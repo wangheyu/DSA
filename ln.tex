@@ -354,6 +354,188 @@ $T(N) = 4 T(N / 2) + N^2 \log N$, 那么 $T(N) = $ ?
 
 你可以继续去补全主定理, 但显然, 这种思路下的主定理永远会有缝隙. 
 
+\subsection{分治策略 (Divide-and-Conquer)}
+
+关于递归算法的设计思路, 通常被称为分治策略, 也就是把整个算法过程归结为三个基本环节: 
+\begin{enumerate}
+  \item 分解 (divide): 将问题分解为若干个规模较小, 与原问题形式相同的子问题.
+  \item 各个治理 (conquer): 递归的求解各个子问题. 当子问题足够小, 直接求解.
+  \item 合并 (combine): 将各个子问题的解合并为原问题的解.
+\end{enumerate}
+以 Merge Sort 为例, 我们可以将其分解为两个子问题: 对左半部分排序, 对右半部分排序. 然后递归地出力两个子问题, 
+最后将两个子问题的解合并为原问题的解. 除了这三个环节以外, 递归设计一定要有一个最基本情形, 也就是递归的终止条件. 
+
+从某种意义上说, 可以将递归策略看作是归纳法证明的一个逆向设计操作.
+
+下面举几个递归算法设计的例子: 
+
+\begin{example}
+  二分查找 (Binary Search). 在一个有序数组 A 中寻找指定元素 x, 如果找到, 返回 x 的下标, 否则返回 NIL. 这里 NIL 是一个抽象的值, 
+  通常在算法中表示不存在. 在具体实现中, 可以用一个不可能出现的值来代替, 比如如果寻找的是数组下标, 那么 NIL 可以是 -1. 整个算法设计思路如下: 
+  \begin{itemize}
+    \item 分解: 对比 x 和数组 A 的中间位置的元素 m.
+    \item 治理: 如果 x == m, 返回 m 的下标; 如果 x < m, 则问题转向在 A 的前半段寻找 x; 如果 x > m, 则在 A 的后半段寻找 x.
+    \item 合并: 无.
+    \item 终止条件: 如果 A 为空, 则返回 NIL. 
+  \end{itemize}
+\end{example}
+
+显然, 算法效率是 $O(\log N)$, 这里 N 是数组 A 的长度.
+
+\begin{example}
+  计算 x 的 n 次幂, 这里 n 是一个自然数. 对于朴素算法而言, 直接循环 n 次做累乘. 显然这个计算量是 $O(n)$. 对于分治策略, 
+  \begin{itemize}
+    \item 分解: 如果 n 是偶数, 那么 $x^n = x^{n / 2} \cdot x^{n / 2}$; 如果 n 是奇数, 那么 $x^n = x^{n / 2} \cdot x^{n / 2} \cdot x$. 这里 $/$ 也是向下取整的整除. 
+    \item 治理: 递归地计算 $x^{n / 2}$.
+    \item 合并: 已经体现在分解这一步. 
+    \item 终止条件: 如果 n = 0, 返回 1.
+  \end{itemize}
+\end{example}
+
+这里要注意, 在实际代码实现时, 下面这个写法是错误的:
+
+\begin{verbatim}
+  double power(double x, int n) { 
+    if (n == 0) return 1;
+    if (n % 2 == 0)
+      return power(x, n / 2) * power(x, n / 2);
+    else 
+      return power(x, n / 2) * power(x, n / 2) * x; 
+  }
+\end{verbatim}
+
+错误的原因是 \verb|return| 时实际调用 \verb|power(x, n / 2)| 函数两次.
+正确的写法是 
+
+\begin{verbatim}
+  double power(double x, int n) { 
+    if (n == 0) return 1;
+    double p = power(x, n / 2);
+    if (n % 2 == 0)
+      return p * p;
+    else 
+      return p * p * x;
+  }
+\end{verbatim}
+
+在这里, 调用一次函数和两次函数, 不仅仅是函数调用更贵的问题, 而是因为这额外的调用发生在递归内部, 
+所以是
+\begin{equation}
+  T(n) = T(\frac{n}{2}) + O(1) = O(\log n).
+\end{equation}
+和
+\begin{equation}
+  T(n) = 2T(\frac{n}{2}) + O(1) = O(n).
+\end{equation}
+的区别. 是算法效率的本质损失. 
+
+\begin{example}
+  Fibonacci 数列. 这个数列的定义是 
+  \begin{equation}
+    F_n = \left\{
+      \begin{array}{ll}
+        0, & n = 0, \\
+        1, & n = 1, \\
+        F_{n - 1} + F_{n - 2}, & n \geq 2.
+      \end{array}
+    \right.
+    \end{equation}
+  朴素算法是直接按照定义计算. 但是这个算法的效率是 $\Omega(\phi^n)$, 其中 $\phi = \frac{\sqrt{5} + 1}{2}$, 
+  也即最优情形下, 也是一个指数时间算法. 指数时间是一个不可接受的时间, 意味着没有用. 之所以这么慢的原因是, 每次递归调用都会产生两个子问题, 
+  但这两个子问题的规模却几乎没有下降. (可以画一下递归树)
+\end{example}
+
+所以尽管很多编程书和算法书, 拿 Fibonacci 数列的朴素生成算法作为递归编程的例子, 但恰恰这是一个绝对不应该用递归实现的例子. 
+这个算法的效率远远不如朴素的循环实现, 即从 $F_0$, $F_1$, $...$, 一直求到 $F_n$. 这样的效率是 $O(n)$.
+而正确的递归生成算法基于下面的事实:
+
+\begin{theorem}
+\begin{equation}
+  \left(
+  \begin{array}{cc}
+    F_{n + 1} & F_n \\
+    F_n & F_{n - 1}
+  \end{array}
+  \right) = \left(
+  \begin{array}{cc}
+    1 & 1 \\
+    1 & 0 
+  \end{array}  
+  \right)^n.
+\end{equation}
+\end{theorem}
+
+该定理不难用归纳法实现. 然后我们只需将求 x 的 n 次幂的算法直接套用, 就可以得到一个 $O(\log n)$ 的算法. 
+
+可能有同学注意到, Fibonacci 序列实际上有一个通项, 
+\begin{equation}
+  F_n = \mathrm{int} \left( \frac{\phi^n}{\sqrt{5}} \right)
+\end{equation}
+那是否意味着我们有一个 $O(1)$ 的算法? 回答是否定的. 直接用上述公式计算, 并不是一个算法. 因为计算机是有限精度的, 上述计算公式在计算机中, 
+对充分大的 n, 总是错误的. 这里体会一下, 离散的计算机算法和考虑连续估计的数值计算是两个不同的概念. 后者专门会在数值分析课程中讨论. 
+
+最后用一个启发式算法暂时作为分治策略的讨论中止. 
+
+\begin{example}
+  矩阵乘法. 设 $A$, $B$ 是两个 $n \times n$ 的矩阵, 我们要计算 $C = AB$.
+  朴素算法是直接按照定义计算, 但这个算法的效率是 $O(n^3)$. 一直以来, 人们都在寻求突破这个时间下界的算法.
+\end{example}
+
+但直接套用分治策略是无效的, 令
+\begin{equation}
+  A = \left[
+    \begin{array}{cc}
+      a & b \\
+      c & d
+    \end{array}
+  \right], 
+  B = \left[
+    \begin{array}{cc}
+      e & f \\
+      g & h
+    \end{array}
+  \right], 
+  A = \left[
+    \begin{array}{cc}
+      r & s \\
+      t & u 
+    \end{array}
+  \right], 
+\end{equation}
+其中 $a$, $b$, $\cdots$, $u$ 都是规模为 $A$ 一半的子块. 那么就有
+\begin{equation}
+  \begin{array}{ll}
+    r = a e + b g, & s = a f + b h, \\
+    t = c e + d g, & u = c f + d h.
+  \end{array}
+\end{equation}
+于是 $T(n) = 8 T(\frac{n}{2}) + O(n^2) = O(n^3)$.
+
+这里提供一个思路, 相比矩阵乘法, 矩阵加法要快的多, 因此我们考虑在分治时尽量减少乘法, 而不介意多来几个加法. 
+一个突破就是 Strassen 算法: 
+
+\begin{theorem}
+  令 
+  \begin{equation}
+    \begin{array}{ll}
+      P_1 = a(f - h), & P_2 = (a + b) h, \\
+      P_3 = (c + d) e, & P_4 = d(g - e), \\
+      P_5 = (a + d)(e + h), & P_6 = (b - d)(g + h), \\
+      P_7 = (a - c)(e + f). & \mbox{以上共 $7$ 个乘法}. \\
+      r = P_5 + P_4 - P_2 + P_6, & s = P_1 + P_2, \\
+      t = P_3 + P_4, & u = P_1 + P_5 - P_3 - P_7.
+    \end{array}
+  \end{equation}
+\end{theorem}
+
+计算量: $7$ 个乘法, $18$ 个加法. 
+\begin{equation}
+  T(n) = 7 T(\frac{n}{2}) + O(n^2) = O(n^{\log_2 7}) \approx O(n^{2.81}).
+\end{equation}
+
+注意这并不是迄今为止最优的矩阵乘法算法, 但考虑到实现的便利, 
+我们一般很少在实际计算时采用比标准乘法操作更复杂操作的算法. 
+
 \section{抽象表: ADT List 及其实现}
 本章讨论最简单和基础的数据结构(data structure). 我们会介绍抽象数据类型
 (Abstract Data Type, ADT) 的概念；与之相关的操作；以及 C++ 的实现.

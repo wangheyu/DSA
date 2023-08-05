@@ -3,3 +3,4 @@
 *.aux
 *.gz
 .vscode
+.ipynb_checkpoints
