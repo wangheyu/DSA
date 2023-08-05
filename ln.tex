@@ -73,6 +73,14 @@
 
 \section{算法分析}
 我们先讲第二章算法分析, 给需要练习技术的同学一周的更多准备时间或退课.
+
+\begin{definition}
+  算法是一个详细的、定义明确的、能够解决特定问题的、有限长度的步骤序列。
+  每个算法的步骤都应该是清晰且不含歧义的，具有准确性、可执行性和有限性。 
+  流程明确且预测性强是算法的一个重要特征，即给定相同的输入，无论何时运行算法，输出都应始终相同。 
+  算法可以用于执行计算、数据处理、自动推理等任务，是计算机科学中的基本概念。  算法是一个有限指令序列, 用于解决某个问题.
+\end{definition}
+  
 算法的本质就是以合理的方式做一件事. 当然这是朴素的说法.
 就像很多算法有朴素的方法,往往是直观的,
 但低下的效率使其无法处理大规模问题.
@@ -137,16 +145,29 @@ $T(N) = \alpha^N$, $\alpha > 1$, 那么 $N$ 不用很大算盘也会获胜.
 $$
 T(N) \in O(f(N)),
 $$
-因为右端显然是一个集合, 表示随着 $N$ 增加, 函数值不会超过 $f(N)$ 的函数全体.
+因为右端显然是一个集合, 
+$$
+O(f(N)) = \{ g(N) \mid \exists c, n_0, \forall N \geq n_0, g(N) \leq cf(N) \}.
+$$
+
+表示随着 $N$ 增加, 函数值的本质上界不会超过 $c f(N)$ 的函数全体.
 比如:
 $$
 T(N) = O(N^2),
 $$
-表示所有随着 $N$ 增加, $T(N)$ 不会超过 $N^2$ 的函数全体.
-因此 $N^2$ 成为 $T(N)$ 的一个本质上界. 对于一个具体的 $N$,
-$N^2$ 未必是其上界, 但是对于充分大的 $N$, 这一点成立.
-因此这里更严格地应该用属于的记号. 但我们在数学分析中也这么用,
-所以实际上这个已经成为一种约定.
+表示所有随着 $N$ 增加, $T(N)$ 不会超过 $c N^2$ 的函数全体.
+因此 $c N^2$ 成为 $T(N)$ 的一个本质上界. 因此这里其实是记号滥用. 
+但我们在数学分析中也这么滥用, 所以实际上这个已经成为一种约定. 只是要注意, 比如: 
+下面这个命题是错误的:
+$$
+f(N) = O(g(N)) \Rightarrow O(g(N)) = f(N); 
+$$
+以及当我们讨论
+$$
+f(N) = O(1)
+$$
+时, 其实说的就是对充分大的 $N$, $f(N)$ 有上界. 
+
 在这个意义上, 我们可以考虑阶的运算法则.
 
 \begin{theorem}[规则 1]
@@ -224,7 +245,114 @@ end
 注意前半段, 将整个计算过程展开成必要的求取次序, 并缓存下来；而后半段, 按照缓存的求值次序, 
 反向逐个求值.
 
-我们先了解递归的基本实现方式, 至于如何设计递归算法, 会在后面的章节讨论. 
+大家可能注意到, 递归的算法的抽象算法时间(或等价地, 称为时间复杂度)并不容易估计, 我们先用一个例子来引入. 
+\begin{verbatim}
+Merge(A, p, q, r)
+  n1 = q - p + 1
+  n2 = r - q 
+  L[1...(n1 + 1)]
+  R[1...(n2 + 1)]
+  for i = 1 to n1
+    L[i] = A[p + i - 1]
+  for j = 1 to n2
+    R[j] = A[q + j]
+  L(n1 + 1) = R(n2 + 1) = +inf
+  for k = p to r
+    if L[i] <= R[j]
+      A[k] = L[i]
+      i = i + 1
+    else
+      A[k] = R[j]
+      j = j + 1
+\end{verbatim}    
+
+这个例子的功能是, 假设数组 A 的 A[p...q] 和 A[q + 1...r] 是已经排好序的, 
+那么经过这个 Merge 过程之后, A[p...r] 都是有序的. (注: 我们默认有序都是升序. 且可重复. )
+这个过程的时间复杂度是 $O(n)$, 其中 $n = r - p + 1$.
+
+在这个例子的基础上, 我们可以构建一种排序算法, 归并排序(Merge Sort), 它的伪代码如下:
+\begin{verbatim}
+  MergeSort(A, p, r)
+    if p < r
+      q = (p + r) / 2
+      MergeSort(A, p, q)
+      MergeSort(A, q + 1, r)
+      Merge(A, p, q, r)
+\end{verbatim}
+注意这里的 / 运算要做下取整. 它的功能是对 A[p...r] 进行排序. 这是一个实际上被广泛使用的算法. 
+我们可以给一个具体的输入来验证一下它的有效性.
+
+我们注意到, 如果假设 MergeSort 的复杂度是 $T(N)$, 在这里 $N = r - p + 1$, 
+那么每一次递归调用都是 $T(N / 2)$, 而 Merge 过程的复杂度是 $O(N)$, 所以我们可以把整个复杂度写成:
+\begin{equation}
+  T(N) = \left\{
+    \begin{array}{ll}
+      O(1), & N = 1, \\
+      2 T(\frac{N}{2}) + O(N), & N > 1.
+    \end{array}
+  \right.
+\end{equation}
+于是复杂度本身也是一个递推公式, 我们可以用递归树来描述它的求解过程.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width = 0.8\textwidth]{images/merge-sort-recursion-tree.png}
+  \caption{Merge Sort 的递归树}
+  \label{fig:merge-sort-recursion-tree}
+\end{figure}
+
+注意, 尽管这里我们通过递归树得到了一个 $O(N \log N)$ 的复杂度, 但这个复杂度的求解过程并不是很严格.
+而严格的证明, 则需要用数学归纳法. 同学们可以自行尝试.
+
+类似地, 对于一般递归过程, 我们可以:
+\begin{enumerate}
+  \item 用递归树来描述递归过程的求解过程, 从而得到一个递推公式;
+  \item 用数学归纳法来证明递推公式的正确性;
+\end{enumerate}
+将这个思路整理成一个一般性定理, 就是主定理(Master Theorem).
+
+\begin{theorem}
+  设 $T(N)$ 是一个递归算法的复杂度, 且满足递推公式:
+  \begin{equation}
+    T(N) = \left\{
+      \begin{array}{ll}
+        O(1), & N = 1, \\
+        a T(\frac{N}{b}) + f(N), & N > 1.
+      \end{array}
+    \right.
+  \end{equation}
+  其中 $a \geq 1$, $b > 1$, 对充分大的 $N$, $f(N) > 0$. 那么:
+  \begin{enumerate}
+    \item 若 $f(N) = O(N^{\log_b a - \epsilon})$, $\epsilon > 0$, 那么 $T(N) = O(N^{\log_b a})$;
+    \item 若 $f(N) = \Theta(N^{\log_b a})$, 那么 $T(N) = O(N^{\log_b a} \log N)$;
+    \item 若 $f(N) = \Omega(N^{\log_b a + \epsilon})$, $\epsilon > 0$, 且对充分大的 $N$, $a f(\frac{N}{b}) \leq c f(N)$, $c < 1$, 那么 $T(N) = O(f(N))$.
+  \end{enumerate}
+\end{theorem}
+
+注意这里第二种情形, 相当与是一个判定的界. 下面举几个例子:
+
+\begin{example}
+$T(N) = 4 T(N / 2) + N$, 那么 $T(N) = O(N^2)$.
+这里, $a = 4$, $b = 2$, $f(N) = N$, $\log_b a = 2$, 所以 $f(N) = \Theta(N^{\log_b a})$, 于是 $T(N) = O(N^2 \log N)$. 这是第一种情况. 
+\end{example}
+
+\begin{example}
+$T(N) = 4 T(N / 2) + N^2$, 那么 $T(N) = \Theta(N^2\log N)$.
+  这里, $a = 4$, $b = 2$, $f(N) = N^2$, $\log_b a = 2$, 所以 $f(N) = \Theta(N^{\log_b a})$, 于是 $T(N) = O(N^2 \log N)$. 这是第二种情况.
+\end{example}
+
+\begin{example}
+$T(N) = 4 T(N / 2) + N^3$, 那么 $T(N) = O(N^3)$.
+  这里, $a = 4$, $b = 2$, $f(N) = N^3$, $\log_b a = 2$, 所以 $f(N) = \Omega(N^{\log_b a + \epsilon})$, 于是 $T(N) = O(N^3)$. 这是第三种情况.
+\end{example}
+
+\begin{example}
+$T(N) = 4 T(N / 2) + N^2 \log N$, 那么 $T(N) = $ ?  
+  这里, $a = 4$, $b = 2$, $f(N) = N^2 \log N$, $\log_b a = 2$, 所以 $f(N)$ 不属于上述任何一种情况, 这是主定理三种情形之外的情况, 主定理不是完备的. 这种情形下, 
+  $T(N) = O(N^2 \log \log N)$. 
+\end{example}
+
+你可以继续去补全主定理, 但显然, 这种思路下的主定理永远会有缝隙. 
 
 \section{抽象表: ADT List 及其实现}
 本章讨论最简单和基础的数据结构(data structure). 我们会介绍抽象数据类型
