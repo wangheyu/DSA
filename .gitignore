@@ -4,3 +4,6 @@
 *.gz
 .vscode
 .ipynb_checkpoints
+*.o
+*.out
+
