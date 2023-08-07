@@ -1,18 +1,5 @@
 #include "ArrayList.h"
 
-ArrayList::ArrayList(int N)
-{
-    // 尽管理论上这里必然是 true, 但仍然应该通过程序确保.
-    if (data == nullptr)
-        data = new char[N];
-    else
-    {
-        std::cerr << "Error: Allocating memory to a non-null pointer may result in memory leakage." 
-        << std::endl;
-        exit(-1);
-    }
-};
-
 void ArrayList::printList() const
 {
     if (size == 0)
@@ -27,37 +14,49 @@ void ArrayList::printList() const
     return;
 }
 
-void ArrayList::makeEmpty() const
+void ArrayList::makeEmpty()
 {
     if (size == 0)
     {
-        std::cerr << "Warning: The list is already empty." << std::endl;
+        if (data != nullptr)
+        {
+            std::cerr << "Error: An empty list has a non-null pointer." << std::endl;
+            exit(-1);
+        }
         return;
     }
     else
     {
+        size = 0;
         if (data != nullptr)
+        {
             delete [] data;
+            data = nullptr;
+        }
         else
-            std::cerr << "Error: A non-empty lsit has a null pointer." << std::endl;
+        {
+            std::cerr << "Error: A non-empty list has a null pointer." << std::endl;
             exit(-1);
+        }
     }
     return;
 }
 
-char* ArrayList::find(char val)
-{
-    char* p = data;
-    for (int i = 0; i < size; i++, p++)
-        if (*p == val)
-            return p;
-    return nullptr;
-}
-
-const char* ArrayList::find(char val) const
-{
-    return const_cast<ArrayList*>(this)->find(val);
-}
+const char* ArrayList::find(char val) const  
+{  
+    for (int i = 0; i < size; ++i) {  
+        if (data[i] == val)  
+        {  
+            return &data[i];  
+        }  
+    }  
+    return nullptr;  
+}  
+  
+char* ArrayList::find(char val)   
+{  
+   return const_cast<char*>(static_cast<const ArrayList&>(*this).find(val));  
+}  
 
 int ArrayList::findIdx(char val) const
 {
@@ -77,7 +76,7 @@ void ArrayList::insert(char val, int pos)
     }
     if (size == 0)
     {
-        if (data = nullptr)
+        if (data == nullptr)
             data = new char[1];
         else
         {
@@ -115,7 +114,7 @@ void ArrayList::remove(char val)
     size--;
 }
 
-char* ArrayList::findKth(int pos)
+const char* ArrayList::findKth(int pos) const
 {
     if (pos < 0 || pos >= size)
     {
@@ -125,8 +124,34 @@ char* ArrayList::findKth(int pos)
     return data + pos;
 }
 
-const char* ArrayList::findKth(int pos) const
+char* ArrayList::findKth(int pos) 
 {
-    return const_cast<ArrayList*>(this)->findKth(pos);
+    return const_cast<char*>(static_cast<const ArrayList&>(*this).findKth(pos));  
 }
 
+ArrayList::ArrayList(const ArrayList &rhs)
+{
+    size = rhs.size;
+    if (size == 0)
+    {
+        data = nullptr;
+        return;
+    }
+    data = new char[size];
+    for (int i = 0; i < size; i++)
+        data[i] = rhs.data[i];
+    return;
+}
+
+ArrayList &ArrayList::operator=(const ArrayList &rhs)
+{
+    if (this != &rhs)
+    {
+        this->makeEmpty();
+        size = rhs.size;
+        data = new char[size];
+        for (int i = 0; i < size; i++)
+            data[i] = rhs.data[i];
+    }
+    return *this;
+}

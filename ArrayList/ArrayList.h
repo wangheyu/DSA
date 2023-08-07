@@ -1,6 +1,5 @@
 #include <iostream>
-#include <cassert>
-#include <cstdlib>
+#include <algorithm>
 
 class ArrayList
 {
@@ -12,9 +11,11 @@ private:
 public:
     // 这个 const 表示该成员函数不会修改类的任何数据.
     void printList() const;
-    void makeEmpty() const;
-    const char* find(char val) const;
-    char* find(char val);
+    void makeEmpty();
+    // 从实用角度, find 返回一个指针会更有意义, 所以这里也提供了动静两套版本.
+    const char* find(char val) const ;  
+    char* find(char val) ;
+    // 原本的 find 保留, 但改名为 findIdx.
     int findIdx(char val) const;
     // 动态函数就不可以加 const 限制.
     void insert(char val, int pos);
@@ -23,8 +24,11 @@ public:
     const char* findKth(int pos) const;
     // 这是上一个函数的重载, 允许修改返回的指针, 也允许修改函数成员的数据.
     char* findKth(int pos);
-    ArrayList() { data = nullptr; }
-    ArrayList(int N);
-    ~ArrayList() { if (data != nullptr) delete [] data; data = nullptr; }
+    ArrayList() { }
+    ArrayList(int N) { data = new char[N]; };
+    ~ArrayList() { if (data != nullptr) delete [] data; }
+    // 复制构造函数, 这里对参数做了引用.
+    ArrayList(const ArrayList &rhs);
+    // 赋值运算的重载.
+    ArrayList &operator=(const ArrayList &rhs);
 };
-
