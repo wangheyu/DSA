@@ -23,7 +23,6 @@ void ArrayList::makeEmpty()
             std::cerr << "Error: An empty list has a non-null pointer." << std::endl;
             exit(-1);
         }
-        return;
     }
     else
     {
@@ -155,3 +154,13 @@ ArrayList &ArrayList::operator=(const ArrayList &rhs)
     }
     return *this;
 }
+
+ArrayList(std::initializer_list<char> initList) {  
+    size = initList.size();  
+    data = new char[size];  
+  
+    int i = 0;  
+    for (auto it = initList.begin(); it != initList.end(); it++, i++) {  
+        data[i] = *it;  
+    }  
+}  

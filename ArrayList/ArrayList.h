@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <initializer_list> 
 
 class ArrayList
 {
@@ -31,4 +32,6 @@ public:
     ArrayList(const ArrayList &rhs);
     // 赋值运算的重载.
     ArrayList &operator=(const ArrayList &rhs);
+    // 在 public 部分添加初始化列表的构造函数  
+    ArrayList(std::initializer_list<char> initList);
 };
