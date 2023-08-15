@@ -155,7 +155,7 @@ ArrayList &ArrayList::operator=(const ArrayList &rhs)
     return *this;
 }
 
-ArrayList(std::initializer_list<char> initList) {  
+ArrayList::ArrayList(std::initializer_list<char> initList) {  
     size = initList.size();  
     data = new char[size];  
   
