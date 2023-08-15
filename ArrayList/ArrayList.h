@@ -19,9 +19,9 @@ private:
     {  
         SUCCESS = 0,  
         INVALID_POS = -1,  
-        UNKNOW_POINTER = -2, 
+        UNKNOWN_POINTER = -2, 
         MISSING_POINTER = -3,
-        OPETATING_EMPTY_LIST = -4,
+        OPERATING_EMPTY_LIST = -4,
         INVALID_SIZE = -5   
     };  
     void _goto_exception (ERR_CODE err_code) const;
@@ -73,7 +73,7 @@ void ArrayList<ELE_T>::_goto_exception(ArrayList<ELE_T>::ERR_CODE error_code) co
         std::cerr << "Error: Invalid position." << std::endl;
         exit(-1);
         break;
-    case ArrayList<ELE_T>::UNKNOW_POINTER:
+    case ArrayList<ELE_T>::UNKNOWN_POINTER:
         std::cerr << "Error: An empty list has a non-null pointer." << std::endl;
         delete [] data;
         exit(-1);
@@ -83,7 +83,7 @@ void ArrayList<ELE_T>::_goto_exception(ArrayList<ELE_T>::ERR_CODE error_code) co
                   << std::endl;
         exit(-1);
         break;
-    case ArrayList<ELE_T>::OPETATING_EMPTY_LIST:
+    case ArrayList<ELE_T>::OPERATING_EMPTY_LIST:
         std::cerr << "Warning: Try to find the k-th element in an empty list." << std::endl;
         // do noting.
         break;
@@ -121,7 +121,7 @@ void ArrayList<ELE_T>::makeEmpty()
     if (size == 0)
     {
         if (data != nullptr)
-            _goto_exception(UNKNOW_POINTER);
+            _goto_exception(UNKNOWN_POINTER);
     }
     else
     {
@@ -166,7 +166,7 @@ void ArrayList<ELE_T>::insert(const ELE_T &val, int pos)
         if (data == nullptr)
             data = new ELE_T[1];
         else
-            _goto_exception(UNKNOW_POINTER);
+            _goto_exception(UNKNOWN_POINTER);
         data[0] = val;
         size++;
         return;
@@ -191,9 +191,9 @@ const ELE_T& ArrayList<ELE_T>::findKth(int pos) const
     if (size == 0)
     {
         if (data == nullptr)
-            _goto_exception(OPETATING_EMPTY_LIST);   
+            _goto_exception(OPERATING_EMPTY_LIST);   
         else
-            _goto_exception(UNKNOW_POINTER);
+            _goto_exception(UNKNOWN_POINTER);
     }
     if (pos < 0 || pos >= size)
         _goto_exception(INVALID_POS);
