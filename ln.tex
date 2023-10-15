@@ -1363,15 +1363,17 @@ $\Theta(n)$ 代价的 (请证明一下). 因此效率低下, 在实际的单链�
 没有发生实质变化, 它们可以用数组或者链表作为底层实现, 主要特性和区别发
 生在如何使用上. 这里我们根据需要和惯例, 给出一些特殊的表操作:
 \begin{itemize}
-  \item {\bf push, 推入} 向表插入(insert)一个新元素；
-  \item {\bf pop, 弹出} 从表内弹出一个元素, 并将它从表中删除. 以上两个
-    操作, 因为效率的原因, 我们一般只考虑发生在表的开头或结尾.
-  \item {\bf top, 读出} 读取表的一个元素. 它相当于不删除的 pop 操作；
-  \item {\bf append, 加入} 向表的尾部插入一个新元素.  
+  \item {\bf push, 推入} 插入(insert)一个新元素；
+  \item {\bf pop, 弹出} 删除下一个元素. 
+  \item {\bf top, 读出(堆栈)} 读取最顶部的一个元素.
+  \item {\bf front, 读出(队列)} 读取最前部的一个元素.
+  \item {\bf size, 大小} 返回表的大小.
+  \item {\bf empty, 检测空表} 检查表是否是空的.
+  
 \end{itemize}
 
 以上这些特异化的操作, 是为了堆栈和队列的特殊要求定制的. 堆栈和队列本质上都是表, 主要区别是
-每一次 pop 或者 top 得到的元素,
+每一次 pop 删除或者 top/front 得到的元素,
 \begin{itemize}
 \item {\bf 堆栈} 是最近一次 push 的元素, 先入先出(First in First Out,
   FIFO).
@@ -1401,6 +1403,75 @@ A -> B -> C -> B-> A
 显然, 堆栈和队列概念都是简单的, 我们直接来看一下如何应用于具体问题. 我
 们将采用 STL 提供的 stack 和 queue 来完成我们的例子. 顺便熟悉一下 C++
 STL.
+
+我们先来个开胃前菜: 如果有一个括号序列, 比如 ``(())()('' 怎么判定它是否左右匹配? 
+
+这是一个经典的使用堆栈解决问题的例子. 我们可以遍历字符串的每一个字符, 遇到左括号就压入堆栈, 
+遇到右括号就检查堆栈顶元素是否匹配, 如果匹配就弹出堆栈, 如果不匹配或者堆栈为空则说明不匹配. 
+最后, 全部处理完后, 如果堆栈为空, 说明全部匹配, 否则说明不匹配.
+
+用C++ 实现的代码如下:
+
+\begin{lstlisting}[language=C++]
+  #include <iostream>
+  #include <cstdlib>
+  #include <string>
+  #include <stack>
+  
+  bool isValid(const std::string& s);
+  
+  bool isValid(const std::string& s) 
+  {
+      std::stack<char> myStack;
+      for (int i = 0; i < s.size(); i++) 
+      {
+          if (s[i] == '(' || s[i] == '[' || s[i] == '{') 
+              myStack.push(s[i]);
+          else if (s[i] == ')' || s[i] == ']' || s[i] == '}')
+          {
+              if (myStack.empty()) 
+                  return false;
+              if (s[i] == ')' && myStack.top() != '(') 
+                  return false;
+              if (s[i] == ']' && myStack.top() != '[') 
+                  return false;
+              if (s[i] == '}' && myStack.top() != '{') 
+                  return false;
+              myStack.pop();
+          }
+          else
+          {
+              std::cerr << "Invalid character: " << s[i] << std::endl;
+              exit(-1);
+          }
+      }
+      return myStack.empty();
+  }    
+  
+  int main(int argc, char* argv[])
+  {
+      if (argc != 2) 
+      {
+          std::cerr << "Usage: " << argv[0] << " <string>" << std::endl;
+          return -1;
+      }
+      if (isValid(argv[1]))
+          std::cout << "Valid" << std::endl;
+      else
+          std::cout << "Invalid" << std::endl;
+      return 0;    
+  };   
+\end{lstlisting}
+
+在上面的代码中, 我们使用了 STL 的 stack, 遍历输入的字符串, 遇到左括号就直接入栈. 
+如果遇到右括号, 我们就检查栈是否为空, 如果为空, 说明没有对应的左括号, 返回 false. 
+然后, 我们看栈顶的左括号是否和当前的右括号匹配, 如果不匹配也返回 false. 如果匹配, 
+我们就把栈顶的左括号弹出栈, 继续处理下一个字符. 最后如果栈为空, 
+说明所有的左括号都找到了匹配的右括号, 返回true. 否则, 说明还有左括号没有找到匹配的右括号, 
+返回false. 
+
+该算法的时间复杂度是 $O(n)$, 其中 $n$ 是字符串的长度. 因为我们只遍历了一次字符串, 
+每次操作栈的复杂度都是 $O(1)$.
 
 \subsection{堆栈应用: 四则混合计算器}
 
