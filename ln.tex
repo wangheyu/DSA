@@ -2186,6 +2186,80 @@ grand parent 节点 \verb|g| 三者的位置关系, 分出了 zig-zag 和 zig-zi
 大家在日常工作和学习中可以直接使用 STL 中的 \verb|set| 和 \verb|map|,
 注意它们的读 / 写性能都是 $\Theta(log N)$ 的.
 
+在C++中, 虚函数是通过在基类中使用关键字 {\bfseries virtual} 声明的函数, 用于实现多态. 
+多态是指基类指针或引用可以指向其派生类对象, 并通过基类指针或引用调用实际指向的派生类中的函数. 
+这种行为称为多态. 多态允许我们对不同的对象执行相同的操作, 但是行为会根据对象的实际类型而变化.
+当一个函数被声明为虚函数后, 编译器就会在运行时来决定调用哪个类的函数, 这称为动态绑定或延迟绑定. 
+
+下面是一个简单的例子来说明虚函数的使用:
+\begin{lstlisting}[language=c++]
+  #include<iostream>  
+  
+  class Base {  
+  public:  
+      virtual void show() { std::cout << "In Base \n"; }  
+  };  
+    
+  class Derived: public Base {  
+  public:  
+      void show() { std::cout << "In Derived \n"; }  
+  };  
+    
+  int main(void) {   
+      Base* bp = new Derived;  
+      bp->show();  // 输出 "In Derived"  
+      return 0;  
+  }      
+\end{lstlisting}
+
+在这个例子中, \verb|show()| 在基类 \verb|Base| 中被声明为虚函数. 
+在派生类 \verb|Derived| 中, 我们对 \verb|show()| 进行了重写. 在 \verb|main| 函数中, 
+我们创建了一个指向 \verb|Derived| 类对象的 \verb|Base| 类指针 \verb|bp|, 
+然后通过这个指针调用 \verb|show()| 函数. 虽然 \verb|bp| 是一个 \verb|Base| 类型的指针, 
+但是因为 \verb|show()| 函数是虚函数, 所以调用的是 \verb|Derived| 类的 \verb|show()| 函数, 
+而不是 \verb|Base| 类的. 这就是多态. 
+
+需要注意的是, 如果一个类有虚函数, 那么这个类就会有一个虚函数表 (也叫 vtable). 
+虚函数表是一个存储类的虚函数地址的表. 每一个类对象都有一个指向虚函数表的指针. 这个指针会在运行时确定, 
+指向正确的虚函数表, 从而实现动态绑定. 
+
+在C++中, 纯虚函数是在基类中声明的虚函数, 它在基类中没有定义 (也就是说, 它没有函数体), 
+但要求任何派生类必须提供定义 (实现). 纯虚函数是通过在函数声明后添加 \verb|= 0| 来指定的. 
+包含纯虚函数的类被称为抽象类, 我们不能创建抽象类的对象.
+
+纯虚函数主要用于实现接口或者抽象类. 在这些情况下, 基类定义了一个通用的接口, 派生类必须根据自己的具体情况来实现这个接口.
+
+下面是一个简单的例子:
+
+\begin{lstlisting}[language=c++]
+  #include<iostream>
+
+  class AbstractClass {
+  public:
+      virtual void pureVirtualFunction() = 0; // 纯虚函数
+  };
+  
+  class DerivedClass : public AbstractClass {
+  public:
+      void pureVirtualFunction() {
+          std::cout << "Implementation of pure virtual function in derived class." << std::endl;
+      }
+  };
+  
+  int main() {
+      // AbstractClass a; // 错误：不能创建抽象类的对象
+      DerivedClass d; // 可以创建派生类的对象
+      d.pureVirtualFunction(); // 调用派生类中实现的纯虚函数
+      return 0;
+  }    
+\end{lstlisting}
+
+在这个例子中, \verb|AbstractClass| 是一个抽象类, 它有一个纯虚函数 \verb|pureVirtualFunction()|.
+\verb|DerivedClass| 是从 \verb|AbstractClass| 派生出来的, 
+它实现了 \verb|pureVirtualFunction()|. 在 \verb|main| 函数中, 
+我们不能创建 \verb|AbstractClass| 的对象, 但是我们可以创建 \verb|DerivedClass| 的对象, 
+并调用其实现的 \verb|pureVirtualFunction()|.
+
 \subsection{C++ 的底层设计}
 
 以下讨论, 参考了
