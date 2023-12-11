@@ -3807,6 +3807,249 @@ countingsort(A[1...N], B[1...N], C[1...M])
 
 本章讨论和图论 (graph theory) 相关的问题. 
 
+\subsection*{预备知识, 动态规划 (Dynamical Programming)}
+
+\subsubsection{最长子序列问题 (longest common subsequence, LCS)}
+
+即在多个序列中寻找最长的公共子序列. 注意是子序列, 而不是连续片段. 这是一个经典问题, 
+它的一个重要应用是在物种的 DNA 中寻找公共子序列, 通过这些 DNA 的公共子序列, 
+我们可以追溯这个物种的进化起源. 比如目前英国出现了 Cov-19 的变种病毒, 
+但是它和标准的 Cov-19 拥有很多 DNA 重叠, 所以我们还是把它看作同一种病毒, 
+并且希望我们目前的疫苗都还有用.
+
+输入：$\{x_1, x_2, \cdots, x_m\}$ 和 $\{y_1, y_2, \cdots, y_n\}$, 长度不一致. 
+
+输出: 它们的 一个LCS.
+
+例：$x =$ A, B, C, D 和 $y =$B, D, C, A, B, A.
+
+则 LCS$(x, y) = $BDAB, BCAB, BCBA. 全部 LCS 是一个集合, 我们的算法要求返回其中一个就行.
+
+\textbf{朴素算法}: 遍历 $x$ 的每一个子序列, 检查它是否为 $y$ 的子序列.
+
+代价: 假定 $x_s$ 是 $x$ 的子序列, 长度是 $l$, 如何判定它是否为长度为 $n$ 的序列 $y$ 的子序列? 
+这里 $n >> l$. 我们需要遍历一次 $y$ 和一次 $x_s$:
+
+\begin{lstlisting}[language=c++]
+  i = 0;
+  j = 0;
+  while (xs[i] != xs.end)
+  {
+      while (y[j] != xs[i] && y[i] != y.end)
+          j++;
+    if (y[j] != y.end)
+          i++;
+      else
+          break;
+  }
+  if (xs[i] != xs.end)
+      return false;
+  else
+      return true;    
+\end{lstlisting}
+
+这个代价是 $T(n) = O(l + n)$. 由 $n > l$, 可以认为是 $T(n)$. 
+也就是对于 $x$ 的每一个子序列, 我们都要做一个 $T(n)$ 的操作, 那么长度为 $m$ 的序列 $x$ 有多少子序列? 
+回答是 $2^m$ 个.
+$$
+x = \{x_1, x_2, x_3, \cdots, x_m \}
+$$
+对每一个 $x_i$ 都有取或不取两种选择. 综合起来, 朴素的暴力穷举算法的代价是
+$$
+T(n) = O(n 2^m).
+$$
+所以我们要远离暴力...
+
+现在考虑改进方案. 按之前的套路, 该是分治策略登场了. 
+即将一个 LCS 问题分成两个子问题来处理. 然而这里出现了新的问题, 
+哪怕 $x$ 分裂成两个规模为 $\frac{m}{2}$ 的子问题，, 
+$O(2^{\frac{m}{2}})$ 仍然是一个不可承受的代价. 
+这里指出一个算法设计时的一般规律, 指数级代价是本质的, 不可能通过分治改进. 
+我们需要新的思路.
+
+我们先考虑一个预备问题: 求 LCS$(x, y)$ 的长度: len(LCS$(x, y)$). 
+这是一个比 LCS$(x, y)$ 本身要简单的问题. 显然, LCS$(x, y)$ 的长度是唯一的. 
+我们引入记号, 用 $|x|$ 表示序列 $x$ 的长度, 用 C[i, j] 表示
+$$
+\mbox{LCS[i, j]} := \mbox{LCS}(x[1...\mathrm{i}], y[1...\mathrm{j}]), 
+1 \leq i \leq |x|, 1 \leq j \leq |y|.
+$$
+中 LCS[i, j] 的长度. 现在考虑如何求 C[i, j]:
+$$
+\mbox{C[i, j]} = \left\{
+\begin{array}{ll}
+\mathrm{C[i - 1, j - 1] + 1}, \mathrm{if~x[i] = y[j]},\\
+\max\{\mathrm{C[i, j - 1], C[i - 1, j]}\}.
+\end{array}
+\right.
+$$
+
+证明: 当 x[i] = y[j] 时, 设 C[i, j] = k, 令 z[1...k] $\in$ LCS[i, j], 
+则由定义, 必有 z[k] = x[i] = y[j]. 即 z[1...k - 1] 是 x[1...i-1] 和 y[1...j - 1]的公共子序列. 
+这里我们自然地考虑 z[1...k - 1] 事实上应该是 LCS[i - 1, j - 1], 
+但这一点其实并不显然, 因为 i > k, 所以不能自然地排除 C[i - 1, j - 1] 
+也为 k 的可能性 (存在其他组合). 这一点需要进一步证明:
+
+\textbf{断言 (claim)}: z[1...k - 1] $\in$ LCS[i - 1, j - 1].
+
+事实上, 假设 w $\in$ LCS[i - 1, j - 1]，且 |w| > k - 1. 
+则将 w 和 z[k] 拼在一起, 得到 w + z[k], 它满足:
+\begin{enumerate}
+  \item w + z[k] 是 x[1...i] 和 y[1...j] 的 LCS;
+  \item w + z[k] > k.
+\end{enumerate}
+这和 z[1...k] $\in$ LCS[i, j] 矛盾. 故有
+$$
+\mbox{C[i - 1, j - 1] = k - 1}.
+$$
+同时也证明了当 x[i] = y[j] 时, 有
+$$
+\mbox{C[i, j] = C[i - 1, j - 1]} + 1.
+$$
+以上证明本身隐藏了一种算法策略, 即对任意
+$$
+\mbox{z[1...k]} \in \mbox{LCS[m, n]},
+$$
+z 的部分前缀 z[1...s] \textbf{必然是} x 和 y 的某个前缀 x[1...i] 和 y[1...j] 的 LCS. 
+更一般地, 这一特征可以表达为: \textbf{最优解的一个部分必然是部分问题的最优解.} 
+这一特征被称为 \textbf{最优子结构 (optimal substructure)}, 
+它是可以引入动态规划的一个重要信号. 在这个具体的问题上, 
+它提示我们应该从 x 和 y 的最简单前缀开始, 一点点扩张 z (不唯一), 
+最终形成 LCS. 这里还是先只计算 LCS 的长度, 这样我们暂时不用考虑不唯一的问题:
+
+\begin{lstlisting}[language=c++]
+  LCS(x, y, i, j)
+  {
+    if (i == -1 || j == -1)
+      return 0;
+    else if (x[i] == y[j])
+      C[i, j] = LCS(x, y, i - 1, j - 1) + 1;
+    else
+      C[i, j] = max(LCS(x, y, i, j - 1), LCS(x, y, i - 1, j - ));
+    return C[i, j];
+  }    
+\end{lstlisting}
+
+我们注意到, 这个算法实际上是一个分治法. 那么它的效率是多少呢? 
+我们似乎不能应用主定理. 这里我们看到, 如果每一次都会恰好进入要进行 max 判定的分支,
+那么就会出现 T(m + n) = T(m + n - 1) * 2 的情况. 这和朴素的 Fabonacci 序列一样, 
+一个问题, 变成了几乎等规模的两个子问题, 它的效率是指数时间的 $O(2^{m + n})$. 
+这是一个不可以使用的算法. 但是如果我们把最坏情况, 比如 LCS(x, y, 7, 6) 的递归树画出来, 
+并假设每一次都会出现最坏的 max 判定情况, 那么我们就会发现, 
+得到一棵有大量子树重复的树. 这些重复的子树, 就是效率低下的根源.
+
+\begin{figure}[h]  
+  \centering  
+  \includegraphics[width=0.75\textwidth]{images/recusive_tree.png} 
+  \caption{分治 LCS 的递归树} % 添加图片标题  
+\end{figure}  
+
+那么解决问题的方案就很明显了: 剪枝. 这也是动态规划中的一个基本思路. 
+而具体的方法有很多. 比如:
+
+\textbf{备注法 (memorization algorithm)}: 即在递归的同时, 
+建立一张备忘表, 记录已经计算过的子问题, 但这个子问题再次出现时, 
+直接调用而不是计算 (从而打断了深入递归). 
+
+\begin{lstlisting}[language=c++]
+  LCS(x, y, i, j)
+  {
+    if (C[i, j] == nil)
+      if (x[i] == y[j])
+        C[i, j] == LCS(x, y, i - 1, j - 1) + 1;   
+      else
+        C[i, j] = max(LCS(x, y, i - 1, j), LCS(x, y, i, j - 1));
+    return C[i, j];
+  }
+\end{lstlisting}
+
+这和之前的代码有毛区别? 其实区别很多:
+
+\begin{enumerate}
+  \item 取消了 i == -1 || j == -1 的递归初始情形;
+  \item 这里的 C[i, j] 实际存放在二维数组 \verb|C[i][j]| 中. 
+  所以只有在 C[i, j] == nil 的时候, 也即还没有计算过的时候, 
+  实际计算, 如果已经计算过了, 直接返回 C[i, j] 的值.
+\end{enumerate}
+
+那么现在的总代价是多少? 其实就是 $O(mn)$, 
+因为本质上, 我们就是要建一张表就行了, 每个元素本质上只会读/写若干次.
+
+然而这个方法并不是动态规划, 因为它本质上没有脱离递归的策略. 
+也就是它仍然遵循将一个大规模问题, 向小规模方向约减. 
+真正的动态规划思路刚好倒过来, 我们直接从小规模的子问题, 
+拼接出大规模的目标问题. 这个思路被称为: \textbf{自底向上 (bottom-up)} 策略.
+(分治法和备忘法是典型的 \textbf{自顶向下 (top-down)} 策略.) 
+具体做法, 以刚才的例子为例, 仍然是画一张表, 但关键是, 以什么次序画.
+$$
+\begin{array}{cccccccccc}
+&&-1&0&1&2&3&4&5&6\\
+&-1&x&A&B&C&B&D&A&B\\
+&y&0&0&0&0&0&0&0&0\\
+0&B&0&0&1&1&1&1&1&1\\
+1&D&0&0&1&1&1&2&2&2\\
+2&C&0&0&1&2&2&2&2&2\\
+3&A&0&1&1&2&2&2&3&3\\
+4&B&0&1&2&2&3&3&3&4\\
+5&A&0&1&2&2&3&3&4&4\\
+\end{array}
+$$
+这里填的次序是, 第一行和第一列都填 $0$, 然后对
+$$
+\begin{array}{ccc}
+&\mbox{x[i - 1]} &\mbox{x[i]}\\
+\mbox{y[j - 1]} & \mbox{C[i - 1, j - 1]} & \mbox{C[i - 1, j]}\\
+\mbox{y[j]} &\mbox{C[i, j - 1]} &\mbox{C[i, j]} 
+\end{array}
+$$
+我们可以遵循
+
+\begin{lstlisting}[language=c++]
+  if (x[i] == y[j])
+  C[i, j] == LCS(x, y, i - 1, j - 1) + 1;   
+else
+  C[i, j] = max(LCS(x, y, i - 1, j), LCS(x, y, i, j - 1));
+\end{lstlisting}
+
+这样就可以从左至右, 从上至下填完整张表格. 显然, 
+我们需要的 LCS(6, 5) 的长度就是 C[6, 5] 
+(这里实际存成了第 $5$ 行第 $6$ 列) 的值, 是 $4$. 
+而实际的 LCS(6, 5), 也可以从这张表得到. 
+比如这里我们发现, 最后的 C[6, 5] 中的 4, 实际上可以在表中回溯它的变化过程:
+$$
+\mbox{C[0, -1]} \to \mbox{C[1, 0]} \to \mbox{C[2, 0]} \to \mbox{C[3, 0]} \to \mbox{C[4, 1]} \to \mbox{C[4, 2]} \to \mbox{C[5, 3]} \to \mbox{C[6, 4]} \to \mbox{C[6, 5]}.
+$$
+我们只要记录它的对角线方向的变化: 
+$\mbox{C[1, 0]}$, $\mbox{C[4, 1]}$, $\mbox{C[5, 3]}$, $\mbox{C[6, 4]}$, 
+因此 LCS 就是:
+$$
+\mbox{x[1]x[4]x[5]x[6]} = \mbox{y[0]y[1]y[3]y[4]}=BDAB.
+$$
+注意这个结果确实不唯一, 因为还有一条可选的变化路径是:
+$$
+\mbox{C[0, -1]} \to \mbox{C[1, 0]} \to \mbox{C[1, 1]} \to \mbox{C[2, 2]} \to \mbox{C[2, 3]} \to \mbox{C[3, 4]} \to \mbox{C[4, 4]} \to \mbox{C[5, 5]} \to \mbox{C[6, 5]}.
+$$
+而对应的 LCS 是:
+$$
+\mbox{x[1]x[2]x[3]x[5]} = \mbox{y[0]y[2]y[4]y[5]}=BCBA.
+$$
+内容不一样, 当然长度一样. 这里还有其他的选择路径.
+
+这里我们可能已经注意到, 实际上, 这张表里面也存放了大量的重复数字. 
+也就是说, 实际上, 我们并不需要存下这里的每一个数字, 
+我们真正需要存放的, 只是发生了对角线跳跃的坐标, 也就是这张图:
+\begin{figure}[h]  
+  \centering  
+  \includegraphics[width=0.75\textwidth]{images/LCS.png}
+  \caption{LCS 路径} % 添加图片标题  
+\end{figure}  
+
+或者, 记成树也行. 用这种方式, 我们的实际存储量, 
+可以下降到 $O(\min(m, n))$, 因为我们不需要存储全部的表, 
+只需要记录这个图, 因此我们可以只缓存一行表就行. 
+事实上, 按行缓存还是按列缓存都行. 注意这里降低的只是存储量, 
+而实际计算量不变.
+
 \subsection{定义}
 
 \noindent{\bf 图(graph)} 图 $G = (V, E)$ 是由{\bf 顶点 (vertex)} 集合
