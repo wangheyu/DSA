@@ -1,0 +1,130 @@
+%!Tex Program = xelatex
+\documentclass[a4paper,12pt]{article}
+\usepackage{amssymb,amsmath,amsfonts,amsthm}
+%\usepackage{newtxtext,newtxmath}
+\usepackage{fontspec,xunicode,xltxtra}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{mathrsfs}
+%\usepackage{zhfontcfg}
+%\usepackage{indentfirst}
+%\usepackage[colorlinks,linkcolor=black]{hyperref}
+%\usepackage{setspace}
+%\usepackage{geometry}
+% or whatever
+
+%\usepackage[latin1]{inputenc}
+% or whatever
+
+\XeTeXlinebreaklocale "zh"
+\XeTeXlinebreakskip = 0pt plus 1pt minus 0.1pt
+
+% Ubuntu
+\newfontfamily\hei{WenQuanYi Micro Hei Mono}
+\newfontfamily\whei{WenQuanYi Zen Hei Mono}
+\newfontfamily\kaishu{AR PL KaitiM GB}
+\newfontfamily\song{AR PL SungtiL GB}
+\newfontfamily\lishu{WenQuanYi Micro Hei Mono}
+\setmainfont[Mapping=tex-text]{AR PL SungtiL GB}
+\setsansfont[Mapping=tex-text]{AR PL KaitiM GB}
+\setmonofont[Mapping=tex-text]{WenQuanYi Micro Hei Mono}
+
+% Mac
+%% \newfontfamily\hei{STHeitiSC-Light}
+%% \newfontfamily\whei{STHeitiSC-Medium}
+%% \newfontfamily\kaishu{STKaitiSC-Regular}
+%% \newfontfamily\song{STSongti-SC-Regular}
+%% \newfontfamily\lishu{STLibianSC-Regular}
+%% \setmainfont[Mapping=tex-text]{STSongti-SC-Regular}
+%% \setsansfont[Mapping=tex-text]{STKaitiSC-Regular}
+%% \setmonofont[Mapping=tex-text]{STHeitiSC-Medium}
+\renewcommand{\baselinestretch}{1.25}
+
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{ulem}
+\usepackage{pgf}
+\usepackage{graphicx}
+
+\usepackage[hmargin={3.18cm, 3.18cm}, width=14.64cm,
+             vmargin={2.54cm, 2.54cm}, height=24.62cm]{geometry}
+\pagestyle{empty}
+
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\pagestyle{fancy} %fancyhdr宏包新增的页面风格
+\renewcommand{\headrulewidth}{0pt}
+%\fancyhf{}
+\cfoot{第 \thepage 页，共 \pageref{LastPage} 页}%当前页 of 总页数
+
+\renewcommand\baselinestretch{1.2}
+\setlength{\headwidth}{\textwidth}
+
+%\renewcommand{\labelenumi}{\bf{\chinese{enumi}、}}
+\renewcommand{\labelenumii}{\arabic{enumii}.}
+\renewcommand{\labelenumiii}{\Roman{enumiii}}
+
+\newcommand{\chuhao}{\fontsize{42pt}{\baselineskip}\selectfont} % 字号设置
+\newcommand{\xiaochuhao}{\fontsize{36pt}{\baselineskip}\selectfont} % 字号设置
+\newcommand{\yihao}{\fontsize{28pt}{\baselineskip}\selectfont} % 字号设置
+\newcommand{\erhao}{\fontsize{21pt}{\baselineskip}\selectfont} % 字号设置
+\newcommand{\xiaoerhao}{\fontsize{18pt}{\baselineskip}\selectfont} % 字号设置
+\newcommand{\sanhao}{\fontsize{15.75pt}{\baselineskip}\selectfont} % 字号设置
+\newcommand{\sihao}{\fontsize{14pt}{\baselineskip}\selectfont} % 字号设置
+\newcommand{\xiaosihao}{\fontsize{12pt}{\baselineskip}\selectfont} % 字号设置
+\newcommand{\wuhao}{\fontsize{10.5pt}{\baselineskip}\selectfont} % 字号设置
+\newcommand{\xiaowuhao}{\fontsize{9pt}{\baselineskip}\selectfont} % 字号设置
+\newcommand{\liuhao}{\fontsize{7.875pt}{\baselineskip}\selectfont} % 字号设置
+\newcommand{\qihao}{\fontsize{5.25pt}{\baselineskip}\selectfont} % 字号设置
+
+\newtheorem{theorem}{定理}
+\newtheorem{definition}{定义}
+\addto{\captionsenglish}{%
+  \renewcommand{\refname}{参考文献}%
+  \renewcommand{\proofname}{证明}%
+  \renewcommand{\figurename}{图}%
+%  \renewcommand{\bibname}{参考文献}%
+}
+
+\renewcommand{\theequation}{\arabic{section}.\arabic{equation}}
+\renewcommand{\thetheorem}{\arabic{section}.\arabic{theorem}}
+\renewcommand{\thedefinition}{\arabic{section}.\arabic{definition}}
+
+
+\begin{document}
+
+\title{\hei 硬币找零问题}
+
+
+%\date{}
+\maketitle
+
+%%------------------------------------------
+%% \section{问题}
+%% \setcounter{equation}{0}
+%% \setcounter{theorem}{0}
+%% \setcounter{definition}{0}
+
+\begin{enumerate}
+\item 你有一定初始硬币数目的几种不同的美元硬币: $1$, $5$, $10$, $25$ 美分. 
+输入每种硬币的数量, 目标是找出使得总金额为 $n$ 美分(也是输入) 的最小硬币数. 
+\item 请先设计你的算法思路, 可以辅以自然语言, 伪代码, 流程图等.
+\item 请用C++实现你的算法, 请尽量使用STL中的容器和算法. 并给出必要的注释.
+\item 请设计合理的测试用例, 并给出测试结果. 测试的重点应放在计算效率上, 并和你的理论分析结果做比较.
+\item 作业要求：
+\begin{enumerate}
+\item 在你的gitee目录中增加项目 \verb|coin|, 包含作业全部内容;
+\item 你的项目中, 必须包含以下文件:
+\begin{enumerate}
+\item \verb|coin.h|, \verb|main.cpp|, \verb|Makefile|;
+\item \verb|report.pdf|, 解释你的设计思路和测试说明; 在工作目录中输入 
+\verb|make report| 应该产生report.pdf;
+\end{enumerate}
+\item {\hei 所有代码和作业必须按要求上传至你的gitee目录, 才会被助教接受! 
+当你已经完成提交后, 请在学在浙大提交 ``已完成'', 方便助教给分. }
+\end{enumerate}
+\end{enumerate}
+
+\bibliographystyle{plain}
+\bibliography{../crazyfish}
+\end{document}
