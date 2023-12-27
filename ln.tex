@@ -1897,7 +1897,7 @@ void insert( Comparable x, BinaryNode * & t )
   树代替 \verb|x|(如有).
 \item 节点 \verb|x| 有两棵子树, 则首先寻找 \verb|x| 的后继 \verb|y|,
   这里指出 \verb|y| 必存在 (右子树的最小值), 然后用 \verb|y| 的值占据
-  |verb|x| 的值, 再将 \verb|x->right| 中删除 \verb|y|.
+  \verb|x| 的值, 再将 \verb|x->right| 中删除 \verb|y|.
 \end{enumerate}
 
 以上操作已经充分考虑了可以利用指针引用这样的神器. 在没有指针引用的年代,
@@ -2608,13 +2608,13 @@ private:
 这个类和 \verb|SingleList| 类一样, 从 \verb|List<DT>| 类派生, 它的节点
 也从 \verb|Node<DT>| 抽象类派生. 它的 \verb|insert| 和 \verb|remove| 和 \verb|SingleList| 的情形
 
-我们现在有: verb|BnaryTree|,
-verb|BinarySearchTree|, \verb|AvlTree|, \verb|SplayTree|.
+我们现在有: \verb|BnaryTree|,
+\verb|BinarySearchTree|, \verb|AvlTree|, \verb|SplayTree|.
 
 让我们来看看, 应该怎样理清它们的逻辑关系.
 
 乍一看似乎并不复杂, \verb|AvlTree|, \verb|SplayTree| 都是一种二叉搜索
-树, 而 verb|BinarySearchTree| 是一种二叉树. 所以从 verb|BinaryTree| 派
+树, 而 \verb|BinarySearchTree| 是一种二叉树. 所以从 \verb|BinaryTree| 派
 生出 \verb|BinarySearchTree|, 再从 \verb|BinarySearchTree| 派生出
 \verb|AvlTree|, \verb|SplayTree|. 但稍微一想, 就会有问题,
 \verb|rotate| 这个操作, 在哪个类实现好?
@@ -3203,7 +3203,7 @@ $\Theta(n)$ 的过程. 但是这一算法过程无法在堆删除时重复. 连�
 素.
 
 我知道你们在想啥, 但稍微有点节操的做法是, 先依次建一个大小为 $k$ 的堆.
-从第 $k + 1$个元素起, 只有当新元素比根节点元素大时, 才插入堆. 直到全部
+从第 $k + 1$个元素起, 只有当新元素比根节点元素大时, 才插入堆, 每次插入后执行一次deleteMin. 确保堆的元素个数是$k$, 直到全部
 元素插入完毕, 此时堆中的元素最小的就是根元素, 它之前必然有 $k - 1$ 个
 元素比它大, 且未入堆的元素必然比它小. 因此它就是第 $k$ 大的元素.
 
