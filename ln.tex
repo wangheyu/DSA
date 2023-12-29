@@ -4512,13 +4512,21 @@ BFS-shortest-path(s, u)
         for each c in v.adj()
             if c.d = Inf
                 c.d = v.d + 1;    // 不会有其他形式的松弛, 因为权永远是 1.
+                Q.push(c);
             if c == u
                 output(c.d);      // 结束啦.
                 end;
 \end{verbatim}
 
-% 这里确 Bellman-Ford 和差分约束系统.
-
+% 这里缺 Bellman-Ford 和差分约束系统.
+\hl{Bellman-Ford算法}\\
+Bellman-Ford算法简单地对所有边进行松弛操作，共执行$|V|-1$次。在重复地计算中，已计算得到正确的距离的边的数量不断增加，直到所有边都计算得到了正确的路径。\\
+每次循环操作实际上是对相邻节点的访问，第$n$次循环操作保证了所有深度为$n$的路径最短。由于图的最短路径最长不会经过超过
+$|V|-1$条边，所以可知Bellman-Ford算法所得为最短路径。\\
+\textbf{负边权操作}\\
+与Dijkstra算法不同的是，Dijkstra算法的基本操作“拓展”是在深度上寻路，而“松弛”操作则是在广度上寻路，这就确定了Bellman-Ford算法可以对负边进行操作而不会影响结果。\\
+\textbf{负权环判定}\\
+因为负权环可以无限制的降低总花费，所以如果发现第$n$次操作仍可降低花销，就一定存在负权环。
 
 \subsection{全部点对之间的最短路径, All-pairs shortest paths}
 即求图中任两点间的最短路径. 之前的 Dijkstra 和 Bellman-Ford 都是单源的. 朴素的算法是做 $n$ 
@@ -4767,7 +4775,7 @@ $$
 \begin{itemize}
   \item 输入: 无向连通图 $G = (V, E)$, 且有边权重 $w : E \to \mathbb{R}$. 这里假设各边的权重都是互异的. 
   \item 输出: 最小生成树 $T$.
-  \item 最小生成树定义: 连通图 $G$ 的生成树是一棵连接了 $G$ 的全部顶点, 且有 
+  \item 最小生成树定义: 连通图 $G$ 的生成树是一棵连接了 $G$ 的全部顶点的树, 且有 
   $$
   w(T) = \sum_{e \in T} w(e)
   $$ 
@@ -4816,7 +4824,8 @@ $$
 
 而子问题的扩张过程仍然是贪婪策略, 或者说基于下面的定理:
 
-\hl{定理} 令 $T$ 是 $G = (V, E)$ 的 MST, 令 $A \subset V$, 设 $(u, v)$ 连接 $A$ 和 
+\hl{定理} 令 $T$ 是 $G = (V, E)$ 的 MST, 令 $A \subset V$, 设 $(u, v)\in E$ 连接 $A$ 和 
+$V/A$连接起来的权重最小的边，则必有$( u , v ) \in T$
 
 
 \bibliography{crazyfish.bib}
