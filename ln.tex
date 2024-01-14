@@ -1375,10 +1375,10 @@ $\Theta(n)$ 代价的 (请证明一下). 因此效率低下, 在实际的单链�
 以上这些特异化的操作, 是为了堆栈和队列的特殊要求定制的. 堆栈和队列本质上都是表, 主要区别是
 每一次 pop 删除或者 top/front 得到的元素,
 \begin{itemize}
-\item {\bf 堆栈} 是最近一次 push 的元素, 先入先出(First in First Out,
-  FIFO).
-\item {\bf 队列} 是表中最早 push 的元素, 后入先出(Last in First Out,
+\item {\bf 堆栈} 是最近一次 push 的元素, 后入先出(Last in First Out,
   LIFO).
+\item {\bf 队列} 是表中最早 push 的元素, 先入先出(First in First Out,
+  FIFO).
 \end{itemize}
 
 显然, 队列这种特性是为了对排队建模. 比如我们有一台网络打印机, 然后一个
@@ -1897,7 +1897,7 @@ void insert( Comparable x, BinaryNode * & t )
   树代替 \verb|x|(如有).
 \item 节点 \verb|x| 有两棵子树, 则首先寻找 \verb|x| 的后继 \verb|y|,
   这里指出 \verb|y| 必存在 (右子树的最小值), 然后用 \verb|y| 的值占据
-  |verb|x| 的值, 再将 \verb|x->right| 中删除 \verb|y|.
+  \verb|x| 的值, 再将 \verb|x->right| 中删除 \verb|y|.
 \end{enumerate}
 
 以上操作已经充分考虑了可以利用指针引用这样的神器. 在没有指针引用的年代,
@@ -2608,13 +2608,13 @@ private:
 这个类和 \verb|SingleList| 类一样, 从 \verb|List<DT>| 类派生, 它的节点
 也从 \verb|Node<DT>| 抽象类派生. 它的 \verb|insert| 和 \verb|remove| 和 \verb|SingleList| 的情形
 
-我们现在有: verb|BnaryTree|,
-verb|BinarySearchTree|, \verb|AvlTree|, \verb|SplayTree|.
+我们现在有: \verb|BnaryTree|,
+\verb|BinarySearchTree|, \verb|AvlTree|, \verb|SplayTree|.
 
 让我们来看看, 应该怎样理清它们的逻辑关系.
 
 乍一看似乎并不复杂, \verb|AvlTree|, \verb|SplayTree| 都是一种二叉搜索
-树, 而 verb|BinarySearchTree| 是一种二叉树. 所以从 verb|BinaryTree| 派
+树, 而 \verb|BinarySearchTree| 是一种二叉树. 所以从 \verb|BinaryTree| 派
 生出 \verb|BinarySearchTree|, 再从 \verb|BinarySearchTree| 派生出
 \verb|AvlTree|, \verb|SplayTree|. 但稍微一想, 就会有问题,
 \verb|rotate| 这个操作, 在哪个类实现好?
@@ -3203,7 +3203,7 @@ $\Theta(n)$ 的过程. 但是这一算法过程无法在堆删除时重复. 连�
 素.
 
 我知道你们在想啥, 但稍微有点节操的做法是, 先依次建一个大小为 $k$ 的堆.
-从第 $k + 1$个元素起, 只有当新元素比根节点元素大时, 才插入堆. 直到全部
+从第 $k + 1$个元素起, 只有当新元素比根节点元素大时, 才插入堆, 每次插入后执行一次deleteMin. 确保堆的元素个数是$k$, 直到全部
 元素插入完毕, 此时堆中的元素最小的就是根元素, 它之前必然有 $k - 1$ 个
 元素比它大, 且未入堆的元素必然比它小. 因此它就是第 $k$ 大的元素.
 
@@ -3258,7 +3258,7 @@ $\Theta(n)$ 的代价. 很难想像, 在合并的时候, 能够不将两个输�
 \item 比较 \verb|H1| 和 \verb|H2| 的 \verb|root|, 不妨设 \verb|H1| 的
   根节点更小, 则将 \verb|merge(H2, H1.right)| 作为 \verb|H1| 的右子树.
 \item 如果 \verb|H1| 的右子树的 \verb|npl| 更长, 则交换 \verb|H1| 的左右子树.
-\item 更新 verb|H1| 根节点的 \verb|npl|.
+\item 更新 \verb|H1| 根节点的 \verb|npl|.
 \end{enumerate}
 
 这是一个自然语言描述, 请对比课本 Fig 6.27 理解. 
@@ -3367,7 +3367,7 @@ Fig 6.39 - Fig. 6.45 给出了一个从空树开始连续 \verb|insert| 的例�
 
 而 \verb|deleteMin(H)| 操作, 则是先找到最小的 \verb|root|, 然后把其他
 的子树全部并成 \verb|H'|(这个代价很低), 将最小 \verb|root| 所在子树,
-除去 \verb|root| 之后的全部子数都并作 \verb|H''|(同样代价很低), 然后
+除去 \verb|root| 之后的全部子树都并作 \verb|H''|(同样代价很低), 然后
 \verb|merge(H', H'')| 就可以了. 查找最小 \verb|root|, 建立 \verb|H'|
 和 \verb|H''| 以及合并都是 $\Theta(\log n)$ 的动作,因此总代价是
 $\Theta(\log n)$.
@@ -3594,7 +3594,7 @@ $$
 快速排序, 同样采用了递归设计, 或者说, 在算法设计上, 采用了{\bf 分治策略}
 (devide-and-conquer, 老英国正米字旗了...). 其基本想法是, 把一个
 规模为 $n$ 的问题, 切割成 $a$ 个独立的规模为 $\frac{n}{b}$ 的子问题. 逐
-个解决,再通过合并这 $a$ 个子问题的答案, 得到最终答案. *关键是:* 这个过
+个解决,再通过合并这 $a$ 个子问题的答案, 得到最终答案. {\bf 关键是:} 这个过
 程会递归重复, 直到非常简单的基础情形, 能直接得到答案(或者说, 能够在
 $\Theta(1)$ 时间得到答案.)
 
@@ -3765,7 +3765,7 @@ $$
 注意这里的证明用到了斯特林公式(Stirling's formula):
 $$
 \lim_{n \to \infty} \frac{n!}{\sqrt{2 \pi n}
-  \left(\frac{n}{}\right)^n} = 1.
+  \left(\frac{n}{e}\right)^n} = 1.
 $$
 也就是本质上 $n!$ 是一个指数量:
 $$
@@ -3797,17 +3797,19 @@ A[1], A[1], ..., A[N],
 countingsort(A[1...N], B[1...N], C[1...M])
     for i = 1 to M
         C[i] = 0
-    for i = 1 to n
+    for i = 1 to N
         C[A[i]] = C[A[i]] + 1    /// 依次计算每个 A[i] 的出现次数.
-    for i = 2 to k
+    for i = 2 to M
         C[i] = C[i] + C[i - 1]   /// 计算 1...k 中每一个数最后一次在输出数组中出现的位置.
-    for i = n downto 1
-        B[C[A[i]]] = A[i]        /// B 存放输出数组.
-	C[A[i]] = C[A[i]] - 1    /// C 的递减次序保证了稳定性.
+    for i = N downto 1
+        B[C[A[i]]--] = A[i]        /// B 存放输出数组.
+                                /// C 的递减次序保证了稳定性.
 \end{verbatim}
-而桶排序可以看作是准备 \verb|M| 个容器, 比如数组 \verb|bucket[1...k]|,
+而桶排序可以看作是准备 \verb|k| 个容器, 比如数组 \verb|bucket[1...k]|,
+每个容器对应一定的范围，
 其每一个元素都是数组或链表, 然后将 \verb|A[i]| 逐个 \verb|push_back|
-到 \verb|bucket[A[i]]| 中去, 最后统一输出 \verb|bucket| 中全部元素. 
+到 \verb|bucket[A[i]]| 中去(\verb|push_back|的过程完成一次插入排序), 最后统一输出 \verb|bucket| 中全部元素. 
+
 
 这两个算法都是非原地且稳定的. 看一下计数排序的例子. 
 
@@ -3864,7 +3866,7 @@ countingsort(A[1...N], B[1...N], C[1...M])
 
 输出: 它们的 一个LCS.
 
-例：$x =$ A, B, C, D 和 $y =$B, D, C, A, B, A.
+例：$x =$ A, B, C, B, D, A, B 和 $y =$B, D, C, A, B, A.
 
 则 LCS$(x, y) = $BDAB, BCAB, BCBA. 全部 LCS 是一个集合, 我们的算法要求返回其中一个就行.
 
@@ -4209,7 +4211,7 @@ void Graph::topsort()   // 这是一个伪代码
 因为寻找入度为 0 的顶点需要遍历, 是一个相对高代价的过程,
 所以我们可以让 \verb|findNewVertexOFIndegreeZero|
 总是返回全部入度为 0 的顶点, 并且依次插入一个队列,
-然后我们在从这个队列弹出全部的拓扑序.
+然后我们再从这个队列弹出全部的拓扑序.
 这样能减少遍历次数. 具体过程参见 Fig. 9.6. 和 Fig. 9.7.
 
 Fig. 9.6 的第一列是初始的全部节点的入度. 然后入度为 $0$ 的节点就入队,
@@ -4303,9 +4305,9 @@ while !Q.empty()
             v.d = u.d + w(u, v)    // u 和 v 之间的连接有没有使 v.d 更短.
                                    // 这就是三角不等式.
 \end{verbatim}
-这个算法本身的叙述并不复杂. 我们看一下树上的例子 Fig 9.8. 也就是 Fig. 9.20.
+这个算法本身的叙述并不复杂. 我们看一下书上的例子 Fig 9.8. 也就是 Fig. 9.20.
 Fig. 9.21 - Fig. 9.28 描述了一个从 $1$ 号顶点出发的单源最短路径的求解过程.
-用的也是 Dijkstra 算法, 就是它描述的有点罗嗦, 我们重现一下过程.
+用的也是 Dijkstra 算法, 就是它描述的有点啰嗦, 我们重现一下过程.
 
 最初状态,
 $$
@@ -4313,7 +4315,7 @@ d = \{0, \infty, \infty, \infty, \infty, \infty, \infty\},
 $$
 然后
 $$
-Q = \{(1, \infty), (2, \infty), (3, \infty), (4, \infty), (5, \infty), (6, \infty), (7, \infty)\}.
+Q = \{(1, 0), (2, \infty), (3, \infty), (4, \infty), (5, \infty), (6, \infty), (7, \infty)\}.
 $$
 第一步, \verb|u = Q.pop_min()|, 显然, $u = 1$. 然后 \verb|u.adj()| 为
 $$
@@ -4362,7 +4364,7 @@ $$
 Q = \{(3, 3), (5, 3), (6, 9), (7, 5)\}.
 $$
 少了一个 $2$. 继续, 下一个出堆的可以是 $3$ 也可以是 $5$, 都可以, 这里 $3$ 先出
-(书上 $5$ 显出), 而 \verb|u.adj()| 为
+(书上 $5$ 先出), 而 \verb|u.adj()| 为
 $$
 \{1, 6\},
 $$
@@ -4456,7 +4458,7 @@ $$
 \noindent{\bf 定理} 对正边权图 $G = (V, E)$,
 Dijkstra 完成后, 有 $\forall v \in V$, $v.d = \delta(s, v)$.
 
-\noindent{\bf 证明}: 先证, $\forall v in V$, 当 $v$ 从 $Q$ 中被弹出时,
+\noindent{\bf 证明}: 先证, $\forall v \in V$, 当 $v$ 从 $Q$ 中被弹出时,
 $v.d = \delta(s, v)$. 假设不成立, 则存在第一个 $u \in V$, 当 $u$ 从 $Q$ 中弹出时,
 由引理 I, 有
 $$
@@ -4510,13 +4512,21 @@ BFS-shortest-path(s, u)
         for each c in v.adj()
             if c.d = Inf
                 c.d = v.d + 1;    // 不会有其他形式的松弛, 因为权永远是 1.
+                Q.push(c);
             if c == u
                 output(c.d);      // 结束啦.
                 end;
 \end{verbatim}
 
-% 这里确 Bellman-Ford 和差分约束系统.
-
+% 这里缺 Bellman-Ford 和差分约束系统.
+\hl{Bellman-Ford算法}\\
+Bellman-Ford算法简单地对所有边进行松弛操作，共执行$|V|-1$次。在重复地计算中，已计算得到正确的距离的边的数量不断增加，直到所有边都计算得到了正确的路径。\\
+每次循环操作实际上是对相邻节点的访问，第$n$次循环操作保证了所有深度为$n$的路径最短。由于图的最短路径最长不会经过超过
+$|V|-1$条边，所以可知Bellman-Ford算法所得为最短路径。\\
+\textbf{负边权操作}\\
+与Dijkstra算法不同的是，Dijkstra算法的基本操作“拓展”是在深度上寻路，而“松弛”操作则是在广度上寻路，这就确定了Bellman-Ford算法可以对负边进行操作而不会影响结果。\\
+\textbf{负权环判定}\\
+因为负权环可以无限制的降低总花费，所以如果发现第$n$次操作仍可降低花销，就一定存在负权环。
 
 \subsection{全部点对之间的最短路径, All-pairs shortest paths}
 即求图中任两点间的最短路径. 之前的 Dijkstra 和 Bellman-Ford 都是单源的. 朴素的算法是做 $n$ 
@@ -4765,7 +4775,7 @@ $$
 \begin{itemize}
   \item 输入: 无向连通图 $G = (V, E)$, 且有边权重 $w : E \to \mathbb{R}$. 这里假设各边的权重都是互异的. 
   \item 输出: 最小生成树 $T$.
-  \item 最小生成树定义: 连通图 $G$ 的生成树是一棵连接了 $G$ 的全部顶点, 且有 
+  \item 最小生成树定义: 连通图 $G$ 的生成树是一棵连接了 $G$ 的全部顶点的树, 且有 
   $$
   w(T) = \sum_{e \in T} w(e)
   $$ 
@@ -4814,7 +4824,8 @@ $$
 
 而子问题的扩张过程仍然是贪婪策略, 或者说基于下面的定理:
 
-\hl{定理} 令 $T$ 是 $G = (V, E)$ 的 MST, 令 $A \subset V$, 设 $(u, v)$ 连接 $A$ 和 
+\hl{定理} 令 $T$ 是 $G = (V, E)$ 的 MST, 令 $A \subset V$, 设 $(u, v)\in E$ 连接 $A$ 和 
+$V/A$连接起来的权重最小的边，则必有$( u , v ) \in T$
 
 
 \section{并查集}
