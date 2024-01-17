@@ -333,7 +333,7 @@ Merge(A, p, q, r)
 
 \begin{example}
 $T(N) = 4 T(N / 2) + N$, 那么 $T(N) = O(N^2)$.
-这里, $a = 4$, $b = 2$, $f(N) = N$, $\log_b a = 2$, 所以 $f(N) = \Theta(N^{\log_b a})$, 于是 $T(N) = O(N^2 \log N)$. 这是第一种情况. 
+这里, $a = 4$, $b = 2$, $f(N) = N$, $\log_b a = 2$, 所以 $f(N) = \Theta(N^{\log_b a})$, 于是 $T(N) = O(N^2)$. 这是第一种情况. 
 \end{example}
 
 \begin{example}
@@ -1375,10 +1375,10 @@ $\Theta(n)$ 代价的 (请证明一下). 因此效率低下, 在实际的单链�
 以上这些特异化的操作, 是为了堆栈和队列的特殊要求定制的. 堆栈和队列本质上都是表, 主要区别是
 每一次 pop 删除或者 top/front 得到的元素,
 \begin{itemize}
-\item {\bf 堆栈} 是最近一次 push 的元素, 先入先出(First in First Out,
-  FIFO).
-\item {\bf 队列} 是表中最早 push 的元素, 后入先出(Last in First Out,
+\item {\bf 堆栈} 是最近一次 push 的元素, 后入先出(Last in First Out,
   LIFO).
+\item {\bf 队列} 是表中最早 push 的元素, 先入先出(First in First Out,
+  FIFO).
 \end{itemize}
 
 显然, 队列这种特性是为了对排队建模. 比如我们有一台网络打印机, 然后一个
