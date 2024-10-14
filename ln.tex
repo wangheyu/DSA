@@ -3215,121 +3215,121 @@ SingleLinkedList<T>::SingleLinkedList(std::initializer_list<T> _l);
 % \item 继承的运用, 这里普通的 Iterator 是 Const Iterator 的一个派生. 
 % \end{itemize}
 
-% \section{堆栈和队列}
+\section{堆栈和队列}
 
-% 堆栈(stack)和队列(queue)可以认为是表的一个应用. 它们的基本结构和操作并
-% 没有发生实质变化, 它们可以用数组或者链表作为底层实现, 主要特性和区别发
-% 生在如何使用上. 这里我们根据需要和惯例, 给出一些特殊的表操作:
-% \begin{itemize}
-%   \item {\bf push, 推入} 插入(insert)一个新元素；
-%   \item {\bf pop, 弹出} 删除下一个元素. 
-%   \item {\bf top, 读出(堆栈)} 读取最顶部的一个元素.
-%   \item {\bf front, 读出(队列)} 读取最前部的一个元素.
-%   \item {\bf size, 大小} 返回表的大小.
-%   \item {\bf empty, 检测空表} 检查表是否是空的.
+堆栈(stack)和队列(queue)可以认为是表的一个应用. 它们的基本结构和操作并
+没有发生实质变化, 它们可以用数组或者链表作为底层实现, 主要特性和区别发
+生在如何使用上. 这里我们根据需要和惯例, 给出一些特殊的表操作:
+\begin{itemize}
+  \item {\bf push, 推入} 插入(insert)一个新元素；
+  \item {\bf pop, 弹出} 删除下一个元素. 
+  \item {\bf top, 读出(堆栈)} 读取最顶部的一个元素.
+  \item {\bf front, 读出(队列)} 读取最前部的一个元素.
+  \item {\bf size, 大小} 返回表的大小.
+  \item {\bf empty, 检测空表} 检查表是否是空的.
   
-% \end{itemize}
+\end{itemize}
 
-% 以上这些特异化的操作, 是为了堆栈和队列的特殊要求定制的. 堆栈和队列本质上都是表, 主要区别是
-% 每一次 pop 删除或者 top/front 得到的元素,
-% \begin{itemize}
-% \item {\bf 堆栈} 是最近一次 push 的元素, 先入先出(First in First Out,
-%   FIFO).
-% \item {\bf 队列} 是表中最早 push 的元素, 后入先出(Last in First Out,
-%   LIFO).
-% \end{itemize}
+以上这些特异化的操作, 是为了堆栈和队列的特殊要求定制的. 堆栈和队列本质上都是表, 主要区别是
+每一次 pop 删除或者 top/front 得到的元素,
+\begin{itemize}
+\item {\bf 堆栈} 是最近一次 push 的元素, 先入先出(First in First Out,
+  FIFO).
+\item {\bf 队列} 是表中最早 push 的元素, 后入先出(Last in First Out,
+  LIFO).
+\end{itemize}
 
-% 显然, 队列这种特性是为了对排队建模. 比如我们有一台网络打印机, 然后一个
-% 楼层的同学都在使用. 大家都通过局域网发送打印请求, 打印服务器就会构建一
-% 个队列, 一边按照收到请求的先后次序向一个等待读列推入请求；另一边独立地
-% 把队列中的请求, 按照先后次序弹出并执行. 这种需求在日常工作中非常常见.
+显然, 队列这种特性是为了对排队建模. 比如我们有一台网络打印机, 然后一个
+楼层的同学都在使用. 大家都通过局域网发送打印请求, 打印服务器就会构建一
+个队列, 一边按照收到请求的先后次序向一个等待读列推入请求；另一边独立地
+把队列中的请求, 按照先后次序弹出并执行. 这种需求在日常工作中非常常见.
 
-% 堆栈据信是图灵提出的一种机制. 目的是正确处理函数的调用. 比如一个函数
-% A, 执行的时候调用了函数 B, 函数 B 又调用了函数 C, 函数 C 还调用了 函数
-% B 和 A, 问正确的函数执行顺序是什么? 最后一次 B 调用结束了应该回到哪个
-% 位置? 在实际工程中, 这种重叠交叉的嵌套调用可以有几千层. 用堆栈的模型很
-% 容易解决这个问题. 我们只要记下调用发生的先后次序:
+堆栈据信是图灵提出的一种机制. 目的是正确处理函数的调用. 比如一个函数
+A, 执行的时候调用了函数 B, 函数 B 又调用了函数 C, 函数 C 还调用了 函数
+B 和 A, 问正确的函数执行顺序是什么? 最后一次 B 调用结束了应该回到哪个
+位置? 在实际工程中, 这种重叠交叉的嵌套调用可以有几千层. 用堆栈的模型很
+容易解决这个问题. 我们只要记下调用发生的先后次序:
 
-% \begin{center}
-% A -> B -> C -> B-> A
-% \end{center}
+\begin{center}
+A -> B -> C -> B-> A
+\end{center}
 
-% 然后按照堆栈先进先出的原则处理就可以了. 也就是这里真正最先完成的函数是
-% 最后一个 A, 然后返回 B, B 完成了返回 C, 再依次是 B 和 A. 除了函数调用,
-% 在一些括号匹配等问题上, 堆栈也能很方便地解决.
+然后按照堆栈先进先出的原则处理就可以了. 也就是这里真正最先完成的函数是
+最后一个 A, 然后返回 B, B 完成了返回 C, 再依次是 B 和 A. 除了函数调用,
+在一些括号匹配等问题上, 堆栈也能很方便地解决.
 
-% 显然, 堆栈和队列概念都是简单的, 我们直接来看一下如何应用于具体问题. 我
-% 们将采用 STL 提供的 stack 和 queue 来完成我们的例子. 顺便熟悉一下 C++
-% STL.
+显然, 堆栈和队列概念都是简单的, 我们直接来看一下如何应用于具体问题. 我
+们将采用 STL 提供的 stack 和 queue 来完成我们的例子. 顺便熟悉一下 C++
+STL.
 
-% 我们先来个开胃前菜: 如果有一个括号序列, 比如 ``(())()('' 怎么判定它是否左右匹配? 
+我们先来个开胃前菜: 如果有一个括号序列, 比如 ``(())()('' 怎么判定它是否左右匹配? 
 
-% 这是一个经典的使用堆栈解决问题的例子. 我们可以遍历字符串的每一个字符, 遇到左括号就压入堆栈, 
-% 遇到右括号就检查堆栈顶元素是否匹配, 如果匹配就弹出堆栈, 如果不匹配或者堆栈为空则说明不匹配. 
-% 最后, 全部处理完后, 如果堆栈为空, 说明全部匹配, 否则说明不匹配.
+这是一个经典的使用堆栈解决问题的例子. 我们可以遍历字符串的每一个字符, 遇到左括号就压入堆栈, 
+遇到右括号就检查堆栈顶元素是否匹配, 如果匹配就弹出堆栈, 如果不匹配或者堆栈为空则说明不匹配. 
+最后, 全部处理完后, 如果堆栈为空, 说明全部匹配, 否则说明不匹配.
 
-% 用C++ 实现的代码如下:
+用C++ 实现的代码如下:
 
-% \begin{lstlisting}[language=C++]
-%   #include <iostream>
-%   #include <cstdlib>
-%   #include <string>
-%   #include <stack>
+\begin{lstlisting}[language=C++]
+  #include <iostream>
+  #include <cstdlib>
+  #include <string>
+  #include <stack>
   
-%   bool isValid(const std::string& s);
+  bool isValid(const std::string& s);
   
-%   bool isValid(const std::string& s) 
-%   {
-%       std::stack<char> myStack;
-%       for (int i = 0; i < s.size(); i++) 
-%       {
-%           if (s[i] == '(' || s[i] == '[' || s[i] == '{') 
-%               myStack.push(s[i]);
-%           else if (s[i] == ')' || s[i] == ']' || s[i] == '}')
-%           {
-%               if (myStack.empty()) 
-%                   return false;
-%               if (s[i] == ')' && myStack.top() != '(') 
-%                   return false;
-%               if (s[i] == ']' && myStack.top() != '[') 
-%                   return false;
-%               if (s[i] == '}' && myStack.top() != '{') 
-%                   return false;
-%               myStack.pop();
-%           }
-%           else
-%           {
-%               std::cerr << "Invalid character: " << s[i] << std::endl;
-%               exit(-1);
-%           }
-%       }
-%       return myStack.empty();
-%   }    
+  bool isValid(const std::string& s) 
+  {
+      std::stack<char> myStack;
+      for (int i = 0; i < s.size(); i++) 
+      {
+          if (s[i] == '(' || s[i] == '[' || s[i] == '{') 
+              myStack.push(s[i]);
+          else if (s[i] == ')' || s[i] == ']' || s[i] == '}')
+          {
+              if (myStack.empty()) 
+                  return false;
+              if (s[i] == ')' && myStack.top() != '(') 
+                  return false;
+              if (s[i] == ']' && myStack.top() != '[') 
+                  return false;
+              if (s[i] == '}' && myStack.top() != '{') 
+                  return false;
+              myStack.pop();
+          }
+          else
+          {
+              std::cerr << "Invalid character: " << s[i] << std::endl;
+              exit(-1);
+          }
+      }
+      return myStack.empty();
+  }    
   
-%   int main(int argc, char* argv[])
-%   {
-%       if (argc != 2) 
-%       {
-%           std::cerr << "Usage: " << argv[0] << " <string>" << std::endl;
-%           return -1;
-%       }
-%       if (isValid(argv[1]))
-%           std::cout << "Valid" << std::endl;
-%       else
-%           std::cout << "Invalid" << std::endl;
-%       return 0;    
-%   };   
-% \end{lstlisting}
+  int main(int argc, char* argv[])
+  {
+      if (argc != 2) 
+      {
+          std::cerr << "Usage: " << argv[0] << " <string>" << std::endl;
+          return -1;
+      }
+      if (isValid(argv[1]))
+          std::cout << "Valid" << std::endl;
+      else
+          std::cout << "Invalid" << std::endl;
+      return 0;    
+  };   
+\end{lstlisting}
 
-% 在上面的代码中, 我们使用了 STL 的 stack, 遍历输入的字符串, 遇到左括号就直接入栈. 
-% 如果遇到右括号, 我们就检查栈是否为空, 如果为空, 说明没有对应的左括号, 返回 false. 
-% 然后, 我们看栈顶的左括号是否和当前的右括号匹配, 如果不匹配也返回 false. 如果匹配, 
-% 我们就把栈顶的左括号弹出栈, 继续处理下一个字符. 最后如果栈为空, 
-% 说明所有的左括号都找到了匹配的右括号, 返回true. 否则, 说明还有左括号没有找到匹配的右括号, 
-% 返回false. 
+在上面的代码中, 我们使用了 STL 的 stack, 遍历输入的字符串, 遇到左括号就直接入栈. 
+如果遇到右括号, 我们就检查栈是否为空, 如果为空, 说明没有对应的左括号, 返回 false. 
+然后, 我们看栈顶的左括号是否和当前的右括号匹配, 如果不匹配也返回 false. 如果匹配, 
+我们就把栈顶的左括号弹出栈, 继续处理下一个字符. 最后如果栈为空, 
+说明所有的左括号都找到了匹配的右括号, 返回true. 否则, 说明还有左括号没有找到匹配的右括号, 
+返回false. 
 
-% 该算法的时间复杂度是 $O(n)$, 其中 $n$ 是字符串的长度. 因为我们只遍历了一次字符串, 
-% 每次操作栈的复杂度都是 $O(1)$.
+该算法的时间复杂度是 $O(n)$, 其中 $n$ 是字符串的长度. 因为我们只遍历了一次字符串, 
+每次操作栈的复杂度都是 $O(1)$.
 
 % \subsection{堆栈应用: 四则混合计算器}
 

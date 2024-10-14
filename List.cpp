@@ -3,16 +3,38 @@
 
 int main()
 {
-    List<int> lst;
-    for (int i = 0; i < 10; ++i)
-    {
-        lst.push_back(i);
-    }
+    // List<int> lst;
+    // for (int i = 0; i < 10; ++i)
+    // {
+    //     lst.push_back(i);
+    // }
 
-    for (auto it = lst.begin(); it != lst.end(); ++it)
+    // for (auto it = lst.begin(); it != lst.end(); ++it)
+    // {
+    //     std::cout << *it << std::endl;
+    // }
+
+    List<int> lst = {1, 2, 3, 4, 5};
+    for (auto &x : lst)
     {
-        std::cout << *it << std::endl;
+        std::cout << x << "\t";
     }
+    std::cout << std::endl;
+
+//    List<int> lst2 = std::move(lst);
+    List<int> lst2 = List<int> {5, 6};
+    for (auto &x : lst2)
+    {
+        std::cout << x << "\t";
+    }
+    std::cout << std::endl;
+
+    lst2 = std::move(lst);
+    for (auto &x : lst2)
+    {
+        std::cout << x << "\t";
+    }
+    std::cout << std::endl;
 
     return 0;
 }
