@@ -178,6 +178,11 @@ public:
     //     _l.size = 0;
     // }
 
+    /**
+     * @brief 在当前位置之后插入一个值.
+     * 
+     * @param _val 插入的值.
+     */
     void insert (const T& _val);
 
     /**
