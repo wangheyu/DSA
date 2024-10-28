@@ -136,7 +136,7 @@ public:
          *
          * @return const Object& 当前节点的数据.
          */
-        Object &retrieve() const
+        const Object &retrieve() const
         {
             return current->data;
         }
@@ -182,7 +182,7 @@ public:
          */
         Object &operator*()
         {
-            return const_iterator::retrieve();
+            return const_iterator::current->data; //const_iterator::retrieve();
         }
 
         /**

@@ -159,16 +159,16 @@ public:
      */
     SingleLinkedList(const SingleLinkedList<T>& _l);
 
-    /**
-     * @brief 拷贝赋值函数.
-     * 
-     * @param _l 拷贝源.
-     * @return SingleLinkedList<T>& 复制后的链表.
-     */
-    SingleLinkedList<T>& operator=(SingleLinkedList<T> _l);
+    // /**
+    //  * @brief 拷贝赋值函数.
+    //  * 
+    //  * @param _l 拷贝源.
+    //  * @return SingleLinkedList<T>& 复制后的链表.
+    //  */
+    // SingleLinkedList<T>& operator=(SingleLinkedList<T> _l);
 
 // 一个传统的拷贝赋值函数
-//    SingleLinkedList<T>& operator=(const SingleLinkedList<T>& _l);
+    SingleLinkedList<T>& operator=(const SingleLinkedList<T>& _l);
 
     // 移动构造函数，但不打算实现.
     // SingleLinkedList(SingleLinkedList<T>&& _l) : head(_l.head), currentPos(_l.currentPos), size(_l.size)
@@ -296,25 +296,16 @@ SingleLinkedList<T>::SingleLinkedList(const SingleLinkedList<T>& _l)
 }
 
 // 一个传统的拷贝赋值函数的实现，主要问题是比较复杂，内部出错环节多。
-// template <typename T>
-// SingleLinkedList<T>& SingleLinkedList<T>::operator=(const SingleLinkedList<T>& _l)
-// {
-//     if (this == &_l)
-//         return *this;
-//     makeEmpty();
-//     _copy(_l);
-//     return *this;
-// }
-
-/// 利用 Copy and Swap 的技巧，实现拷贝赋值函数。逻辑简单，不容易出错。
 template <typename T>
-SingleLinkedList<T>& SingleLinkedList<T>::operator=(SingleLinkedList<T> _l)
+SingleLinkedList<T>& SingleLinkedList<T>::operator=(const SingleLinkedList<T>& _l)
 {
-    std::swap(head, _l.head);
-    std::swap(currentPos, _l.currentPos);
-    std::swap(size, _l.size);
+    if (this == &_l)
+        return *this;
+    makeEmpty();
+    _copy(_l);
     return *this;
 }
+
 
 template <typename T>
 void SingleLinkedList<T>::_copy(const SingleLinkedList<T>& _l)

@@ -3331,258 +3331,258 @@ STL.
 该算法的时间复杂度是 $O(n)$, 其中 $n$ 是字符串的长度. 因为我们只遍历了一次字符串, 
 每次操作栈的复杂度都是 $O(1)$.
 
-% \subsection{堆栈应用: 四则混合计算器}
+\subsection{堆栈应用: 四则混合计算器}
 
-% 用户输入一串字符串, 如果它构成有意义的四则混合运算表达式, 则给出计算结果, 
-% 否则给出错误提示. 例如, 输入
-% \begin{verbatim}
-% 3.1 * (1.7 + 2.1) / 5.0
-% \end{verbatim}
-% 输出 \verb|2.356|. 
+用户输入一串字符串, 如果它构成有意义的四则混合运算表达式, 则给出计算结果, 
+否则给出错误提示. 例如, 输入
+\begin{verbatim}
+3.1 * (1.7 + 2.1) / 5.0
+\end{verbatim}
+输出 \verb|2.356|. 
 
-% 我们的表达式符合 C / C++ 的规范, 即有意义的字符是 $0 \sim 9$, $+ - *
-% /$, 空格(包括 TAB, 都忽略), 括号(只允许小括号, 但可以嵌套).
+我们的表达式符合 C / C++ 的规范, 即有意义的字符是 $0 \sim 9$, $+ - *
+/$, 空格(包括 TAB, 都忽略), 括号(只允许小括号, 但可以嵌套).
 
-% 这里我们采取尽可能简单的设计思路. 按以下步骤实施:
+这里我们采取尽可能简单的设计思路. 按以下步骤实施:
 
-% \begin{enumerate}
-% \item 排除掉全部错误的表达式和干扰的符号(如连续多个空格或 TAB);
-% \item 将表达式转换成便于计算的格式, 计算表达式, 给出结果.
-% \end{enumerate}
+\begin{enumerate}
+\item 排除掉全部错误的表达式和干扰的符号(如连续多个空格或 TAB);
+\item 将表达式转换成便于计算的格式, 计算表达式, 给出结果.
+\end{enumerate}
 
-% 第一步, 依次读入字符, 一旦发现非法字符, 停止, 输出错误. 否则过滤掉空格,
-% 形成一个新的干净的表达式. 这里可以用一个字符队列. 当输入过程变得复杂,
-% 比如不止一个输入对象, 而且会发生并发, 锁死时, 采用队列是正确的做法.
+第一步, 依次读入字符, 一旦发现非法字符, 停止, 输出错误. 否则过滤掉空格,
+形成一个新的干净的表达式. 这里可以用一个字符队列. 当输入过程变得复杂,
+比如不止一个输入对象, 而且会发生并发, 锁死时, 采用队列是正确的做法.
 
-% 接下去, 我们人类之所以要使用括号, 其实是因为我们采用了中缀表达式(inﬁx
-% expression):
-% \begin{verbatim}
-% 操作数1 运算符 操作数2 
-% \end{verbatim}
-% 这样当\verb|操作数2|嵌套了表达式时, 我们就不得不考虑运算优先级的问题,
-% 最终导致了
-% \begin{itemize}
-% \item 先乘除, 后加减；
-% \item 括号优先级最高.
-% \end{itemize}
-% 这两条奇葩的规定. 这本质上是因为我们有一个线性思考的大脑. 而计算机则表示, 
-% 运算优先级是一个伪命题. 你要做的是, 改变书写习惯, 成为后缀表达式
-% (postﬁx expression), 又称逆波兰式(reverse Polish notation):
-% \begin{verbatim}
-% 操作数1 操作数2 运算符  
-% \end{verbatim}
-% 比如
-% \begin{verbatim}
-% 3.1 * (1.7 + 2.1) / 5.0
-% \end{verbatim}
-% 写成后缀表达式就是
-% \begin{verbatim}
-% 3.1 1.7 2.1 + * 5.0 /
-% \end{verbatim}
-% 运行规则是: 准备一个堆栈, 依次读入并压入 \verb|3.1|, \verb|1.7|,
-% \verb|2.1|, 一旦读到一个运算符\verb|+|, 就把前两个操作数都弹出
-% (LIFO), 然后计算其结果, 作为新的操作数压回去. 这里就是计算
-% \begin{verbatim}
-% 1.7 2.1 +
-% \end{verbatim}
-% 然后把计算结果 \verb|3.8| 压入. 继续, 下一个输入是 \verb|*|, 然后再弹
-% 出最后两个压入数据,
-% \begin{verbatim}
-% 3.1 3.8 *
-% \end{verbatim}
-% 结果 \verb|11.78| 压入. 再继续, 读入 \verb|5.0|, 压入. 读入 \verb|\|,
-% \begin{verbatim}
-% 11.78 5.0 /
-% \end{verbatim}
-% 结果是 \verb|2.356|. 注意这时, 输入已经结束, 而堆栈也是空的, 所以计算
-% 结束. 整个过程中, 没有任何括号的必要, 甚至没有任何优先级的必要.
+接下去, 我们人类之所以要使用括号, 其实是因为我们采用了中缀表达式(inﬁx
+expression):
+\begin{verbatim}
+操作数1 运算符 操作数2 
+\end{verbatim}
+这样当\verb|操作数2|嵌套了表达式时, 我们就不得不考虑运算优先级的问题,
+最终导致了
+\begin{itemize}
+\item 先乘除, 后加减；
+\item 括号优先级最高.
+\end{itemize}
+这两条奇葩的规定. 这本质上是因为我们有一个线性思考的大脑. 而计算机则表示, 
+运算优先级是一个伪命题. 你要做的是, 改变书写习惯, 成为后缀表达式
+(postﬁx expression), 又称逆波兰式(reverse Polish notation):
+\begin{verbatim}
+操作数1 操作数2 运算符  
+\end{verbatim}
+比如
+\begin{verbatim}
+3.1 * (1.7 + 2.1) / 5.0
+\end{verbatim}
+写成后缀表达式就是
+\begin{verbatim}
+3.1 1.7 2.1 + * 5.0 /
+\end{verbatim}
+运行规则是: 准备一个堆栈, 依次读入并压入 \verb|3.1|, \verb|1.7|,
+\verb|2.1|, 一旦读到一个运算符\verb|+|, 就把前两个操作数都弹出
+(LIFO), 然后计算其结果, 作为新的操作数压回去. 这里就是计算
+\begin{verbatim}
+1.7 2.1 +
+\end{verbatim}
+然后把计算结果 \verb|3.8| 压入. 继续, 下一个输入是 \verb|*|, 然后再弹
+出最后两个压入数据,
+\begin{verbatim}
+3.1 3.8 *
+\end{verbatim}
+结果 \verb|11.78| 压入. 再继续, 读入 \verb|5.0|, 压入. 读入 \verb|\|,
+\begin{verbatim}
+11.78 5.0 /
+\end{verbatim}
+结果是 \verb|2.356|. 注意这时, 输入已经结束, 而堆栈也是空的, 所以计算
+结束. 整个过程中, 没有任何括号的必要, 甚至没有任何优先级的必要.
 
-% 前提是我们有办法将中缀表达式转换成后缀表达式. 这件事似乎很复杂, 
-% 因为括号除了优先级规定, 还有是否匹配的问题. 但办法也是用堆栈.
+前提是我们有办法将中缀表达式转换成后缀表达式. 这件事似乎很复杂, 
+因为括号除了优先级规定, 还有是否匹配的问题. 但办法也是用堆栈.
 
-% 课本 3.6.3 描述了中缀表达式转后缀表达式的过程, 以及后缀表达式的计算过
-% 程. 但没有给出代码. 我们可以用 STL 提供的工具, 快速实现一下.
+课本 3.6.3 描述了中缀表达式转后缀表达式的过程, 以及后缀表达式的计算过
+程. 但没有给出代码. 我们可以用 STL 提供的工具, 快速实现一下.
 
-% 接下去的工作作为作业: 请完成一个四则混合运算器.
-% \begin{itemize}
-% \item 输入: 一个由数字, 运算符, 空格, 括号等构成的中缀表达式字符串；
-% \item 输出: 如果输入是合法的中缀表达式, 给出其运算结果, 否则输出错误.
-% \end{itemize}
-% 具体要求见学在浙大. 
+接下去的工作作为作业: 请完成一个四则混合运算器.
+\begin{itemize}
+\item 输入: 一个由数字, 运算符, 空格, 括号等构成的中缀表达式字符串；
+\item 输出: 如果输入是合法的中缀表达式, 给出其运算结果, 否则输出错误.
+\end{itemize}
+具体要求见学在浙大. 
 
-% \subsection{队列应用: 排队的估计和模拟}
+\subsection{队列应用: 排队的估计和模拟}
 
-% 这个问题是一门叫排队论的分支学科研究的核心问题. 我们来考虑其最基本的模
-% 型之一. 比如, 现在有一个核酸检测点, 共有 $k$ 个检测台. 每个检测台每个
-% 单位时间检测的人数是 $\mu$, 而每个单位时间到达的人数是 $\lambda$. 现在
-% 问, 作为管理者, 应该如何规划队伍的数量, 使得队伍尽可能有序和高效；而作
-% 为一般群众, 我们的应对策略又该是什么? 
+这个问题是一门叫排队论的分支学科研究的核心问题. 我们来考虑其最基本的模
+型之一. 比如, 现在有一个核酸检测点, 共有 $k$ 个检测台. 每个检测台每个
+单位时间检测的人数是 $\mu$, 而每个单位时间到达的人数是 $\lambda$. 现在
+问, 作为管理者, 应该如何规划队伍的数量, 使得队伍尽可能有序和高效；而作
+为一般群众, 我们的应对策略又该是什么? 
 
-% \subsection{简陋条件下的数组实现: 堆栈, 队列和模拟链表}
+\subsection{简陋条件下的数组实现: 堆栈, 队列和模拟链表}
 
-% 所谓简陋条件, 指的是不动用 STL 这种复杂工具. 可能是因为编译器, 硬件或
-% 工作环境不允许. 也可能仅仅是因为没这个必要. 而解决方案是一致的, 用数组.
+所谓简陋条件, 指的是不动用 STL 这种复杂工具. 可能是因为编译器, 硬件或
+工作环境不允许. 也可能仅仅是因为没这个必要. 而解决方案是一致的, 用数组.
 
-% 几乎任何语言都有数组. 队列的数组实现是自然的, 但仍然需要两个下标记录,
-% 一个记录当前的队列头, 一个记录当前的队列尾. 入队就是在队尾增加一个新元
-% 素, 而出队只要把头位置往后挪一位就行. 从效率出发, 真实删除出队元素是不
-% 可行的. 而对整个队列做重排或重分配, 只会发生在数组长度耗尽的情况. 所以,
-% 首先在初始化时, 数组不要开得太短, 而循环指标也可以减少数组空间用尽发生
-% 的概率. 也就是当数组下标 $k$ 大于等于当前数组元素总数 $N$ 时,
-% $$
-% k = k - N.
-% $$
-% 与之配合, 出队时, 应该把出队元素赋成一个不常用的特殊数, 比如机器最小数. 
+几乎任何语言都有数组. 队列的数组实现是自然的, 但仍然需要两个下标记录,
+一个记录当前的队列头, 一个记录当前的队列尾. 入队就是在队尾增加一个新元
+素, 而出队只要把头位置往后挪一位就行. 从效率出发, 真实删除出队元素是不
+可行的. 而对整个队列做重排或重分配, 只会发生在数组长度耗尽的情况. 所以,
+首先在初始化时, 数组不要开得太短, 而循环指标也可以减少数组空间用尽发生
+的概率. 也就是当数组下标 $k$ 大于等于当前数组元素总数 $N$ 时,
+$$
+k = k - N.
+$$
+与之配合, 出队时, 应该把出队元素赋成一个不常用的特殊数, 比如机器最小数. 
 
-% 数组的堆栈实现也是类似的, 只需要标记当前栈顶的下标就行了. 入栈就是在栈
-% 顶插入新元素, 栈顶下标加一；出栈就是把栈顶元素读出, 同时栈顶下标减一.
-% 它的实现比队列更加方便.
+数组的堆栈实现也是类似的, 只需要标记当前栈顶的下标就行了. 入栈就是在栈
+顶插入新元素, 栈顶下标加一；出栈就是把栈顶元素读出, 同时栈顶下标减一.
+它的实现比队列更加方便.
 
-% 如果要操作的元素对象比较复杂, 在条件简陋时, 可以用指针数组.
+如果要操作的元素对象比较复杂, 在条件简陋时, 可以用指针数组.
 
-% 最后说一个极端简陋的情形: 不用指针完成链表操作. 又称为模拟链表. 其实,
-% 链表在计算机内部的实现, 就是依赖于类数组操作的. 计算机内部数据都是按一
-% 定的单位大小, 存放在连续的内存空间的, 每一个单位, 都有连续的, 唯一的内
-% 存地址(下标). 因此你只要模拟这种计算机内部逻辑就可以了.
+最后说一个极端简陋的情形: 不用指针完成链表操作. 又称为模拟链表. 其实,
+链表在计算机内部的实现, 就是依赖于类数组操作的. 计算机内部数据都是按一
+定的单位大小, 存放在连续的内存空间的, 每一个单位, 都有连续的, 唯一的内
+存地址(下标). 因此你只要模拟这种计算机内部逻辑就可以了.
 
-% 具体说, 就是用两个数组, 一个是数据元素数组 \verb|data[]|, 一个是下标数
-% 组 \verb|next[]|. 两个数组一一对应, \verb|next[i]| 里存放的是数据元素
-% \verb|data[i]| 的下一个元素的下标. 如果 \verb|next[i] == -1|, 则表示
-% \verb|NULL|. 而 \verb|head| 也就是 \verb|data[]| 的一个下标(未必是
-% \verb|0|).
-% 例如:
-% \begin{verbatim}
-% 3.1 -> 7.2 -> -1.0 -> 5.5 
-% \end{verbatim}
-% 可以存储为:
-% \begin{verbatim}
-%   data[] = {5.5, 6.7, 7.2, 9.3, -1.0, 255, 3.1, 114, 514}
-%   next[] = { -1,   0,   4,   0,    0,   0,   2,   0,   0}
-% \end{verbatim}
-% 注意设 \verb|head = 6|. 我们遍历一遍: \verb|head = 6|, 所以第一个元素
-% 是 \verb|data[6] = 3.1|. 然后下一个元素下标是 \verb|next[6] = 2|, 元素
-% 是 \verb|data[2] = 7.2|. 再下一个元素下标是 \verb|next[2] = 4|, 元素是
-% \verb|data[4] = -1.0|. 再下一个元素下标是 \verb|next[4] = 0|, 元素是
-% \verb|data[0] = 5.5|. 再下一个元素下标是 \verb|next[0] = -1|, 已经到了
-% 结尾. 遍历完成. 
+具体说, 就是用两个数组, 一个是数据元素数组 \verb|data[]|, 一个是下标数
+组 \verb|next[]|. 两个数组一一对应, \verb|next[i]| 里存放的是数据元素
+\verb|data[i]| 的下一个元素的下标. 如果 \verb|next[i] == -1|, 则表示
+\verb|NULL|. 而 \verb|head| 也就是 \verb|data[]| 的一个下标(未必是
+\verb|0|).
+例如:
+\begin{verbatim}
+3.1 -> 7.2 -> -1.0 -> 5.5 
+\end{verbatim}
+可以存储为:
+\begin{verbatim}
+  data[] = {5.5, 6.7, 7.2, 9.3, -1.0, 255, 3.1, 114, 514}
+  next[] = { -1,   0,   4,   0,    0,   0,   2,   0,   0}
+\end{verbatim}
+注意设 \verb|head = 6|. 我们遍历一遍: \verb|head = 6|, 所以第一个元素
+是 \verb|data[6] = 3.1|. 然后下一个元素下标是 \verb|next[6] = 2|, 元素
+是 \verb|data[2] = 7.2|. 再下一个元素下标是 \verb|next[2] = 4|, 元素是
+\verb|data[4] = -1.0|. 再下一个元素下标是 \verb|next[4] = 0|, 元素是
+\verb|data[0] = 5.5|. 再下一个元素下标是 \verb|next[0] = -1|, 已经到了
+结尾. 遍历完成. 
 
-% 请自行考虑如何在此框架下实现数组的基本操作和双链表等. 
+请自行考虑如何在此框架下实现数组的基本操作和双链表等. 
 
-% \section{树}
+\section{树}
 
-% \subsection{二叉搜索树, Binary Search Tree}
+\subsection{二叉搜索树, Binary Search Tree}
 
-% 我们直接看一下, 课本提供的 BinarySearchTree.h 的代码. 一个学习语言的方
-% 法就是读别人的代码, 特别是高手的代码. 读代码的一个好习惯是边读边写注释
-% 和自己的小测试.
+我们直接看一下, 课本提供的 BinarySearchTree.h 的代码. 一个学习语言的方
+法就是读别人的代码, 特别是高手的代码. 读代码的一个好习惯是边读边写注释
+和自己的小测试.
 
-% \begin{lstlisting}[language=C++]
-%   /** 
-%   * Default constructor. 
-%   * 
-%   */
-%   BinarySearchTree( ) : root{ nullptr } 
-%   {
-%     /// C++ 11 以后的标准推崇用 {} 来初始化数据.  
-%   }
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+  /** 
+  * Default constructor. 
+  * 
+  */
+  BinarySearchTree( ) : root{ nullptr } 
+  {
+    /// C++ 11 以后的标准推崇用 {} 来初始化数据.  
+  }
+\end{lstlisting}
 
-% 常见的内置类型如 \verb|int| 等等, 或者 STL 中类型如 \verb|string| 等等,都
-% 提供了这种初始化. 一般的 \verb|struct| 或者 \verb|class| 中的
-% \verb|public|, 都默认提供了这种初始化形式. 当然实际上我们并不推荐在类
-% 设计中直接使用这种缺省构造. 而是建议大家在设计类时考虑显式构造具有这种
-% 接口的构造. 
+常见的内置类型如 \verb|int| 等等, 或者 STL 中类型如 \verb|string| 等等,都
+提供了这种初始化. 一般的 \verb|struct| 或者 \verb|class| 中的
+\verb|public|, 都默认提供了这种初始化形式. 当然实际上我们并不推荐在类
+设计中直接使用这种缺省构造. 而是建议大家在设计类时考虑显式构造具有这种
+接口的构造. 
 
-% 测试代码 \verb|test_brace.cpp| 给出了一个默认大括号初始化的例子.
+测试代码 \verb|test_brace.cpp| 给出了一个默认大括号初始化的例子.
 
-% 接下去的拷贝构造函数使用了静态左值引用作为参数, 避免在调用的时候, 参数
-% \verb|rhs| 从外部进入函数内部时发生复制.
+接下去的拷贝构造函数使用了静态左值引用作为参数, 避免在调用的时候, 参数
+\verb|rhs| 从外部进入函数内部时发生复制.
 
-% \begin{lstlisting}[language=C++]
-%   /**
-%   * Copy constructor
-%   */
-%   BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
-%   {
-%     /// 初始化时的 root{ nullptr } 似乎毫无意义?
-%     root = clone( rhs.root );
-%     /// 这里用 clone 完成指针指向的内容复制, 而不是仅仅复制了指针.
-%   }
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+  /**
+  * Copy constructor
+  */
+  BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
+  {
+    /// 初始化时的 root{ nullptr } 似乎毫无意义?
+    root = clone( rhs.root );
+    /// 这里用 clone 完成指针指向的内容复制, 而不是仅仅复制了指针.
+  }
+\end{lstlisting}
 
-% 通过　gdb 我们可以清楚看到，在参数在传递过程中，并没有发生复制．
+通过　gdb 我们可以清楚看到，在参数在传递过程中，并没有发生复制．
 
-% \begin{verbatim}
-% Breakpoint 1, main () at TestBinarySearchTree.cpp:49
-% 49	    BinarySearchTree<int> t3(t);
-% (gdb) p t
-% $1 = {root = 0x55555556c2c0}
-% (gdb) p &t
-% $2 = (BinarySearchTree<int> *) 0x7fffffffe3f0
-% (gdb) s
-% BinarySearchTree<int>::BinarySearchTree (this=0x7fffffffe3f8, rhs=...) 
-% at BinarySearchTree.h:40
-% 40	    BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
-% (gdb) s
-% 43			root = clone( rhs.root );
-% (gdb) p rhs
-% $3 = (const BinarySearchTree<int> &) @0x7fffffffe3f0: {root = 0x55555556c2c0}
-% \end{verbatim}
+\begin{verbatim}
+Breakpoint 1, main () at TestBinarySearchTree.cpp:49
+49	    BinarySearchTree<int> t3(t);
+(gdb) p t
+$1 = {root = 0x55555556c2c0}
+(gdb) p &t
+$2 = (BinarySearchTree<int> *) 0x7fffffffe3f0
+(gdb) s
+BinarySearchTree<int>::BinarySearchTree (this=0x7fffffffe3f8, rhs=...) 
+at BinarySearchTree.h:40
+40	    BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
+(gdb) s
+43			root = clone( rhs.root );
+(gdb) p rhs
+$3 = (const BinarySearchTree<int> &) @0x7fffffffe3f0: {root = 0x55555556c2c0}
+\end{verbatim}
 
-% 避免这个复制是重要的，因为这是一次{\bf 额外}的复制．复制构造函数本身的任务就
-% 是复制，发生在\verb|clone| 调用内部, 这是一个内置的递归函数.
+避免这个复制是重要的，因为这是一次{\bf 额外}的复制．复制构造函数本身的任务就
+是复制，发生在\verb|clone| 调用内部, 这是一个内置的递归函数.
 
-% \begin{lstlisting}[language=C++]
-%   /**
-%   * Internal method to clone subtree.
-%   */
-%   BinaryNode * clone( BinaryNode *t ) const
-%   {
-%     if( t == nullptr )
-%         return nullptr;
-%     else
-%         return new BinaryNode{ t->element,
-%                                clone( t->left ),
-%                                clone( t->right ) };
-%   }
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+  /**
+  * Internal method to clone subtree.
+  */
+  BinaryNode * clone( BinaryNode *t ) const
+  {
+    if( t == nullptr )
+        return nullptr;
+    else
+        return new BinaryNode{ t->element,
+                               clone( t->left ),
+                               clone( t->right ) };
+  }
+\end{lstlisting}
 
-% 提问, 复制时这是一个什么序的遍历?
+提问, 复制时这是一个什么序的遍历?
 
-% 按照　C 语言和旧　C++ 规范，有一种情况函数调用时的参数复制仍然不可避免，比如
-% \begin{lstlisting}[language=C++]
-%   ...
-%   Student cai {"Kunkun", 24};
-%   ...
-% \end{lstlisting}
-% 这里在函数调用时, 因为 "Kunkun" 作为一个常量字符串, 是一个右值 (不可变
-% 更的值), 因此不能作为左值进行引用, 必然会发生一次额外复制.
+按照　C 语言和旧　C++ 规范，有一种情况函数调用时的参数复制仍然不可避免，比如
+\begin{lstlisting}[language=C++]
+  ...
+  Student cai {"Kunkun", 24};
+  ...
+\end{lstlisting}
+这里在函数调用时, 因为 "Kunkun" 作为一个常量字符串, 是一个右值 (不可变
+更的值), 因此不能作为左值进行引用, 必然会发生一次额外复制.
 
-% 为此 C++ 11 引入了右值引用的概念. 注意左值的生命周期取决于变量本身的生
-% 命周期, 因此可以通过左值引用, 顺带修改变量的值. 但右值是一次性的, 用完
-% 即丢. 因此无所谓改变右值. 这里有一个典型的案例:
+为此 C++ 11 引入了右值引用的概念. 注意左值的生命周期取决于变量本身的生
+命周期, 因此可以通过左值引用, 顺带修改变量的值. 但右值是一次性的, 用完
+即丢. 因此无所谓改变右值. 这里有一个典型的案例:
 
-% \begin{lstlisting}[language=C++]
-% /**
-% * Move constructor
-% */
-% BinarySearchTree( BinarySearchTree && rhs ) : root{ rhs.root }
-% {
-%   /// 比较和 copy 的区别, 这里外部参数传入 rhs 时, 如果外部参数
-%   /// 是一个右值, 那么按照旧 C++ 规范, 复制不可避免. 现在提供了
-%   /// 右值引用, 在参数传入时, 避免了复制. 而这里通过对 rhs.root
-%   /// 的指针复制, 避免了整棵树的复制. 
-%   rhs.root = nullptr;
-%   /// 必须释放 rhs.root 的管理权限. 提问: 为何这里不需要先delete
-%   /// ? this->root 接管了原本 rhs.root 的内存, 没有指向内容的复
-%   /// 制. 数据仍然存放在原地址, 因此不可以 delete, 否则
-%   /// this->root 下的树也会被删除.  而 rhs 在调用发生之后, 作为
-%   /// 一个右值量, 从概念上, 只用一次, 不会再使用, 因此可以赋为
-%   /// nullptr, 避免同一段内存出现两个入口.
-% }
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+/**
+* Move constructor
+*/
+BinarySearchTree( BinarySearchTree && rhs ) : root{ rhs.root }
+{
+  /// 比较和 copy 的区别, 这里外部参数传入 rhs 时, 如果外部参数
+  /// 是一个右值, 那么按照旧 C++ 规范, 复制不可避免. 现在提供了
+  /// 右值引用, 在参数传入时, 避免了复制. 而这里通过对 rhs.root
+  /// 的指针复制, 避免了整棵树的复制. 
+  rhs.root = nullptr;
+  /// 必须释放 rhs.root 的管理权限. 提问: 为何这里不需要先delete
+  /// ? this->root 接管了原本 rhs.root 的内存, 没有指向内容的复
+  /// 制. 数据仍然存放在原地址, 因此不可以 delete, 否则
+  /// this->root 下的树也会被删除.  而 rhs 在调用发生之后, 作为
+  /// 一个右值量, 从概念上, 只用一次, 不会再使用, 因此可以赋为
+  /// nullptr, 避免同一段内存出现两个入口.
+}
+\end{lstlisting}
 
-% 我们在跟踪中观察右值的实际作用:
+我们在跟踪中观察右值的实际作用:
 
 % \begin{verbatim}
 % Breakpoint 1, main () at TestBinarySearchTree.cpp:63

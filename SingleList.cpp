@@ -33,8 +33,5 @@ int main()
     list1.remove();
     list1.remove();
     list1.printList();
-
-
-
     return 0;
 }
