@@ -3549,1034 +3549,1429 @@ private:
 };
 \end{lstlisting}
 
-% \begin{lstlisting}[language=C++]
-%   /** 
-%   * Default constructor. 
-%   * 
-%   */
-%   BinarySearchTree( ) : root{ nullptr } 
-%   {
-%     /// C++ 11 以后的标准推崇用 {} 来初始化数据.  
-%   }
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+  /** 
+  * Default constructor. 
+  * 
+  */
+  BinarySearchTree( ) : root{ nullptr } 
+  {
+    /// C++ 11 以后的标准推崇用 {} 来初始化数据.  
+  }
+\end{lstlisting}
 
-% 常见的内置类型如 \verb|int| 等等, 或者 STL 中类型如 \verb|string| 等等,都
-% 提供了这种初始化. 一般的 \verb|struct| 或者 \verb|class| 中的
-% \verb|public|, 都默认提供了这种初始化形式. 当然实际上我们并不推荐在类
-% 设计中直接使用这种缺省构造. 而是建议大家在设计类时考虑显式构造具有这种
-% 接口的构造. 
+常见的内置类型如 \verb|int| 等等, 或者 STL 中类型如 \verb|string| 等等,都
+提供了这种初始化. 一般的 \verb|struct| 或者 \verb|class| 中的
+\verb|public|, 都默认提供了这种初始化形式. 当然实际上我们并不推荐在类
+设计中直接使用这种缺省构造. 而是建议大家在设计类时考虑显式构造具有这种
+接口的构造. 
 
-% 测试代码 \verb|test_brace.cpp| 给出了一个默认大括号初始化的例子.
+测试代码 \verb|test_brace.cpp| 给出了一个默认大括号初始化的例子.
 
-% 接下去的拷贝构造函数使用了静态左值引用作为参数, 避免在调用的时候, 参数
-% \verb|rhs| 从外部进入函数内部时发生复制.
+接下去的拷贝构造函数使用了静态左值引用作为参数, 避免在调用的时候, 参数
+\verb|rhs| 从外部进入函数内部时发生复制.
 
-% \begin{lstlisting}[language=C++]
-%   /**
-%   * Copy constructor
-%   */
-%   BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
-%   {
-%     /// 初始化时的 root{ nullptr } 似乎毫无意义?
-%     root = clone( rhs.root );
-%     /// 这里用 clone 完成指针指向的内容复制, 而不是仅仅复制了指针.
-%   }
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+  /**
+  * Copy constructor
+  */
+  BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
+  {
+    /// 初始化时的 root{ nullptr } 似乎毫无意义?
+    root = clone( rhs.root );
+    /// 这里用 clone 完成指针指向的内容复制, 而不是仅仅复制了指针.
+  }
+\end{lstlisting}
 
-% 通过　gdb 我们可以清楚看到，在参数在传递过程中，并没有发生复制．
+通过　gdb 我们可以清楚看到，在参数在传递过程中，并没有发生复制．
 
-% \begin{verbatim}
-% Breakpoint 1, main () at TestBinarySearchTree.cpp:49
-% 49	    BinarySearchTree<int> t3(t);
-% (gdb) p t
-% $1 = {root = 0x55555556c2c0}
-% (gdb) p &t
-% $2 = (BinarySearchTree<int> *) 0x7fffffffe3f0
-% (gdb) s
-% BinarySearchTree<int>::BinarySearchTree (this=0x7fffffffe3f8, rhs=...) 
-% at BinarySearchTree.h:40
-% 40	    BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
-% (gdb) s
-% 43			root = clone( rhs.root );
-% (gdb) p rhs
-% $3 = (const BinarySearchTree<int> &) @0x7fffffffe3f0: {root = 0x55555556c2c0}
-% \end{verbatim}
+\begin{verbatim}
+Breakpoint 1, main () at TestBinarySearchTree.cpp:49
+49	    BinarySearchTree<int> t3(t);
+(gdb) p t
+$1 = {root = 0x55555556c2c0}
+(gdb) p &t
+$2 = (BinarySearchTree<int> *) 0x7fffffffe3f0
+(gdb) s
+BinarySearchTree<int>::BinarySearchTree (this=0x7fffffffe3f8, rhs=...) 
+at BinarySearchTree.h:40
+40	    BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
+(gdb) s
+43			root = clone( rhs.root );
+(gdb) p rhs
+$3 = (const BinarySearchTree<int> &) @0x7fffffffe3f0: {root = 0x55555556c2c0}
+\end{verbatim}
 
-% 避免这个复制是重要的，因为这是一次{\bf 额外}的复制．复制构造函数本身的任务就
-% 是复制，发生在\verb|clone| 调用内部, 这是一个内置的递归函数.
+避免这个复制是重要的，因为这是一次{\bf 额外}的复制．复制构造函数本身的任务就
+是复制，发生在\verb|clone| 调用内部, 这是一个内置的递归函数.
 
-% \begin{lstlisting}[language=C++]
-%   /**
-%   * Internal method to clone subtree.
-%   */
-%   BinaryNode * clone( BinaryNode *t ) const
-%   {
-%     if( t == nullptr )
-%         return nullptr;
-%     else
-%         return new BinaryNode{ t->element,
-%                                clone( t->left ),
-%                                clone( t->right ) };
-%   }
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+  /**
+  * Internal method to clone subtree.
+  */
+  BinaryNode * clone( BinaryNode *t ) const
+  {
+    if( t == nullptr )
+        return nullptr;
+    else
+        return new BinaryNode{ t->element,
+                               clone( t->left ),
+                               clone( t->right ) };
+  }
+\end{lstlisting}
 
-% 提问, 复制时这是一个什么序的遍历?
+提问, 复制时这是一个什么序的遍历?
 
-% 按照　C 语言和旧　C++ 规范，有一种情况函数调用时的参数复制仍然不可避免，比如
-% \begin{lstlisting}[language=C++]
-%   ...
-%   Student cai {"Kunkun", 24};
-%   ...
-% \end{lstlisting}
-% 这里在函数调用时, 因为 "Kunkun" 作为一个常量字符串, 是一个右值 (不可变
-% 更的值), 因此不能作为左值进行引用, 必然会发生一次额外复制.
+按照　C 语言和旧　C++ 规范，有一种情况函数调用时的参数复制仍然不可避免，比如
+\begin{lstlisting}[language=C++]
+  ...
+  Student cai {"Kunkun", 24};
+  ...
+\end{lstlisting}
+这里在函数调用时, 因为 "Kunkun" 作为一个常量字符串, 是一个右值 (不可变
+更的值), 因此不能作为左值进行引用, 必然会发生一次额外复制.
 
-% 为此 C++ 11 引入了右值引用的概念. 注意左值的生命周期取决于变量本身的生
-% 命周期, 因此可以通过左值引用, 顺带修改变量的值. 但右值是一次性的, 用完
-% 即丢. 因此无所谓改变右值. 这里有一个典型的案例:
+为此 C++ 11 引入了右值引用的概念. 注意左值的生命周期取决于变量本身的生
+命周期, 因此可以通过左值引用, 顺带修改变量的值. 但右值是一次性的, 用完
+即丢. 因此无所谓改变右值. 这里有一个典型的案例:
 
-% \begin{lstlisting}[language=C++]
-% /**
-% * Move constructor
-% */
-% BinarySearchTree( BinarySearchTree && rhs ) : root{ rhs.root }
-% {
-%   /// 比较和 copy 的区别, 这里外部参数传入 rhs 时, 如果外部参数
-%   /// 是一个右值, 那么按照旧 C++ 规范, 复制不可避免. 现在提供了
-%   /// 右值引用, 在参数传入时, 避免了复制. 而这里通过对 rhs.root
-%   /// 的指针复制, 避免了整棵树的复制. 
-%   rhs.root = nullptr;
-%   /// 必须释放 rhs.root 的管理权限. 提问: 为何这里不需要先delete
-%   /// ? this->root 接管了原本 rhs.root 的内存, 没有指向内容的复
-%   /// 制. 数据仍然存放在原地址, 因此不可以 delete, 否则
-%   /// this->root 下的树也会被删除.  而 rhs 在调用发生之后, 作为
-%   /// 一个右值量, 从概念上, 只用一次, 不会再使用, 因此可以赋为
-%   /// nullptr, 避免同一段内存出现两个入口.
-% }
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+/**
+* Move constructor
+*/
+BinarySearchTree( BinarySearchTree && rhs ) : root{ rhs.root }
+{
+  /// 比较和 copy 的区别, 这里外部参数传入 rhs 时, 如果外部参数
+  /// 是一个右值, 那么按照旧 C++ 规范, 复制不可避免. 现在提供了
+  /// 右值引用, 在参数传入时, 避免了复制. 而这里通过对 rhs.root
+  /// 的指针复制, 避免了整棵树的复制. 
+  rhs.root = nullptr;
+  /// 必须释放 rhs.root 的管理权限. 提问: 为何这里不需要先delete
+  /// ? this->root 接管了原本 rhs.root 的内存, 没有指向内容的复
+  /// 制. 数据仍然存放在原地址, 因此不可以 delete, 否则
+  /// this->root 下的树也会被删除.  而 rhs 在调用发生之后, 作为
+  /// 一个右值量, 从概念上, 只用一次, 不会再使用, 因此可以赋为
+  /// nullptr, 避免同一段内存出现两个入口.
+}
+\end{lstlisting}
 
-% 我们在跟踪中观察右值的实际作用:
+我们在跟踪中观察右值的实际作用:
 
-% \begin{verbatim}
-% Breakpoint 1, main () at TestBinarySearchTree.cpp:63
-% 63	    BinarySearchTree<int> t4(std::move(t));
-% (gdb) p t
-% $1 = {root = 0x55555556c2c0}
-% (gdb) p &t
-% $2 = (BinarySearchTree<int> *) 0x7fffffffe3e8
-% (gdb) s
-% std::move<BinarySearchTree<int>&> (__t=...) 
-% at /usr/include/c++/9/bits/move.h:99
-% 99	    move(_Tp&& __t) noexcept
-% (gdb) s
-% 100	    
-% { return static_cast<typename std::remove_reference<_Tp>::type&&>(__t); }
-% (gdb) s
-% BinarySearchTree<int>::BinarySearchTree (this=0x7fffffffe3e8, rhs=...) 
-% at BinarySearchTree.h:50
-% 50	    BinarySearchTree( BinarySearchTree && rhs ) : root{ rhs.root }
-% (gdb) s
-% 56			rhs.root = nullptr;
-% (gdb) p rhs
-% $3 = (BinarySearchTree<int> &&) @0x7fffffffe3e8: {root = 0x55555556c2c0}
-% (gdb) s
-% 63	    }
-% (gdb) s
-% main () at TestBinarySearchTree.cpp:66
-% 66	    for( i = 2; i < NUMS; i+=2 )
-% (gdb) p t4
-% $4 = {root = 0x55555556c2c0}
-% (gdb) p &t4
-% $5 = (BinarySearchTree<int> *) 0x7fffffffe400
-% (gdb) p t
-% $6 = {root = 0x0}
-% (gdb) p &t
-% $7 = (BinarySearchTree<int> *) 0x7fffffffe3e8
-% \end{verbatim}
+\begin{verbatim}
+Breakpoint 1, main () at TestBinarySearchTree.cpp:63
+63	    BinarySearchTree<int> t4(std::move(t));
+(gdb) p t
+$1 = {root = 0x55555556c2c0}
+(gdb) p &t
+$2 = (BinarySearchTree<int> *) 0x7fffffffe3e8
+(gdb) s
+std::move<BinarySearchTree<int>&> (__t=...) 
+at /usr/include/c++/9/bits/move.h:99
+99	    move(_Tp&& __t) noexcept
+(gdb) s
+100	    
+{ return static_cast<typename std::remove_reference<_Tp>::type&&>(__t); }
+(gdb) s
+BinarySearchTree<int>::BinarySearchTree (this=0x7fffffffe3e8, rhs=...) 
+at BinarySearchTree.h:50
+50	    BinarySearchTree( BinarySearchTree && rhs ) : root{ rhs.root }
+(gdb) s
+56			rhs.root = nullptr;
+(gdb) p rhs
+$3 = (BinarySearchTree<int> &&) @0x7fffffffe3e8: {root = 0x55555556c2c0}
+(gdb) s
+63	    }
+(gdb) s
+main () at TestBinarySearchTree.cpp:66
+66	    for( i = 2; i < NUMS; i+=2 )
+(gdb) p t4
+$4 = {root = 0x55555556c2c0}
+(gdb) p &t4
+$5 = (BinarySearchTree<int> *) 0x7fffffffe400
+(gdb) p t
+$6 = {root = 0x0}
+(gdb) p &t
+$7 = (BinarySearchTree<int> *) 0x7fffffffe3e8
+\end{verbatim}
 
-% 我们可以看到, \verb|move| 的实际作用是一次左值到右值的转换, 而函数参数
-% 通过地址直接获得了一个右值的引用, 因此没有发生复制. 然后尽管 \verb|t4|
-% 是一个新的实体, 但它的 \verb|root| 直接复制了 \verb|t| 的 \verb|root|,
-% 因此对原树的管理权已经传递给 \verb|t4|, 而 \verb|t| 的 \verb|root| 直
-% 接被切断, 避免了两棵树管理同一段内存的问题. 这种切断语法上不是必须的,
-% 但逻辑上是.
+我们可以看到, \verb|move| 的实际作用是一次左值到右值的转换, 而函数参数
+通过地址直接获得了一个右值的引用, 因此没有发生复制. 然后尽管 \verb|t4|
+是一个新的实体, 但它的 \verb|root| 直接复制了 \verb|t| 的 \verb|root|,
+因此对原树的管理权已经传递给 \verb|t4|, 而 \verb|t| 的 \verb|root| 直
+接被切断, 避免了两棵树管理同一段内存的问题. 这种切断语法上不是必须的,
+但逻辑上是.
 
-% 同样的情况发生在赋值运算中. 一般对动态类, 我们都需要重载赋值运算
-% \verb|=|, 而这里也有引用避免隐含复制的问题. 课本的例子也是极好的. 但在
-% 移动赋值运算时, 有一个逻辑漏洞. 参见注释.
+同样的情况发生在赋值运算中. 一般对动态类, 我们都需要重载赋值运算
+\verb|=|, 而这里也有引用避免隐含复制的问题. 课本的例子也是极好的. 但在
+移动赋值运算时, 有一个逻辑漏洞. 参见注释.
 
-% 接下去课本的代码都中规中矩. 注意一下:
-% \begin{verbatim}
-% BinaryNode * findMin( BinaryNode *t ) const
-% \end{verbatim}
-% 和
-% \begin{verbatim}
-% BinaryNode * findMax( BinaryNode *t ) const
-% \end{verbatim}
-% 这两个功能上对称的函数. 但它们的实现截然不同. 通常, 后者效率更高一些.
-% 但是前者更容易设计, 可读性更好. 课本这里同时展示了两个版本, 供大家比较
-% 学习.
+接下去课本的代码都中规中矩. 注意一下:
+\begin{verbatim}
+BinaryNode * findMin( BinaryNode *t ) const
+\end{verbatim}
+和
+\begin{verbatim}
+BinaryNode * findMax( BinaryNode *t ) const
+\end{verbatim}
+这两个功能上对称的函数. 但它们的实现截然不同. 通常, 后者效率更高一些.
+但是前者更容易设计, 可读性更好. 课本这里同时展示了两个版本, 供大家比较
+学习.
 
-% 课本的类设计上, 也不是没有槽点. 大家这里可以观察到, \verb|contain| 和
-% \verb|remove| 似乎有较多的重复功能代码段. 这是一个需要察觉的要素. 这说
-% 明这里发生了功能代码冗余. 如何避免呢? 也很简单, 再增加一个内置函数
-% \verb|find(val)|, 如果 \verb|val| 存在, 返回其节点地址, 如果不存在, 则
-% 返回 \verb|NIL| (或任何一个约定标志). 然后 \verb|contain| 和
-% \verb|remove| 都通过调用 \verb|find| 完成相应功能. (\verb|contain| 此
-% 时沦为 \verb|find| 的一层马甲.)
+课本的类设计上, 也不是没有槽点. 大家这里可以观察到, \verb|contain| 和
+\verb|remove| 似乎有较多的重复功能代码段. 这是一个需要察觉的要素. 这说
+明这里发生了功能代码冗余. 如何避免呢? 也很简单, 再增加一个内置函数
+\verb|find(val)|, 如果 \verb|val| 存在, 返回其节点地址, 如果不存在, 则
+返回 \verb|NIL| (或任何一个约定标志). 然后 \verb|contain| 和
+\verb|remove| 都通过调用 \verb|find| 完成相应功能. (\verb|contain| 此
+时沦为 \verb|find| 的一层马甲.)
 
-% 动态数据结构的难点都在动态操作上, 典型的就是 \verb|insert| 和
-% \verb|delete|. 一般删除又更复杂一些. 我们先看 \verb|insert|. 一个数据
-% 结构是有一定的规则的, 比如 BST 的动态操作要满足操作前后要都要满足 BST
-% 的定义.
+动态数据结构的难点都在动态操作上, 典型的就是 \verb|insert| 和
+\verb|delete|. 一般删除又更复杂一些. 我们先看 \verb|insert|. 一个数据
+结构是有一定的规则的, 比如 BST 的动态操作要满足操作前后要都要满足 BST
+的定义.
 
 
-% 首先接口上, 我们注意到有两个版本:
-% \begin{verbatim}
-% void insert( const Comparable & x, BinaryNode * & t )
-% \end{verbatim}
-% 和
-% \begin{verbatim}
-% void insert( Comparable && x, BinaryNode * & t )
-% \end{verbatim}
-% 分别对应了 \verb|x| 是左值和右值的情况. 当然, 我们可以只有一个版本:
-% \begin{verbatim}
-% void insert( Comparable x, BinaryNode * & t )
-% \end{verbatim}
-% 对应 \verb|x| 的任意情况, 只是这样注定 \verb|x| 在参数传递时会发生隐含
-% 复制. 所以, 如果 \verb|x| 是轻量级的, 如 \verb|int| 等等, 完全可以不用
-% 回避这个复制, 以简化接口. 但对 \verb|x| 可能是重量级, 如这里是一个未知
-% 的模板类型, 那么同时提供左右值引用是 C++ 11 以后推荐的做法.
+首先接口上, 我们注意到有两个版本:
+\begin{verbatim}
+void insert( const Comparable & x, BinaryNode * & t )
+\end{verbatim}
+和
+\begin{verbatim}
+void insert( Comparable && x, BinaryNode * & t )
+\end{verbatim}
+分别对应了 \verb|x| 是左值和右值的情况. 当然, 我们可以只有一个版本:
+\begin{verbatim}
+void insert( Comparable x, BinaryNode * & t )
+\end{verbatim}
+对应 \verb|x| 的任意情况, 只是这样注定 \verb|x| 在参数传递时会发生隐含
+复制. 所以, 如果 \verb|x| 是轻量级的, 如 \verb|int| 等等, 完全可以不用
+回避这个复制, 以简化接口. 但对 \verb|x| 可能是重量级, 如这里是一个未知
+的模板类型, 那么同时提供左右值引用是 C++ 11 以后推荐的做法.
 
-% 现在回到 \verb|insert| 操作. 我们需要首先确定插入的点. 这里仍然使用了
-% 递归, 找到用于挂载的节点, 它要么是一个叶子节点, 也可能是一个只有单边子
-% 树的节点, 而新节点将挂在它的空子树上. 实际上, 我们观察代码就会发现, 课
-% 本的代码竟然一口气递归到了 \verb|nullptr|, 也就是空节点. 在链表操作时
-% 我们知道, 在做插入准备的遍历时, 哪怕是在最后增加一个新节点, 也不能一直
-% 遍历到空节点, 否则就失去了前续节点的线索. 那么为什么这里可以呢? 关键是
-% 递归的时候, 采用了指针引用的接口 \verb|BinaryNode * & t|.
+现在回到 \verb|insert| 操作. 我们需要首先确定插入的点. 这里仍然使用了
+递归, 找到用于挂载的节点, 它要么是一个叶子节点, 也可能是一个只有单边子
+树的节点, 而新节点将挂在它的空子树上. 实际上, 我们观察代码就会发现, 课
+本的代码竟然一口气递归到了 \verb|nullptr|, 也就是空节点. 在链表操作时
+我们知道, 在做插入准备的遍历时, 哪怕是在最后增加一个新节点, 也不能一直
+遍历到空节点, 否则就失去了前续节点的线索. 那么为什么这里可以呢? 关键是
+递归的时候, 采用了指针引用的接口 \verb|BinaryNode * & t|.
 
-% 我们前面分析了引用主要有两个功能, 一个是避免隐含复制；另一个是用于修改
-% 被引用的变量. 指针引用, 就是指针变量的引用. 这里 \verb|BinaryNode *|
-% 应该看作是一种变量类型, 表示能存放一个 \verb|BinaryNode| 节点地址的指
-% 针变量. 所以 \verb|BinaryNode * & t| 就表示 \verb|t| 是对一个存放了节
-% 点地址的指针变量的引用. 你可以认为它本质是通过一个双重指针 (即指针变量
-% 的地址) 来传递参数的. 当上一层调用 \verb|insert( x, t->left );| 时,
-% \verb|t->left| 本身是一个地址值, 但它传给参数 \verb|t| 时, 不是把它存
-% 的地址值复制给 \verb|t|, 而是通过它 (\verb|t->left|) 的地址, 传递了一
-% 个引用给 \verb|t|. 所以当 \verb|t| 是 \verb|nullptr| 时, 直接将其改成
-% 一个新节点的地址, 这个改动也会通过这个左值引用, 反馈给 \verb|t->left|,
-% 从而实现当发现上一层的左子树是空, 就将其改成新节点地址的操作. 
+我们前面分析了引用主要有两个功能, 一个是避免隐含复制；另一个是用于修改
+被引用的变量. 指针引用, 就是指针变量的引用. 这里 \verb|BinaryNode *|
+应该看作是一种变量类型, 表示能存放一个 \verb|BinaryNode| 节点地址的指
+针变量. 所以 \verb|BinaryNode * & t| 就表示 \verb|t| 是对一个存放了节
+点地址的指针变量的引用. 你可以认为它本质是通过一个双重指针 (即指针变量
+的地址) 来传递参数的. 当上一层调用 \verb|insert( x, t->left );| 时,
+\verb|t->left| 本身是一个地址值, 但它传给参数 \verb|t| 时, 不是把它存
+的地址值复制给 \verb|t|, 而是通过它 (\verb|t->left|) 的地址, 传递了一
+个引用给 \verb|t|. 所以当 \verb|t| 是 \verb|nullptr| 时, 直接将其改成
+一个新节点的地址, 这个改动也会通过这个左值引用, 反馈给 \verb|t->left|,
+从而实现当发现上一层的左子树是空, 就将其改成新节点地址的操作. 
 
-% 注意不论哪个版本, 第二个参数都是左值指针引用. 
-% \begin{lstlisting}[language=C++]
-%       /**
-%      * Internal method to insert into a subtree.
-%      * x is the item to insert.
-%      * t is the node that roots the subtree.
-%      * Set the new root of the subtree.
-%      */
-%     void insert( const Comparable & x, BinaryNode * & t )
-% 	{
-% 	    if( t == nullptr )
-% 		t = new BinaryNode{ x, nullptr, nullptr };
-% 	    /// 这里可以这么做的原因是 t 是一个指针引用参数. 也就是说, t
-% 	    /// 是一个指针变量的引用. 这个分支被触发, 要么 t 就是 root, 而
-% 	    /// root 是 nullptr, 也就是说这是一棵空树. 于是直接给它分配一
-% 	    /// 个新结点；另一种情况是递归的终点. 也就是 t 是作为一个指针
-% 	    /// 引用参数, 对之前某结点的左子树或右子树的根的引用. 比如, 实
-% 	    /// 际发生的调用是 insert( x, t->left ), 这样进入调用后, 发现
-% 	    /// t 是 nullptr, 于是把 t 赋成一个新结点. 这时对 t 的改动, 相
-% 	    /// 当于对上一层 t->left 的一个别名的改动 (引用的原始定义), 于
-% 	    /// 是相当于直接把上一层的 t->left 从 nullptr 改成了新结点. 因
-% 	    /// 此合法且高效. 用这种技巧我们就不需要保留上一层的缓存了. 
-% 	    else if( x < t->element )
-% 		insert( x, t->left );
-% 	    else if( t->element < x )
-% 		insert( x, t->right );
-% 	    else
-% 		;  // Duplicate; do nothing
-% 	    /// 书上这个 BST 约定元素无重复, 因此有重复就什么也不做. 
-% 	}
-% \end{lstlisting}
+注意不论哪个版本, 第二个参数都是左值指针引用. 
+\begin{lstlisting}[language=C++]
+      /**
+     * Internal method to insert into a subtree.
+     * x is the item to insert.
+     * t is the node that roots the subtree.
+     * Set the new root of the subtree.
+     */
+    void insert( const Comparable & x, BinaryNode * & t )
+	{
+	    if( t == nullptr )
+		t = new BinaryNode{ x, nullptr, nullptr };
+	    /// 这里可以这么做的原因是 t 是一个指针引用参数. 也就是说, t
+	    /// 是一个指针变量的引用. 这个分支被触发, 要么 t 就是 root, 而
+	    /// root 是 nullptr, 也就是说这是一棵空树. 于是直接给它分配一
+	    /// 个新结点；另一种情况是递归的终点. 也就是 t 是作为一个指针
+	    /// 引用参数, 对之前某结点的左子树或右子树的根的引用. 比如, 实
+	    /// 际发生的调用是 insert( x, t->left ), 这样进入调用后, 发现
+	    /// t 是 nullptr, 于是把 t 赋成一个新结点. 这时对 t 的改动, 相
+	    /// 当于对上一层 t->left 的一个别名的改动 (引用的原始定义), 于
+	    /// 是相当于直接把上一层的 t->left 从 nullptr 改成了新结点. 因
+	    /// 此合法且高效. 用这种技巧我们就不需要保留上一层的缓存了. 
+	    else if( x < t->element )
+		insert( x, t->left );
+	    else if( t->element < x )
+		insert( x, t->right );
+	    else
+		;  // Duplicate; do nothing
+	    /// 书上这个 BST 约定元素无重复, 因此有重复就什么也不做. 
+	}
+\end{lstlisting}
 
-% 插入这里注意一个细节，如果从初始，依次插入的数据是 6，5，7，2，5，8，那么得到的 BST 长什么样？
+插入这里注意一个细节，如果从初始，依次插入的数据是 6，5，7，2，5，8，那么得到的 BST 长什么样？
 
-% %\includegraphics[width=0.75\textwidth]{images/BST_insert1.png}
+%\includegraphics[width=0.75\textwidth]{images/BST_insert1.png}
 
-% 那么如果插入次序是：6，2，5，5，8，7 呢？
+那么如果插入次序是：6，2，5，5，8，7 呢？
 
-% %\includegraphics[width=0.75\textwidth]{images/BST_insert2.png}
+%\includegraphics[width=0.75\textwidth]{images/BST_insert2.png}
 
-% 稍加思考，不难明确：
+稍加思考，不难明确：
 
-% \begin{enumerate}
-% \item BST 是否平衡，和插入次序有关；
-% \item 同一棵 BST，插入的次序不唯一；
-% \end{enumerate}
+\begin{enumerate}
+\item BST 是否平衡，和插入次序有关；
+\item 同一棵 BST，插入的次序不唯一；
+\end{enumerate}
 
-% 现在我们来考虑一个动态结构中最复杂的操作——删除。这里要求删除一个 BST
-% 的指定节点，并且要求删除之后，通过适当的调整（限制在 $\Theta(1)$），使
-% 得它仍然是 BST。注意一个前提, 由于我们的插入规则, 我们的 BST 中不会有
-% 重复值节点. 这里我们用 \verb|x| 代表我们即将删除的节点。我们分以下几种情况
-% 讨论：
+现在我们来考虑一个动态结构中最复杂的操作——删除。这里要求删除一个 BST
+的指定节点，并且要求删除之后，通过适当的调整（限制在 $\Theta(1)$），使
+得它仍然是 BST。注意一个前提, 由于我们的插入规则, 我们的 BST 中不会有
+重复值节点. 这里我们用 \verb|x| 代表我们即将删除的节点。我们分以下几种情况
+讨论：
 
-% \begin{enumerate}
-% \item 节点 \verb|x| 没有任何子节点, 直接删除 \verb|x| 即可; 
-% \item 节点 \verb|x| 有一个子树, 用它的子树代替 \verb|x|, 再删除
-%   \verb|x|; 这两种情况可以统一处理. 即删除 \verb|x|, 用 \verb|x| 的子
-%   树代替 \verb|x|(如有).
-% \item 节点 \verb|x| 有两棵子树, 则首先寻找 \verb|x| 的后继 \verb|y|,
-%   这里指出 \verb|y| 必存在 (右子树的最小值), 然后用 \verb|y| 的值占据
-%   |verb|x| 的值, 再将 \verb|x->right| 中删除 \verb|y|.
-% \end{enumerate}
+\begin{enumerate}
+\item 节点 \verb|x| 没有任何子节点, 直接删除 \verb|x| 即可; 
+\item 节点 \verb|x| 有一个子树, 用它的子树代替 \verb|x|, 再删除
+  \verb|x|; 这两种情况可以统一处理. 即删除 \verb|x|, 用 \verb|x| 的子
+  树代替 \verb|x|(如有).
+\item 节点 \verb|x| 有两棵子树, 则首先寻找 \verb|x| 的后继 \verb|y|,
+  这里指出 \verb|y| 必存在 (右子树的最小值), 然后用 \verb|y| 的值占据
+  |verb|x| 的值, 再将 \verb|x->right| 中删除 \verb|y|.
+\end{enumerate}
 
-% 以上操作已经充分考虑了可以利用指针引用这样的神器. 在没有指针引用的年代,
-% 上述操作极为复杂, 大家可以去看算法导论中的相关内容.
+以上操作已经充分考虑了可以利用指针引用这样的神器. 在没有指针引用的年代,
+上述操作极为复杂, 大家可以去看算法导论中的相关内容.
 
-% 这里顺便指出, 课本的 \verb|remove| 只提供了一个版本, 它没有像
-% \verb|insert| 那样同时提供左右值引用的版本, 而是只用了一个常量左值引用
-% 的接口版本来共同处理左右值引用的调用. 这里的基本逻辑是, 我们不会修改被
-% 删除对象. 我们在 \verb|test_rvalue.cpp| 中演示一下常量左值引用的意义.
+这里顺便指出, 课本的 \verb|remove| 只提供了一个版本, 它没有像
+\verb|insert| 那样同时提供左右值引用的版本, 而是只用了一个常量左值引用
+的接口版本来共同处理左右值引用的调用. 这里的基本逻辑是, 我们不会修改被
+删除对象. 我们在 \verb|test_rvalue.cpp| 中演示一下常量左值引用的意义.
 
-% 我们看到, C++ 的新特性, 已经不再是一些细节修饰的语法糖, 而是开始试图从
-% 根本上调整一些底层算法的逻辑. 从汇编的角度看, 可能并没有什么本质区别,
-% 特别是自动优化之后. 但是对 C++ 层面和算法层面, 系统内部调度和算法结构
-% 之间的分层变得更加清晰, 上层的算法变得更加直观和简约. 这是未来 C++ 和
-% 算法的一个发展趋势. 
+我们看到, C++ 的新特性, 已经不再是一些细节修饰的语法糖, 而是开始试图从
+根本上调整一些底层算法的逻辑. 从汇编的角度看, 可能并没有什么本质区别,
+特别是自动优化之后. 但是对 C++ 层面和算法层面, 系统内部调度和算法结构
+之间的分层变得更加清晰, 上层的算法变得更加直观和简约. 这是未来 C++ 和
+算法的一个发展趋势. 
 
-% \subsection{平衡树}
+\subsection{平衡树}
 
-% 基于二叉搜索树可以构建一个排序算法:
+基于二叉搜索树可以构建一个排序算法:
 
-% \begin{enumerate}
-% \item 将待排数据依次插入一棵空二叉树;
-% \item 中序遍历输出.
-% \end{enumerate}
+\begin{enumerate}
+\item 将待排数据依次插入一棵空二叉树;
+\item 中序遍历输出.
+\end{enumerate}
 
-% 课本提供的 \verb|printTree| 就是中序遍历输出. 我们写了 \verb|BSTsort|
-% 来看一下效果.
+课本提供的 \verb|printTree| 就是中序遍历输出. 我们写了 \verb|BSTsort|
+来看一下效果.
 
-% 然而, 这样的排序, 效率是多少? 考虑 $n$ 个数, 如果输入数据是升序或者降
-% 序, 也就是 $1, 2, \cdots, n$ 或者 $n, n - 1, \cdots, 1$, 那么它建立的
-% BST 长什么样? 所以它的排序总效率是多少? 遍历效率显然总是 $\Theta(n)$,
-% 因此关键看建树效率:
-% $$
-% T(n) = \Theta(n) + 1 + 2 + \cdots + n = \Theta(n^2).
-% $$
+然而, 这样的排序, 效率是多少? 考虑 $n$ 个数, 如果输入数据是升序或者降
+序, 也就是 $1, 2, \cdots, n$ 或者 $n, n - 1, \cdots, 1$, 那么它建立的
+BST 长什么样? 所以它的排序总效率是多少? 遍历效率显然总是 $\Theta(n)$,
+因此关键看建树效率:
+$$
+T(n) = \Theta(n) + 1 + 2 + \cdots + n = \Theta(n^2).
+$$
 
-% 如何提升这个排序效率? 比如, 什么样的输入序列是最佳的? 它形成的 BST 长
-% 什么样? 最后算法的总效率是多少? 如果是一棵满二叉树, 那么树高是
-% $$
-% h :=\log (n + 1) - 1 = \Theta(n),
-% $$
-% 这里 $n$ 是节点总数. 而建树的一半工作量是建立最后一层节点(叶子节点), 所以总工作量是
-% $$
-% T(n) = \Theta(n\log n).
-% $$
+如何提升这个排序效率? 比如, 什么样的输入序列是最佳的? 它形成的 BST 长
+什么样? 最后算法的总效率是多少? 如果是一棵满二叉树, 那么树高是
+$$
+h :=\log (n + 1) - 1 = \Theta(n),
+$$
+这里 $n$ 是节点总数. 而建树的一半工作量是建立最后一层节点(叶子节点), 所以总工作量是
+$$
+T(n) = \Theta(n\log n).
+$$
 
-% 我们不可能去决定用户的输入数据, 所以, 解决问题的关键在于, 如果用户给的
-% 数据是坏的, 我们怎样在建立 BST (\verb|insert|) 给予局部(必须是局部)调
-% 整, 使得树长得更好, 来提高效率.
+我们不可能去决定用户的输入数据, 所以, 解决问题的关键在于, 如果用户给的
+数据是坏的, 我们怎样在建立 BST (\verb|insert|) 给予局部(必须是局部)调
+整, 使得树长得更好, 来提高效率.
 
-% 这里首先说明一点, 是好的树多还是坏的树多? 坏的树是一种极端情形, 因此平
-% 均意义上, 大部分树是好的, 或者说, 没那么坏. 所以一个偷懒的做法是, 将用
-% 户给的数据打乱, 然后再建树. 这样从平均意义上说, 我们的排序算法是高效率
-% 的.
+这里首先说明一点, 是好的树多还是坏的树多? 坏的树是一种极端情形, 因此平
+均意义上, 大部分树是好的, 或者说, 没那么坏. 所以一个偷懒的做法是, 将用
+户给的数据打乱, 然后再建树. 这样从平均意义上说, 我们的排序算法是高效率
+的.
 
-% 但这个不是最坏可能性. 所以为了确保我们的排序在最坏可能性下仍然是好的,
-% 我们必须:
+但这个不是最坏可能性. 所以为了确保我们的排序在最坏可能性下仍然是好的,
+我们必须:
 
-% \begin{enumerate}
-% \item 有一个指标来判定什么时候树已经不好了;
-% \item 如果不好了, 能否通过一个局部的改变来使树变得好. 这个局部改变的工
-%   作量, 必须是一个 $\Theta(1)$ 的操作.
-% \end{enumerate}
+\begin{enumerate}
+\item 有一个指标来判定什么时候树已经不好了;
+\item 如果不好了, 能否通过一个局部的改变来使树变得好. 这个局部改变的工
+  作量, 必须是一个 $\Theta(1)$ 的操作.
+\end{enumerate}
 
-% 通过前面的观察我们发现, 一棵 BST 的好与坏, 关键是它每一个节点的左右子
-% 树是否平衡. 所以我们就从这个入手. 首先, 规定空树的高度是 $-1$, 然后每
-% 一棵非空 BST 树的高度, 定义为其高度为最深的叶子节点到根节点的连接数.
-% 当一棵 BST 处于最平衡的状态, 也就是是满二叉树时, 它的高度是
-% $$
-% h = \lceil \log (n + 1) \rceil - 1.
-% $$
+通过前面的观察我们发现, 一棵 BST 的好与坏, 关键是它每一个节点的左右子
+树是否平衡. 所以我们就从这个入手. 首先, 规定空树的高度是 $-1$, 然后每
+一棵非空 BST 树的高度, 定义为其高度为最深的叶子节点到根节点的连接数.
+当一棵 BST 处于最平衡的状态, 也就是是满二叉树时, 它的高度是
+$$
+h = \lceil \log (n + 1) \rceil - 1.
+$$
 
-% 这个要求苛刻一点, 我们知道 BST 稍微不平衡一些, 并不对效率有太大的影响.
-% 所以我们可以规定一个左右子树的最大高度差 $c$. 也就是说, 我们要求一棵
-% BST, 它的每一个节点, 左右子树的最大高度差都不超过 $c$. 这样的 BST, 称
-% 为 AVL Tree. 课本和接下去的讨论, 我们都设 $c = 1$.
+这个要求苛刻一点, 我们知道 BST 稍微不平衡一些, 并不对效率有太大的影响.
+所以我们可以规定一个左右子树的最大高度差 $c$. 也就是说, 我们要求一棵
+BST, 它的每一个节点, 左右子树的最大高度差都不超过 $c$. 这样的 BST, 称
+为 AVL Tree. 课本和接下去的讨论, 我们都设 $c = 1$.
 
-% 这样我们就定义了一棵不会太不平衡的树. 问题是, 为了维持这样的树, 我们在
-% 动态操作时付出的代价是什么? 以及数据结构本身是否需要作出调整.
+这样我们就定义了一棵不会太不平衡的树. 问题是, 为了维持这样的树, 我们在
+动态操作时付出的代价是什么? 以及数据结构本身是否需要作出调整.
 
-% 这是一个典型的扩展数据结构. 这是一种基本方法论. 我们从一个基础结构出发,
-% 增加必要的属性, 然后通过在动态操作中维持这个属性, 来确保新结构具有某种
-% 性质.
+这是一个典型的扩展数据结构. 这是一种基本方法论. 我们从一个基础结构出发,
+增加必要的属性, 然后通过在动态操作中维持这个属性, 来确保新结构具有某种
+性质.
 
-% \begin{lstlisting}[language=C++]
-%   struct AvlNode
-%   {
-%     Comparable element;
-%     AvlNode   *left;
-%     AvlNode   *right;
-%     int       height;
+\begin{lstlisting}[language=C++]
+  struct AvlNode
+  {
+    Comparable element;
+    AvlNode   *left;
+    AvlNode   *right;
+    int       height;
 
-%     AvlNode( const Comparable & ele, AvlNode *lt, AvlNode *rt, int h = 0 )
-%     : element{ ele }, left{ lt }, right{ rt }, height{ h } { }
+    AvlNode( const Comparable & ele, AvlNode *lt, AvlNode *rt, int h = 0 )
+    : element{ ele }, left{ lt }, right{ rt }, height{ h } { }
     
-%     AvlNode( Comparable && ele, AvlNode *lt, AvlNode *rt, int h = 0 )
-%     : element{ std::move( ele ) }, left{ lt }, right{ rt }, height{ h } { }
-%   };
-% \end{lstlisting}
+    AvlNode( Comparable && ele, AvlNode *lt, AvlNode *rt, int h = 0 )
+    : element{ std::move( ele ) }, left{ lt }, right{ rt }, height{ h } { }
+  };
+\end{lstlisting}
 
-% 多了一个高度 \verb|height|. 
+多了一个高度 \verb|height|. 
 
-% 然后我们需要在动态操作时始终维护这个值, 使它:
-% \begin{enumerate}
-% \item 始终正确;
-% \item 通过局部调整结构, 使得这个值能确保结构的某种性质. 在这里, 就是当
-%   某个节点左右子树高度差超过 $c$ 时, 局部调整树, 使得任何时候, 任何节
-%   点的左右子树的高度差都不超过 $c$. 这个要求看上去是一个全局要求, 但如
-%   果我们能在每一次动态操作时都以一个常数工作量确保新增的局部结构不破坏
-%   整体性质, 那么我们就可以在不增加最坏复杂度阶数的前提下, 实现全局性质
-%   的提升. 
-% \end{enumerate}
+然后我们需要在动态操作时始终维护这个值, 使它:
+\begin{enumerate}
+\item 始终正确;
+\item 通过局部调整结构, 使得这个值能确保结构的某种性质. 在这里, 就是当
+  某个节点左右子树高度差超过 $c$ 时, 局部调整树, 使得任何时候, 任何节
+  点的左右子树的高度差都不超过 $c$. 这个要求看上去是一个全局要求, 但如
+  果我们能在每一次动态操作时都以一个常数工作量确保新增的局部结构不破坏
+  整体性质, 那么我们就可以在不增加最坏复杂度阶数的前提下, 实现全局性质
+  的提升. 
+\end{enumerate}
 
-% 在 AVL Tree 的特例下, 就是每一次做 \verb|insert| 或 \verb|remove| 操作
-% 时, 都确保每一个相关节点的 \verb|height| 值被正确更新了. 同时, 一旦发
-% 现某个节点的左右子树的高度差超过了阈值 $c$, 我们需要做一个局部操作进行
-% 调整. 这个局部操作称为旋转.
+在 AVL Tree 的特例下, 就是每一次做 \verb|insert| 或 \verb|remove| 操作
+时, 都确保每一个相关节点的 \verb|height| 值被正确更新了. 同时, 一旦发
+现某个节点的左右子树的高度差超过了阈值 $c$, 我们需要做一个局部操作进行
+调整. 这个局部操作称为旋转.
 
-% 现在来分析课本的代码, 我们这里的 $c$ 就是
-% \begin{verbatim}
-% static const int ALLOWED_IMBALANCE = 1;
-% \end{verbatim}
-% 这里 \verb|const| 限制了此为常量, 不可更改; \verb|static| 限制了此为静
-% 态变量, 它对所有类实体都是同一个值. 新的 C++ 鼓励更多使用 \verb|const|
-% 来代替宏, 更多使用 \verb|static| 来代替全局变量. 顺便说一句, 这两个关
-% 键字是可交换的, 也就是说,
-% \begin{verbatim}
-% const static int ALLOWED_IMBALANCE = 1;
-% \end{verbatim}
-% 和之前定义是等价的.
+现在来分析课本的代码, 我们这里的 $c$ 就是
+\begin{verbatim}
+static const int ALLOWED_IMBALANCE = 1;
+\end{verbatim}
+这里 \verb|const| 限制了此为常量, 不可更改; \verb|static| 限制了此为静
+态变量, 它对所有类实体都是同一个值. 新的 C++ 鼓励更多使用 \verb|const|
+来代替宏, 更多使用 \verb|static| 来代替全局变量. 顺便说一句, 这两个关
+键字是可交换的, 也就是说,
+\begin{verbatim}
+const static int ALLOWED_IMBALANCE = 1;
+\end{verbatim}
+和之前定义是等价的.
 
-% 接下去我们看到在每一个动态操作, 也就是 \verb|insert| 或者
-% \verb|remove| 的最后, 都多了一个 \verb|balance| 的操作.
+接下去我们看到在每一个动态操作, 也就是 \verb|insert| 或者
+\verb|remove| 的最后, 都多了一个 \verb|balance| 的操作.
 
-% \begin{lstlisting}[language=C++]
-%   // Assume t is balanced or within one of being balanced
-%   void balance( AvlNode * & t )
-%   {
-%     if( t == nullptr )
-%       return;
+\begin{lstlisting}[language=C++]
+  // Assume t is balanced or within one of being balanced
+  void balance( AvlNode * & t )
+  {
+    if( t == nullptr )
+      return;
 
-%     /// 左倾严重  
-%     if( height( t->left ) - height( t->right ) > ALLOWED_IMBALANCE )
-%       /// case I
-%       if( height( t->left->left ) >= height( t->left->right ) )
-%         rotateWithLeftChild( t );
-%       /// case II
-%       else
-%         doubleWithLeftChild( t );
-%     /// 右倾严重  
-%     else if( height( t->right ) - height( t->left ) > ALLOWED_IMBALANCE )
-%       /// case IV
-%       if( height( t->right->right ) >= height( t->right->left ) )
-%         rotateWithRightChild( t );
-%       /// case III
-%       else
-%         doubleWithRightChild( t );
-%     /// 更新 height            
-%     t->height = max( height( t->left ), height( t->right ) ) + 1;
-%   }
-% \end{lstlisting}
+    /// 左倾严重  
+    if( height( t->left ) - height( t->right ) > ALLOWED_IMBALANCE )
+      /// case I
+      if( height( t->left->left ) >= height( t->left->right ) )
+        rotateWithLeftChild( t );
+      /// case II
+      else
+        doubleWithLeftChild( t );
+    /// 右倾严重  
+    else if( height( t->right ) - height( t->left ) > ALLOWED_IMBALANCE )
+      /// case IV
+      if( height( t->right->right ) >= height( t->right->left ) )
+        rotateWithRightChild( t );
+      /// case III
+      else
+        doubleWithRightChild( t );
+    /// 更新 height            
+    t->height = max( height( t->left ), height( t->right ) ) + 1;
+  }
+\end{lstlisting}
 
-% 对于什么时候需要旋转, 书上分了四种情况进行讨论. 注意 Avl Tree 允许左右
-% 子树有 $c$ 的高度差, 因此并不是每一次 \verb|insert| 都会触发高度调整,
-% 也就是 \verb|rotate|. 在不需要调整高度的情况, \verb|balance| 做的事情
-% 就是 最后一行, 更新高度. 问题是: \verb|balance| 被执行了几次?
+对于什么时候需要旋转, 书上分了四种情况进行讨论. 注意 Avl Tree 允许左右
+子树有 $c$ 的高度差, 因此并不是每一次 \verb|insert| 都会触发高度调整,
+也就是 \verb|rotate|. 在不需要调整高度的情况, \verb|balance| 做的事情
+就是 最后一行, 更新高度. 问题是: \verb|balance| 被执行了几次?
 
-% 回答是, 作为递归调用的最后一行, 每一次回溯都会执行一次. 也就是从
-% \verb|root| 到插入的最后一个新节点, 中间路过的每一个节点都会执行一次,
-% 从而确保这一路上的节点的高度都是对的. 由于每一次执行的内容, 都只有
-% $\Theta(1)$, 所以总量在阶数上没有变化.
+回答是, 作为递归调用的最后一行, 每一次回溯都会执行一次. 也就是从
+\verb|root| 到插入的最后一个新节点, 中间路过的每一个节点都会执行一次,
+从而确保这一路上的节点的高度都是对的. 由于每一次执行的内容, 都只有
+$\Theta(1)$, 所以总量在阶数上没有变化.
 
-% 这里除了 \verb|gdb| 可以验证上述过程, 我们还可以使用 \verb|printf| 大
-% 法.
+这里除了 \verb|gdb| 可以验证上述过程, 我们还可以使用 \verb|printf| 大
+法.
 
-% 这里我们需要注意, 所有的 \verb|AvlNode * & t | 都使用了指针引用. 也就
-% 是对 \verb|t| 的任何修改都会直接影响到形参所对应的原始调用对象. 比如,
-% 如果我们修改节点 \verb|r| 的左子树, 我们不一定需要在 \verb|r| 中改, 而
-% 是通过对 \verb|r->left| 的指针引用, 同样可以读取, 并修改其左子树. 这会
-% 极大简化我们的代码, 或者说, 让我们的代码更加直观, 更加符合实际操作(绘
-% 图).
+这里我们需要注意, 所有的 \verb|AvlNode * & t | 都使用了指针引用. 也就
+是对 \verb|t| 的任何修改都会直接影响到形参所对应的原始调用对象. 比如,
+如果我们修改节点 \verb|r| 的左子树, 我们不一定需要在 \verb|r| 中改, 而
+是通过对 \verb|r->left| 的指针引用, 同样可以读取, 并修改其左子树. 这会
+极大简化我们的代码, 或者说, 让我们的代码更加直观, 更加符合实际操作(绘
+图).
 
-% %\includegraphics[width=0.75\textwidth]{images/SingleCase1.jpg}
+%\includegraphics[width=0.75\textwidth]{images/SingleCase1.jpg}
 
-% 上图是我们对照了代码的 Case 1 的实际操作示意图.
+上图是我们对照了代码的 Case 1 的实际操作示意图.
 
-% Case 4 和 Case 1 是对称的, 而 Case 2 和 3 无法通过一次旋转调整到位, 它
-% 们被称为Double Rotation, 因为它们需要两次旋转. 我们可能注意到之前 Case
-% 1 中对 \verb|k1| 的高度调整似乎是多余的, 因为回到上一层, 我们仍然会调
-% 整 \verb|t| 的高度(\verb|k1| 之后会被交给 \verb|k2|, 而 \verb|k2| 是对
-% \verb|t| 的指针引用). 在 Single Rotation 中, 确实是如此. 但因为 Double
-% Rotation 直接通过调用两次 Single Rotation 实现, 所以这里必须也对
-% \verb|k1| 的高度进行调整. 当然, 这里在某些 case, 是可以通过减少一次高
-% 度调整来节省操作, 但这样可能会使代码更加繁琐.
+Case 4 和 Case 1 是对称的, 而 Case 2 和 3 无法通过一次旋转调整到位, 它
+们被称为Double Rotation, 因为它们需要两次旋转. 我们可能注意到之前 Case
+1 中对 \verb|k1| 的高度调整似乎是多余的, 因为回到上一层, 我们仍然会调
+整 \verb|t| 的高度(\verb|k1| 之后会被交给 \verb|k2|, 而 \verb|k2| 是对
+\verb|t| 的指针引用). 在 Single Rotation 中, 确实是如此. 但因为 Double
+Rotation 直接通过调用两次 Single Rotation 实现, 所以这里必须也对
+\verb|k1| 的高度进行调整. 当然, 这里在某些 case, 是可以通过减少一次高
+度调整来节省操作, 但这样可能会使代码更加繁琐.
 
-% %\includegraphics[width=0.75\textwidth]{images/DoubleCase2.jpg}
+%\includegraphics[width=0.75\textwidth]{images/DoubleCase2.jpg}
 
-% 上图显示了 Case 2 如何通过一次 Case 1 加一次 Case 4 的操作调整.
+上图显示了 Case 2 如何通过一次 Case 1 加一次 Case 4 的操作调整.
 
-% 对于 \verb|insert| 可以通过 \verb|balance| 调整平衡, 那么对于
-% \verb|remove|, 我们同样只需要在最后增加一个 \verb|balance| 操作就可以
-% 了. 
+对于 \verb|insert| 可以通过 \verb|balance| 调整平衡, 那么对于
+\verb|remove|, 我们同样只需要在最后增加一个 \verb|balance| 操作就可以
+了. 
 
-% 另一个可以考虑的问题是, 如果不用递归, 这几个步骤应该如何调整? 
+另一个可以考虑的问题是, 如果不用递归, 这几个步骤应该如何调整? 
 
-% \subsection{Splay Tree, 伸展树, 或分裂树}
+\subsection{Splay Tree, 伸展树, 或分裂树}
 
-% 我们考虑平衡树的一个主要目的, 是希望得到一种不论是静态还是动态操作, 在
-% 最坏可能下都是 $\Theta(\log n)$ 的存储结构. 而这一点, 通过控制树高
-% $h = \Theta(\log n)$ 实现.
+我们考虑平衡树的一个主要目的, 是希望得到一种不论是静态还是动态操作, 在
+最坏可能下都是 $\Theta(\log n)$ 的存储结构. 而这一点, 通过控制树高
+$h = \Theta(\log n)$ 实现.
 
-% 所以 Avl Tree 的整体思路就是, 确保我们的树, 不会太不平衡, 从而达到一个
-% 可以接受的效率. 从这个意义上说, 我们也可以考虑是否有一种策略, 能够始终
-% 使树处于非常接近满树的状态? 从而达到某种意义上的最优? 这种策略是有的,
-% 被称为红黑树 (Red Black Tree). 这个学期由于我们在培养方案中增加了高级
-% 数据结构, 所以我们这门课不再提供 Red Black Tree 这种高级结构的讨论. 有
-% 兴趣的同学可以继续修习高级数据结构这门课, 或者参考第 12 章, 以及我提供
-% 的基于算法导论的程序. 由于没有使用指针引用, 大家可以看到动态操作要复杂
-% 的多.
+所以 Avl Tree 的整体思路就是, 确保我们的树, 不会太不平衡, 从而达到一个
+可以接受的效率. 从这个意义上说, 我们也可以考虑是否有一种策略, 能够始终
+使树处于非常接近满树的状态? 从而达到某种意义上的最优? 这种策略是有的,
+被称为红黑树 (Red Black Tree). 这个学期由于我们在培养方案中增加了高级
+数据结构, 所以我们这门课不再提供 Red Black Tree 这种高级结构的讨论. 有
+兴趣的同学可以继续修习高级数据结构这门课, 或者参考第 12 章, 以及我提供
+的基于算法导论的程序. 由于没有使用指针引用, 大家可以看到动态操作要复杂
+的多.
 
-% 由此大家就很怀念随机扰动生成一棵大概率是平衡的 BST 的操作. 但是这个操
-% 作, 尽管可能性很低, 在最坏可能性下单个操作是 $\Theta(n)$. 算法就是走钢
-% 丝, 我们能不能稍微不那么偷懒一点, 但是得到效率, 或者仅仅是效率保证更高
-% 一点的做法?
+由此大家就很怀念随机扰动生成一棵大概率是平衡的 BST 的操作. 但是这个操
+作, 尽管可能性很低, 在最坏可能性下单个操作是 $\Theta(n)$. 算法就是走钢
+丝, 我们能不能稍微不那么偷懒一点, 但是得到效率, 或者仅仅是效率保证更高
+一点的做法?
 
-% 这一节提供了一种思路: Splay Tree, 中文译作伸展树或分裂树. 它的想法很简
-% 单, 关键在于确保树别太高. 而旋转总是可以降低树的高度. 那么能不能在做单
-% 独操作的时候, 总是不断地旋转, 比如, 我们对节点 \verb|x| 的每一次访问,
-% 都把它旋转到 \verb|root| 如何? 一个可以想见的好处是, 如果我们有一批比
-% 较接近的访问值, 而它们就在 \verb|x| 附近, 因为 \verb|x| 在旋转到
-% \verb|root| 的过程中会把周围的值都一起带到 \verb|root| 附近, 所以那么
-% 在接下去的一连串操作中, 我们都可以期待用很少的步骤就完成操作. 也就是这
-% 个想法追求的是用一种简单的调整, 不需要额外跟踪和更新高度值
-% \verb|height|, 保证整体效率和平衡树接近. 或者说, 在连续的 $m$ 个操作中,
-% 总效率达到 $\Theta(m \log(n))$. 这里允许一个偶发的, 单独的操作, 仍然是
-% $\Theta(n)$ 的, 但在平均意义上, 连续的操作总是能保持一定效率的.
+这一节提供了一种思路: Splay Tree, 中文译作伸展树或分裂树. 它的想法很简
+单, 关键在于确保树别太高. 而旋转总是可以降低树的高度. 那么能不能在做单
+独操作的时候, 总是不断地旋转, 比如, 我们对节点 \verb|x| 的每一次访问,
+都把它旋转到 \verb|root| 如何? 一个可以想见的好处是, 如果我们有一批比
+较接近的访问值, 而它们就在 \verb|x| 附近, 因为 \verb|x| 在旋转到
+\verb|root| 的过程中会把周围的值都一起带到 \verb|root| 附近, 所以那么
+在接下去的一连串操作中, 我们都可以期待用很少的步骤就完成操作. 也就是这
+个想法追求的是用一种简单的调整, 不需要额外跟踪和更新高度值
+\verb|height|, 保证整体效率和平衡树接近. 或者说, 在连续的 $m$ 个操作中,
+总效率达到 $\Theta(m \log(n))$. 这里允许一个偶发的, 单独的操作, 仍然是
+$\Theta(n)$ 的, 但在平均意义上, 连续的操作总是能保持一定效率的.
 
-% 课本的 4.5.1 介绍了一种很有启发性(最懒), 但却翻车的想法. 就是总是通过
-% 单旋转将访问的节点提升到 \verb|root|. 这种想法翻车的根本原因在于采用的
-% 旋转策略过于简单, 所以当你把一个节点从很深的叶子提升到 \verb|root| 时,
-% 总有一些节点被你降到了差不多深度. 因此来回折腾之下, 仍然可以构建出 $m$
-% 个连续操作, 每个操作都是 $\Theta(n)$ 的.
+课本的 4.5.1 介绍了一种很有启发性(最懒), 但却翻车的想法. 就是总是通过
+单旋转将访问的节点提升到 \verb|root|. 这种想法翻车的根本原因在于采用的
+旋转策略过于简单, 所以当你把一个节点从很深的叶子提升到 \verb|root| 时,
+总有一些节点被你降到了差不多深度. 因此来回折腾之下, 仍然可以构建出 $m$
+个连续操作, 每个操作都是 $\Theta(n)$ 的.
 
-% 这个方法的失败之处在于旋转情况过于单一, 以至于只是局部提升了被访问的节
-% 点, 对树的其余部分影响不大. 我们这里是允许在一些个别操作上有
-% $\Theta(n)$ 的代价的(意味着可以全局调整树), 充分利用这一点, 如果能对后
-% 续的访问有益(树更矮).
+这个方法的失败之处在于旋转情况过于单一, 以至于只是局部提升了被访问的节
+点, 对树的其余部分影响不大. 我们这里是允许在一些个别操作上有
+$\Theta(n)$ 的代价的(意味着可以全局调整树), 充分利用这一点, 如果能对后
+续的访问有益(树更矮).
 
-% 解决的方案是根据被访问节点 \verb|x| 和它的 parent 节点 \verb|p| 和
-% grand parent 节点 \verb|g| 三者的位置关系, 分出了 zig-zag 和 zig-zig
-% 两种情况(其实是四种, 还有两种对称的情况). 并采取不同的旋转策略. 这些判
-% 定和策略, 在没有额外增加 \verb|height| 计算的前提下, 尽可能的让整棵树
-% 避免出现单边过长的情况, 从而确保了在持续操作中的高效率.
+解决的方案是根据被访问节点 \verb|x| 和它的 parent 节点 \verb|p| 和
+grand parent 节点 \verb|g| 三者的位置关系, 分出了 zig-zag 和 zig-zig
+两种情况(其实是四种, 还有两种对称的情况). 并采取不同的旋转策略. 这些判
+定和策略, 在没有额外增加 \verb|height| 计算的前提下, 尽可能的让整棵树
+避免出现单边过长的情况, 从而确保了在持续操作中的高效率.
 
-% 课本提供了完整的伸展树操作, 我们不再在课堂上分析具体代码了. 大家自己回
-% 去研究. 请注意, 画树和复杂性分析都是一种很不错的考试方式.
+课本提供了完整的伸展树操作, 我们不再在课堂上分析具体代码了. 大家自己回
+去研究. 请注意, 画树和复杂性分析都是一种很不错的考试方式.
 
-% \subsection{B-Tree, B 树}
-% 我们到目前为止, 总是喜欢用结构简单的二叉树, 然后在每一个节点都存放少量
-% 的数据. 这种二进制思维在大部分算法中运行良好. 但考虑到有一种实际情况是,
-% 数据的存储介质读取相对 CPU 的运算速度非常慢. 比如硬盘, 甚至云盘. 那么
-% 一个值得考虑的问题就是我们是否应该尽量减少存储介质的随机访问次数? 比如
-% 一个节点内的数据, 一般都是连续存放的, 所以可以一次性读取到内存, 再去处
-% 理. 但是从一个节点访问到另一个节点, 比如访问其左孩子, 那就是一个典型的
-% 随机访问, 我们可能要跳跃到介质的任何部分去寻找新节点的数据.
+\subsection{B-Tree, B 树}
+我们到目前为止, 总是喜欢用结构简单的二叉树, 然后在每一个节点都存放少量
+的数据. 这种二进制思维在大部分算法中运行良好. 但考虑到有一种实际情况是,
+数据的存储介质读取相对 CPU 的运算速度非常慢. 比如硬盘, 甚至云盘. 那么
+一个值得考虑的问题就是我们是否应该尽量减少存储介质的随机访问次数? 比如
+一个节点内的数据, 一般都是连续存放的, 所以可以一次性读取到内存, 再去处
+理. 但是从一个节点访问到另一个节点, 比如访问其左孩子, 那就是一个典型的
+随机访问, 我们可能要跳跃到介质的任何部分去寻找新节点的数据.
 
-% 如果我们确实有这个需求, 那么问题就是在这种前提下, 二叉树还是最优的么?
-% 回答显然是, 我们希望继续能像二叉搜索树那样保持一个有序, 像 AVL 树那样
-% 保持一个平衡, 同时我们还希望这棵树不要太高, 但每个节点的后代, 可以不止
-% 两个. 或者说, 我们该考虑一下 M 叉搜索树了. 显然, 平衡的 M - 叉搜索树的
-% 高度是 $\log_M N$, 这里 $N$ 是节点个数, 也是一个 \verb|find| 操作, 当
-% 失败时 (最坏可能) 的操作步数. 
+如果我们确实有这个需求, 那么问题就是在这种前提下, 二叉树还是最优的么?
+回答显然是, 我们希望继续能像二叉搜索树那样保持一个有序, 像 AVL 树那样
+保持一个平衡, 同时我们还希望这棵树不要太高, 但每个节点的后代, 可以不止
+两个. 或者说, 我们该考虑一下 M 叉搜索树了. 显然, 平衡的 M - 叉搜索树的
+高度是 $\log_M N$, 这里 $N$ 是节点个数, 也是一个 \verb|find| 操作, 当
+失败时 (最坏可能) 的操作步数. 
 
-% 课本上给出了一种 M 叉平衡树的具体实施策略, 也就是 B 树. 它的结构和设计
-% 都不复杂, 我们不展开讲了, 大家自己去了解一下. 期末考试不会要求这一节.
+课本上给出了一种 M 叉平衡树的具体实施策略, 也就是 B 树. 它的结构和设计
+都不复杂, 我们不展开讲了, 大家自己去了解一下. 期末考试不会要求这一节.
 
-% \subsection{STL 中的平衡树}
+\subsection{STL 中的平衡树}
 
-% 在 STL 中, 利用平衡树实现的容器是 \verb|std::set| 和
-% \verb|std::map|. 这里 \verb|set| 本身和 \verb|map| 中的 key 的要求都是
-% 不可重复, 这和课本中介绍的二叉树是一致的. 但其实 STL 中实现的不是 AVL
-% 树, 而是 Red-Black Tree, 红黑树. 在综合性能上, 红黑树要优于 AVL 树, 但
-% 基本操作更加复杂, 有兴趣的同学可以自己阅读课本第 12 章, 同样不做考试要
-% 求.
+在 STL 中, 利用平衡树实现的容器是 \verb|std::set| 和
+\verb|std::map|. 这里 \verb|set| 本身和 \verb|map| 中的 key 的要求都是
+不可重复, 这和课本中介绍的二叉树是一致的. 但其实 STL 中实现的不是 AVL
+树, 而是 Red-Black Tree, 红黑树. 在综合性能上, 红黑树要优于 AVL 树, 但
+基本操作更加复杂, 有兴趣的同学可以自己阅读课本第 12 章, 同样不做考试要
+求.
 
-% 大家在日常工作和学习中可以直接使用 STL 中的 \verb|set| 和 \verb|map|,
-% 注意它们的读 / 写性能都是 $\Theta(log N)$ 的.
+大家在日常工作和学习中可以直接使用 STL 中的 \verb|set| 和 \verb|map|,
+注意它们的读 / 写性能都是 $\Theta(log N)$ 的.
 
-% 在C++中, 虚函数是通过在基类中使用关键字 {\bfseries virtual} 声明的函数, 用于实现多态. 
-% 多态是指基类指针或引用可以指向其派生类对象, 并通过基类指针或引用调用实际指向的派生类中的函数. 
-% 这种行为称为多态. 多态允许我们对不同的对象执行相同的操作, 但是行为会根据对象的实际类型而变化.
-% 当一个函数被声明为虚函数后, 编译器就会在运行时来决定调用哪个类的函数, 这称为动态绑定或延迟绑定. 
+在C++中, 虚函数是通过在基类中使用关键字 {\bfseries virtual} 声明的函数, 用于实现多态. 
+多态是指基类指针或引用可以指向其派生类对象, 并通过基类指针或引用调用实际指向的派生类中的函数. 
+这种行为称为多态. 多态允许我们对不同的对象执行相同的操作, 但是行为会根据对象的实际类型而变化.
+当一个函数被声明为虚函数后, 编译器就会在运行时来决定调用哪个类的函数, 这称为动态绑定或延迟绑定. 
 
-% 下面是一个简单的例子来说明虚函数的使用:
-% \begin{lstlisting}[language=c++]
-%   #include<iostream>  
+下面是一个简单的例子来说明虚函数的使用:
+\begin{lstlisting}[language=c++]
+  #include<iostream>  
   
-%   class Base {  
-%   public:  
-%       virtual void show() { std::cout << "In Base \n"; }  
-%   };  
+  class Base {  
+  public:  
+      virtual void show() { std::cout << "In Base \n"; }  
+  };  
     
-%   class Derived: public Base {  
-%   public:  
-%       void show() { std::cout << "In Derived \n"; }  
-%   };  
+  class Derived: public Base {  
+  public:  
+      void show() { std::cout << "In Derived \n"; }  
+  };  
     
-%   int main(void) {   
-%       Base* bp = new Derived;  
-%       bp->show();  // 输出 "In Derived"  
-%       return 0;  
-%   }      
-% \end{lstlisting}
+  int main(void) {   
+      Base* bp = new Derived;  
+      bp->show();  // 输出 "In Derived"  
+      return 0;  
+  }      
+\end{lstlisting}
 
-% 在这个例子中, \verb|show()| 在基类 \verb|Base| 中被声明为虚函数. 
-% 在派生类 \verb|Derived| 中, 我们对 \verb|show()| 进行了重写. 在 \verb|main| 函数中, 
-% 我们创建了一个指向 \verb|Derived| 类对象的 \verb|Base| 类指针 \verb|bp|, 
-% 然后通过这个指针调用 \verb|show()| 函数. 虽然 \verb|bp| 是一个 \verb|Base| 类型的指针, 
-% 但是因为 \verb|show()| 函数是虚函数, 所以调用的是 \verb|Derived| 类的 \verb|show()| 函数, 
-% 而不是 \verb|Base| 类的. 这就是多态. 
+在这个例子中, \verb|show()| 在基类 \verb|Base| 中被声明为虚函数. 
+在派生类 \verb|Derived| 中, 我们对 \verb|show()| 进行了重写. 在 \verb|main| 函数中, 
+我们创建了一个指向 \verb|Derived| 类对象的 \verb|Base| 类指针 \verb|bp|, 
+然后通过这个指针调用 \verb|show()| 函数. 虽然 \verb|bp| 是一个 \verb|Base| 类型的指针, 
+但是因为 \verb|show()| 函数是虚函数, 所以调用的是 \verb|Derived| 类的 \verb|show()| 函数, 
+而不是 \verb|Base| 类的. 这就是多态. 
 
-% 需要注意的是, 如果一个类有虚函数, 那么这个类就会有一个虚函数表 (也叫 vtable). 
-% 虚函数表是一个存储类的虚函数地址的表. 每一个类对象都有一个指向虚函数表的指针. 这个指针会在运行时确定, 
-% 指向正确的虚函数表, 从而实现动态绑定. 
+需要注意的是, 如果一个类有虚函数, 那么这个类就会有一个虚函数表 (也叫 vtable). 
+虚函数表是一个存储类的虚函数地址的表. 每一个类对象都有一个指向虚函数表的指针. 这个指针会在运行时确定, 
+指向正确的虚函数表, 从而实现动态绑定. 
 
-% 在C++中, 纯虚函数是在基类中声明的虚函数, 它在基类中没有定义 (也就是说, 它没有函数体), 
-% 但要求任何派生类必须提供定义 (实现). 纯虚函数是通过在函数声明后添加 \verb|= 0| 来指定的. 
-% 包含纯虚函数的类被称为抽象类, 我们不能创建抽象类的对象.
+在C++中, 纯虚函数是在基类中声明的虚函数, 它在基类中没有定义 (也就是说, 它没有函数体), 
+但要求任何派生类必须提供定义 (实现). 纯虚函数是通过在函数声明后添加 \verb|= 0| 来指定的. 
+包含纯虚函数的类被称为抽象类, 我们不能创建抽象类的对象.
 
-% 纯虚函数主要用于实现接口或者抽象类. 在这些情况下, 基类定义了一个通用的接口, 派生类必须根据自己的具体情况来实现这个接口.
+纯虚函数主要用于实现接口或者抽象类. 在这些情况下, 基类定义了一个通用的接口, 派生类必须根据自己的具体情况来实现这个接口.
 
-% 下面是一个简单的例子:
+下面是一个简单的例子:
 
-% \begin{lstlisting}[language=c++]
-%   #include<iostream>
+\begin{lstlisting}[language=c++]
+  #include<iostream>
 
-%   class AbstractClass {
-%   public:
-%       virtual void pureVirtualFunction() = 0; // 纯虚函数
-%   };
+  class AbstractClass {
+  public:
+      virtual void pureVirtualFunction() = 0; // 纯虚函数
+  };
   
-%   class DerivedClass : public AbstractClass {
-%   public:
-%       void pureVirtualFunction() {
-%           std::cout << "Implementation of pure virtual function in derived class." << std::endl;
-%       }
-%   };
+  class DerivedClass : public AbstractClass {
+  public:
+      void pureVirtualFunction() {
+          std::cout << "Implementation of pure virtual function in derived class." << std::endl;
+      }
+  };
   
-%   int main() {
-%       // AbstractClass a; // 错误：不能创建抽象类的对象
-%       DerivedClass d; // 可以创建派生类的对象
-%       d.pureVirtualFunction(); // 调用派生类中实现的纯虚函数
-%       return 0;
-%   }    
-% \end{lstlisting}
+  int main() {
+      // AbstractClass a; // 错误：不能创建抽象类的对象
+      DerivedClass d; // 可以创建派生类的对象
+      d.pureVirtualFunction(); // 调用派生类中实现的纯虚函数
+      return 0;
+  }    
+\end{lstlisting}
 
-% 在这个例子中, \verb|AbstractClass| 是一个抽象类, 它有一个纯虚函数 \verb|pureVirtualFunction()|.
-% \verb|DerivedClass| 是从 \verb|AbstractClass| 派生出来的, 
-% 它实现了 \verb|pureVirtualFunction()|. 在 \verb|main| 函数中, 
-% 我们不能创建 \verb|AbstractClass| 的对象, 但是我们可以创建 \verb|DerivedClass| 的对象, 
-% 并调用其实现的 \verb|pureVirtualFunction()|.
+在这个例子中, \verb|AbstractClass| 是一个抽象类, 它有一个纯虚函数 \verb|pureVirtualFunction()|.
+\verb|DerivedClass| 是从 \verb|AbstractClass| 派生出来的, 
+它实现了 \verb|pureVirtualFunction()|. 在 \verb|main| 函数中, 
+我们不能创建 \verb|AbstractClass| 的对象, 但是我们可以创建 \verb|DerivedClass| 的对象, 
+并调用其实现的 \verb|pureVirtualFunction()|.
 
-% \subsection{C++ 的底层设计}
+\subsection{C++ 的底层设计}
 
-% 以下讨论, 参考了
+以下讨论, 参考了
 
-% Scott Meyers, Effective C++, 中译本, 侯捷译, 改善程序与设计的 55 个具体做法.
+Scott Meyers, Effective C++, 中译本, 侯捷译, 改善程序与设计的 55 个具体做法.
 
-% 第 6 章, 继承与面向对象.
+第 6 章, 继承与面向对象.
 
-% 我们假定大家经过一个月的学习, 已经初步掌握了 C++ 的基本语法和面向对象
-% 的基本理念. 那么接下去, 就是要尝试掌握 C++ 的设计原则, 并且将我们在数
-% 学和逻辑上的特长与之相结合. 这一方面要求我们不断地练习, 光看书是永远学
-% 不会 C++ 的, 你必须做点什么. 另一方面, 借鉴别人的经验, 特别是高手的经
-% 验永远是重要的. 侯捷作为一个资深程序员, 其品味和修养都很不错, 不论是他
-% 撰写的还是翻译的书, 都值得重视.
+我们假定大家经过一个月的学习, 已经初步掌握了 C++ 的基本语法和面向对象
+的基本理念. 那么接下去, 就是要尝试掌握 C++ 的设计原则, 并且将我们在数
+学和逻辑上的特长与之相结合. 这一方面要求我们不断地练习, 光看书是永远学
+不会 C++ 的, 你必须做点什么. 另一方面, 借鉴别人的经验, 特别是高手的经
+验永远是重要的. 侯捷作为一个资深程序员, 其品味和修养都很不错, 不论是他
+撰写的还是翻译的书, 都值得重视.
 
-% 今天我们直接进入这本书的第 32 条建议. 这条建议直指面向对象编程的核心概
-% 念: 公开继承.
+今天我们直接进入这本书的第 32 条建议. 这条建议直指面向对象编程的核心概
+念: 公开继承.
 
-% 从语法上说, 公开继承就是基于一个已经存在的类, 做一个派生:
+从语法上说, 公开继承就是基于一个已经存在的类, 做一个派生:
 
-% \begin{lstlisting}[language=C++]
-% class C1 {...};
+\begin{lstlisting}[language=C++]
+class C1 {...};
 
-% class C2 : public C1
-% {
-%   ...
-% };
-% \end{lstlisting}
+class C2 : public C1
+{
+  ...
+};
+\end{lstlisting}
 
-% 但 C++ 从来不是一门编程语言, 而是一个逻辑系统. 这里作者强调的是, 当你
-% 写下这句话的时候, 你本质上在声明: C2 is a C1. 如果这个逻辑不对, 即便你
-% 的语法是对的, 你的设计也是错误的.
+但 C++ 从来不是一门编程语言, 而是一个逻辑系统. 这里作者强调的是, 当你
+写下这句话的时候, 你本质上在声明: C2 is a C1. 如果这个逻辑不对, 即便你
+的语法是对的, 你的设计也是错误的.
 
-% 比如, 我们可以有一个类叫 \verb|student|, 然后从这个类派生出一个类
-% \verb|undergraduate|. 这样你其实是在声明: \verb|undergraduate| is a
-% \verb|student|. 本科生是一种学生.
+比如, 我们可以有一个类叫 \verb|student|, 然后从这个类派生出一个类
+\verb|undergraduate|. 这样你其实是在声明: \verb|undergraduate| is a
+\verb|student|. 本科生是一种学生.
 
-% 然后你注意到本科生和研究生都有学号, 都有 gpa, 都有专业, 都有入学, 毕业,
-% 退学等操作. 于是你从代码重用的角度, 说不如把研究生类从本科生类派生出来吧? 也就是
+然后你注意到本科生和研究生都有学号, 都有 gpa, 都有专业, 都有入学, 毕业,
+退学等操作. 于是你从代码重用的角度, 说不如把研究生类从本科生类派生出来吧? 也就是
 
-% \begin{lstlisting}[language=C++]
-% class UndergaduateStudent
-% {
-% private:
-%   int ID;
-%   string name;
-%   ...
-% public:
-%   void enrol();
-%   void graduate();
-%   ...
-% } 
+\begin{lstlisting}[language=C++]
+class UndergaduateStudent
+{
+private:
+  int ID;
+  string name;
+  ...
+public:
+  void enrol();
+  void graduate();
+  ...
+} 
   
-% class GraduateStudent : public UndergaduateStudent
-% {
-%   ...
-% };
-% \end{lstlisting}
+class GraduateStudent : public UndergaduateStudent
+{
+  ...
+};
+\end{lstlisting}
 
-% 这个做法从语法上看毫无问题, 但从逻辑上大错特错. 因为这个设计从逻辑上在
-% 声明研究生是本科生的一类, 但实际情况不是如此. 因此这个设计会在某个时候
-% 引发不可收拾的逻辑混乱. 比如某一天本科生增加了一个函数叫"体测", 而这个
-% 动作默认也会施加到研究生类中, 这种混乱导致所谓的代码重用, 根本上是临时
-% 的, 不可持续的. 因此相关的设计也无法日积月累, 最后形成规模化的软件库.
+这个做法从语法上看毫无问题, 但从逻辑上大错特错. 因为这个设计从逻辑上在
+声明研究生是本科生的一类, 但实际情况不是如此. 因此这个设计会在某个时候
+引发不可收拾的逻辑混乱. 比如某一天本科生增加了一个函数叫"体测", 而这个
+动作默认也会施加到研究生类中, 这种混乱导致所谓的代码重用, 根本上是临时
+的, 不可持续的. 因此相关的设计也无法日积月累, 最后形成规模化的软件库.
 
-% 那么如何才能让我们的设计和代码是有生命的, 可以积累并且增长的? 回答是必
-% 须符合逻辑. 这种逻辑以数理逻辑为基础, 并且从自然和社会中获得经验和灵感.
+那么如何才能让我们的设计和代码是有生命的, 可以积累并且增长的? 回答是必
+须符合逻辑. 这种逻辑以数理逻辑为基础, 并且从自然和社会中获得经验和灵感.
 
-% 比如, 如果我们要写一个类, 北京鸭, 那么一个可以考虑的基类是鸭子, 再之上
-% 是鸟类, 再之上是动物. 这样如果我们需要将对象扩展到南京鸭, 那么显然我们
-% 只需要从鸭子派生, 从而不用构建全部鸭子所共有的属性和功能, 而可以把精力
-% 放在北京鸭和南京鸭上, 比如一个适合烤, 另一个适合蒸. 这才是真正的代码重
-% 用.
+比如, 如果我们要写一个类, 北京鸭, 那么一个可以考虑的基类是鸭子, 再之上
+是鸟类, 再之上是动物. 这样如果我们需要将对象扩展到南京鸭, 那么显然我们
+只需要从鸭子派生, 从而不用构建全部鸭子所共有的属性和功能, 而可以把精力
+放在北京鸭和南京鸭上, 比如一个适合烤, 另一个适合蒸. 这才是真正的代码重
+用.
 
-% 所以我们之前的研究生和本科生的设计, 正确的做法是构建基类学生, 然后从学
-% 生类派生出本科生和研究生. 对于本科生和研究生中重复的属性和功能, 我们应
-% 该定义到学生类去.
+所以我们之前的研究生和本科生的设计, 正确的做法是构建基类学生, 然后从学
+生类派生出本科生和研究生. 对于本科生和研究生中重复的属性和功能, 我们应
+该定义到学生类去.
 
-% 第 32 条还提出了一个问题, 日常的直觉有时会误导你. 比如它举了一个例子是
-% 正方形是否应该被认为是矩形的派生? 从几何的直觉和逻辑直觉都告诉你, 正方
-% 形 is-a 矩形. 因此这样的派生不会有问题. 但实际上, 当你产生一个叫矩形的
-% 类, 且真的去实际产生一些矩形对象时, 你就会产生一些针对矩形的实际功能需
-% 求. 比如我们有时希望改变矩形的面积, 而这一点在矩形中, 可以通过固定宽,
-% 改变长做到. 但由于正方形继承了矩形, 结果就导致正方形也获得了通过固定宽,
-% 改变长去改变面积的功能. 而这一点直接违背了正方形的定义. 所以这里逻辑上
-% 是存在隐患的. 当然我们可以重载正方形的改变面积函数做到这一点, 但这就依
-% 赖程序员的仔细, 而且会要求一个写正方形的程序员, 去考虑矩形的书写逻辑.
-% 这种额外的要求, 当软件增长时, 也会是一个额外的, 甚至不收敛的负担. 所以
-% 一个基类和派生类的关系应该是: 凡基类能做的事, 派生类都能做.  从这个角
-% 度考虑, 显然正方形从矩形类派生就有问题了. 正确的做法仍然是二者共同从一
-% 个基类, 比如四边形派生, 然后矩形和正方形可以有不同的改变面积版本.
+第 32 条还提出了一个问题, 日常的直觉有时会误导你. 比如它举了一个例子是
+正方形是否应该被认为是矩形的派生? 从几何的直觉和逻辑直觉都告诉你, 正方
+形 is-a 矩形. 因此这样的派生不会有问题. 但实际上, 当你产生一个叫矩形的
+类, 且真的去实际产生一些矩形对象时, 你就会产生一些针对矩形的实际功能需
+求. 比如我们有时希望改变矩形的面积, 而这一点在矩形中, 可以通过固定宽,
+改变长做到. 但由于正方形继承了矩形, 结果就导致正方形也获得了通过固定宽,
+改变长去改变面积的功能. 而这一点直接违背了正方形的定义. 所以这里逻辑上
+是存在隐患的. 当然我们可以重载正方形的改变面积函数做到这一点, 但这就依
+赖程序员的仔细, 而且会要求一个写正方形的程序员, 去考虑矩形的书写逻辑.
+这种额外的要求, 当软件增长时, 也会是一个额外的, 甚至不收敛的负担. 所以
+一个基类和派生类的关系应该是: 凡基类能做的事, 派生类都能做.  从这个角
+度考虑, 显然正方形从矩形类派生就有问题了. 正确的做法仍然是二者共同从一
+个基类, 比如四边形派生, 然后矩形和正方形可以有不同的改变面积版本.
 
-% 这种逻辑的一种极致行为, 就是抽象类. 本质上, 学生, 鸭子都是一种抽象概念,
-% 我们的具体学生都是分本科生和研究生的, 鸭子也都是北京鸭和南京鸭, 学生和
-% 鸭子本身就是共性的体现. 如果我们不允许学生和鸭子直接实体化, 任何一个学
-% 生, 都必须先区分是本科生还是研究生, 再实体化, 任何一个鸭子, 都必须区分
-% 是那一种具体品种, 再实体化, 那么我们就可以从逻辑上避免, 从矩形继承出正
-% 方形这种情况. 
+这种逻辑的一种极致行为, 就是抽象类. 本质上, 学生, 鸭子都是一种抽象概念,
+我们的具体学生都是分本科生和研究生的, 鸭子也都是北京鸭和南京鸭, 学生和
+鸭子本身就是共性的体现. 如果我们不允许学生和鸭子直接实体化, 任何一个学
+生, 都必须先区分是本科生还是研究生, 再实体化, 任何一个鸭子, 都必须区分
+是那一种具体品种, 再实体化, 那么我们就可以从逻辑上避免, 从矩形继承出正
+方形这种情况. 
 
-% 在实际工作中, 往往没有这么简单. 比如现在来考虑我们学习过的数据结构, 是
-% 否可以在这种理念下, 进一步合理化.
+在实际工作中, 往往没有这么简单. 比如现在来考虑我们学习过的数据结构, 是
+否可以在这种理念下, 进一步合理化.
 
-% 最简单的: \verb|SingleLinkedList| 和 \verb|DoubleLinkedList|, 彼此间应
-% 该互相继承么? 谁继承谁?
+最简单的: \verb|SingleLinkedList| 和 \verb|DoubleLinkedList|, 彼此间应
+该互相继承么? 谁继承谁?
 
-% 按照上面的逻辑, 单链表 is-not-a 双链表, 双链表也 is-not-a 单链表. 尽管
-% 它们有大量的操作是重复的. 这里逻辑清晰和代码重用之间, 要构建一个合理的
-% 平衡. 作为一个设计师, 这个时候应该体现你的风格和理念. 而不是严格遵循一
-% 个刻板的模式. 
+按照上面的逻辑, 单链表 is-not-a 双链表, 双链表也 is-not-a 单链表. 尽管
+它们有大量的操作是重复的. 这里逻辑清晰和代码重用之间, 要构建一个合理的
+平衡. 作为一个设计师, 这个时候应该体现你的风格和理念. 而不是严格遵循一
+个刻板的模式. 
 
-% 一个有逻辑强迫症的设计师, 可能会选择一个抽象的链表类, 然后所有有实际功
-% 能的链表, 都继承这个类.
+一个有逻辑强迫症的设计师, 可能会选择一个抽象的链表类, 然后所有有实际功
+能的链表, 都继承这个类.
 
-% 一个比较实用主义的(懒惰)设计师, 会声称, 所有单链表的功能, 都可以用双链表完成,
-% 只是浪费了 $\Theta(N)$ 的空间而已. 因此他只实现了双链表. 就像 STL 这样.
+一个比较实用主义的(懒惰)设计师, 会声称, 所有单链表的功能, 都可以用双链表完成,
+只是浪费了 $\Theta(N)$ 的空间而已. 因此他只实现了双链表. 就像 STL 这样.
 
-% 这里其实还有一个更琐碎的问题, 单链表和双链表的一个本质区别是节点的结构
-% 不一样. 那么节点应该互相继承么?
+这里其实还有一个更琐碎的问题, 单链表和双链表的一个本质区别是节点的结构
+不一样. 那么节点应该互相继承么?
 
-% 一个典型的单链表节点设计:
+一个典型的单链表节点设计:
 
-% \begin{lstlisting}[language=C++]
-% template<typename DT>
-% class SingleNode
-% {
-% private:
-%     DT element;
-%     SingleNode* next;
-% public:
-%     DT getElemnt() const {return element;}
-%     void setElement(DT _val) {element = _val;}
-%     SingleNode* getNext() const {return next;}
-%     void setNext(SingleNode* _nt) {next = _nt;} 
-% };
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+template<typename DT>
+class SingleNode
+{
+private:
+    DT element;
+    SingleNode* next;
+public:
+    DT getElemnt() const {return element;}
+    void setElement(DT _val) {element = _val;}
+    SingleNode* getNext() const {return next;}
+    void setNext(SingleNode* _nt) {next = _nt;} 
+};
+\end{lstlisting}
 
-% 一个典型的双链表节点设计:
+一个典型的双链表节点设计:
 
-% \begin{lstlisting}[language=C++]
-% template<typename DT>
-% class DoubleNode
-% {
-% private:
-%     DT element;
-%     DoubleNode* next;
-%     DoubleNode* previous;
-% public:
-%     DT getElemnt() const {return element;}
-%     DoubleNode* getNext() const {return next;}
-%     DoubleNode* getPrevious() const {return previous;}
-%     void setElement(DT _val) {element = _val;}
-%     void setNext(DoubleNode* _nt) {next = _nt;}
-%     void setPrevious(DoubleNode* _pv) {previous = _pv;}
-% };
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+template<typename DT>
+class DoubleNode
+{
+private:
+    DT element;
+    DoubleNode* next;
+    DoubleNode* previous;
+public:
+    DT getElemnt() const {return element;}
+    DoubleNode* getNext() const {return next;}
+    DoubleNode* getPrevious() const {return previous;}
+    void setElement(DT _val) {element = _val;}
+    void setNext(DoubleNode* _nt) {next = _nt;}
+    void setPrevious(DoubleNode* _pv) {previous = _pv;}
+};
+\end{lstlisting}
 
-% 粗看上去, 它们有大量的结构和代码似乎是重复的, 但是它们二者之间如果出现
-% 继承关系是非常危险的. 比如说双链表节点继承了单链表节点, 从而节省了一个
-% 方向的操作. 但是这也意味着, 增加了在一个双链表中塞进去一个单链表节点错
-% 误的可能. 或者在一个单链表中塞进去一个双链表节点, 而后面的错误甚至不会
-% 被发现, 会一直运行下去. 
+粗看上去, 它们有大量的结构和代码似乎是重复的, 但是它们二者之间如果出现
+继承关系是非常危险的. 比如说双链表节点继承了单链表节点, 从而节省了一个
+方向的操作. 但是这也意味着, 增加了在一个双链表中塞进去一个单链表节点错
+误的可能. 或者在一个单链表中塞进去一个双链表节点, 而后面的错误甚至不会
+被发现, 会一直运行下去. 
 
-% 所以一个安全的做法是分别独立构建二者. 或者, 如果一定要强调二者都是节点
-% 这个逻辑, 那么可以构建一个抽象的节点类. 然后二者都从节点类派生. 那么抽
-% 象的节点类应该具有何种属性和操作呢? 首先我们排除所有指针型类型, 那么剩
-% 下的就只有 \verb|element| 了, 而纯虚函数就只剩 \verb|getElemnt| 和
-% \verb|setElement|.
+所以一个安全的做法是分别独立构建二者. 或者, 如果一定要强调二者都是节点
+这个逻辑, 那么可以构建一个抽象的节点类. 然后二者都从节点类派生. 那么抽
+象的节点类应该具有何种属性和操作呢? 首先我们排除所有指针型类型, 那么剩
+下的就只有 \verb|element| 了, 而纯虚函数就只剩 \verb|getElemnt| 和
+\verb|setElement|.
 
-% \begin{lstlisting}[language=C++]
-% template<typename DT>
-% class Node
-% {
-% private:
-%     DT element;
-% public:
-%     virtual DT getElemnt() const {return element;}
-%     virtual void setElemnt(DT _val) {element = _val;}
-%     Node(DT _val) {element = _val;}
-% };
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+template<typename DT>
+class Node
+{
+private:
+    DT element;
+public:
+    virtual DT getElemnt() const {return element;}
+    virtual void setElemnt(DT _val) {element = _val;}
+    Node(DT _val) {element = _val;}
+};
+\end{lstlisting}
 
-% 而这个节点的抽象定义, 甚至可以涵盖树和图. 我们的逻辑声明其实是: 凡是节
-% 点, 都必须存储数据. 怎么索引节点, 则不是节点最本质的内容. 仔细考虑一下,
-% 这种设计也许的确是合适的.
+而这个节点的抽象定义, 甚至可以涵盖树和图. 我们的逻辑声明其实是: 凡是节
+点, 都必须存储数据. 怎么索引节点, 则不是节点最本质的内容. 仔细考虑一下,
+这种设计也许的确是合适的.
 
-% 现在再来考虑, 什么是抽象意义上的链表. 这里我们给一个例子:
+现在再来考虑, 什么是抽象意义上的链表. 这里我们给一个例子:
 
-% \begin{lstlisting}[language=C++]
-% template<typename DT>
-% class List
-% {
-% public:
-%     virtual void insert(DT _val) = 0;
-%     virtual void remove(DT _val) = 0;
-% };
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+template<typename DT>
+class List
+{
+public:
+    virtual void insert(DT _val) = 0;
+    virtual void remove(DT _val) = 0;
+};
+\end{lstlisting}
 
-% 注意这不是最好的设计, 只是体现设计思想的一个例子. 这里的逻辑是: 设计者
-% 认为, 凡是链表, 都必须有插入和删除两个操作. 一个链表的设计当然不需要如
-% 此严谨, 但这里只是体现这样一种潜在的可能性, 这种设计可以用在更加复杂的
-% 结构中, 比如一个泛函空间, 或者一个高维的流形. 别以为这些数学概念不会出
-% 现在工业生产中, 在诸如流体计算等尖端领域, 就需要这种结构, 而到那时, 严
-% 格的数学逻辑几乎是确保你不会在概念迷宫中迷路的唯一保证.
+注意这不是最好的设计, 只是体现设计思想的一个例子. 这里的逻辑是: 设计者
+认为, 凡是链表, 都必须有插入和删除两个操作. 一个链表的设计当然不需要如
+此严谨, 但这里只是体现这样一种潜在的可能性, 这种设计可以用在更加复杂的
+结构中, 比如一个泛函空间, 或者一个高维的流形. 别以为这些数学概念不会出
+现在工业生产中, 在诸如流体计算等尖端领域, 就需要这种结构, 而到那时, 严
+格的数学逻辑几乎是确保你不会在概念迷宫中迷路的唯一保证.
 
-% 以上是链表的抽象类, 现在来构建具体的单链表和双链表类. 先看单链表类:
+以上是链表的抽象类, 现在来构建具体的单链表和双链表类. 先看单链表类:
 
-% \begin{lstlisting}[language=C++]
-% template<typename DT>
-% class SingleList : public List<DT>
-% {
-% private:
-%     class SingleNode : public Node<DT>
-%     {
-%     private:
-% 	SingleNode* next;
-%     public:
-% 	virtual SingleNode* getNext() const
-% 	{
-% 	    return next;
-% 	}
-% 	virtual void setNext(SingleNode* _nt)
-% 	{
-% 	    next = _nt;
-% 	}
-% 	SingleNode(DT _val) : Node<DT>(_val) {next = nullptr;}
-%     };
-%     SingleNode* head = nullptr;
-%     SingleNode* currentPosition = nullptr;
-%     ...
-% };
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+template<typename DT>
+class SingleList : public List<DT>
+{
+private:
+    class SingleNode : public Node<DT>
+    {
+    private:
+	SingleNode* next;
+    public:
+	virtual SingleNode* getNext() const
+	{
+	    return next;
+	}
+	virtual void setNext(SingleNode* _nt)
+	{
+	    next = _nt;
+	}
+	SingleNode(DT _val) : Node<DT>(_val) {next = nullptr;}
+    };
+    SingleNode* head = nullptr;
+    SingleNode* currentPosition = nullptr;
+    ...
+};
+\end{lstlisting}
 
-% 我们在类模板的声明中直接定义了 \verb|SingleNode|, 它是 \verb|Node| 抽
-% 象类的派生, 体现了: \verb|SingleNode| is-a \verb|Node| 的基本逻辑. 而
-% \verb|SingleList| 类则从 \verb|List| 类派生, 体现了: \verb|SingleList|
-% is-a \verb|List| 的逻辑. 这里注意模板类的使用方式. 或者问: 为何
-% \verb|SingleNode| 不是一个模板? \verb|SingleNode| 依附于
-% \verb|SingleList<DT>|, 事实上 \verb|SingleList<DT>| 的抽象类型
-% \verb|DT| 就是节点的抽象类型, 而节点的抽象类型就是节点的
-% \verb|element| 的类型, 而 \verb|element| 的类型是交给基类模板
-% \verb|Node<DT>| 去管理的. 所有的 \verb|DT| 都必须是同一个类型, 因此不
-% 能再有独立的模板定义. 
+我们在类模板的声明中直接定义了 \verb|SingleNode|, 它是 \verb|Node| 抽
+象类的派生, 体现了: \verb|SingleNode| is-a \verb|Node| 的基本逻辑. 而
+\verb|SingleList| 类则从 \verb|List| 类派生, 体现了: \verb|SingleList|
+is-a \verb|List| 的逻辑. 这里注意模板类的使用方式. 或者问: 为何
+\verb|SingleNode| 不是一个模板? \verb|SingleNode| 依附于
+\verb|SingleList<DT>|, 事实上 \verb|SingleList<DT>| 的抽象类型
+\verb|DT| 就是节点的抽象类型, 而节点的抽象类型就是节点的
+\verb|element| 的类型, 而 \verb|element| 的类型是交给基类模板
+\verb|Node<DT>| 去管理的. 所有的 \verb|DT| 都必须是同一个类型, 因此不
+能再有独立的模板定义. 
 
-% 还有两个语法细节是: 首先
-% \begin{verbatim}
-% SingleNode(DT _val) : Node<DT>(_val) {next = nullptr;}
-% \end{verbatim}
+还有两个语法细节是: 首先
+\begin{verbatim}
+SingleNode(DT _val) : Node<DT>(_val) {next = nullptr;}
+\end{verbatim}
 
-% 派生类的构造函数是建立在基类的构造函数基础之上的. 这里 \verb|_val| 交
-% 给 \verb|element| 是在基类构造上完成的(哪怕它的基类是抽象类), 而派生类
-% 生成完基类部分后真正做的事是设置 \verb|next|, 这也是体现这个派生类本质
-% 的事情.
+派生类的构造函数是建立在基类的构造函数基础之上的. 这里 \verb|_val| 交
+给 \verb|element| 是在基类构造上完成的(哪怕它的基类是抽象类), 而派生类
+生成完基类部分后真正做的事是设置 \verb|next|, 这也是体现这个派生类本质
+的事情.
 
-% 其次, \verb|currentPosition| 是一个派生类的功能性定义. 我们课本上, 是
-% 通过一整套迭代器 (iterator) 来定位具体元素位置的, 这里我们搞的简单一点,
-% 所有动态操作都围绕一个定位指针进行. 因为这是非常细节和具体的功能, 因此
-% 出现在具体派生类的定义中是合适的. 
+其次, \verb|currentPosition| 是一个派生类的功能性定义. 我们课本上, 是
+通过一整套迭代器 (iterator) 来定位具体元素位置的, 这里我们搞的简单一点,
+所有动态操作都围绕一个定位指针进行. 因为这是非常细节和具体的功能, 因此
+出现在具体派生类的定义中是合适的. 
 
-% 到这里我们会发现, 其实逻辑结构的设计和定义, 都是清晰, 简单和直接的. 如
-% 果你的不论是抽象基类过于复杂, 还是派生类过于复杂, 可能不仅仅是丑陋, 而
-% 且意味着逻辑混乱.
+到这里我们会发现, 其实逻辑结构的设计和定义, 都是清晰, 简单和直接的. 如
+果你的不论是抽象基类过于复杂, 还是派生类过于复杂, 可能不仅仅是丑陋, 而
+且意味着逻辑混乱.
 
-% 因为这只是演示设计思路的代码, 我们这里只给了简单的析构函数, 构造函数直接采用缺省:
-% \begin{lstlisting}[language=C++]
-%     ~SingleList()
-%     {
-% 	while (head != nullptr)
-% 	{
-% 	    SingleNode* t = head;
-% 	    head = head->getNext();
-% 	    delete t;
-% 	}
-%     }
-% \end{lstlisting}
+因为这只是演示设计思路的代码, 我们这里只给了简单的析构函数, 构造函数直接采用缺省:
+\begin{lstlisting}[language=C++]
+    ~SingleList()
+    {
+	while (head != nullptr)
+	{
+	    SingleNode* t = head;
+	    head = head->getNext();
+	    delete t;
+	}
+    }
+\end{lstlisting}
 
-% 抽象函数只能规定一个操作的必要性, 无法(也不应该)控制其具体实现和功能细
-% 节. 所以我们这里 \verb|insert| 采取了一种奇怪的规则: 将新元素插入当前
-% 位置的下一个位置, 当前位置不动. 如果是空链表, 则产生一个新节点, 头指针
-% 和当前位置都指向新节点. 
+抽象函数只能规定一个操作的必要性, 无法(也不应该)控制其具体实现和功能细
+节. 所以我们这里 \verb|insert| 采取了一种奇怪的规则: 将新元素插入当前
+位置的下一个位置, 当前位置不动. 如果是空链表, 则产生一个新节点, 头指针
+和当前位置都指向新节点. 
 
-% 而体现具体派生类的具体函数实现, 则自然会复杂一些, 但 \verb|insert| 也还好:
+而体现具体派生类的具体函数实现, 则自然会复杂一些, 但 \verb|insert| 也还好:
 
-% \begin{lstlisting}[language=C++]
-% bvirtual void insert(DT _val)
-% {
-%     SingleNode* newNode = new SingleNode {_val};
-%     if (head == nullptr)
-%         head = currentPosition = newNode;
-%     else
-%     {
-%         newNode->setNext(currentPosition->getNext());
-% 	currentPosition->setNext(newNode);
-%     }
-% };
-% \end{lstlisting}
+\begin{lstlisting}[language=C++]
+bvirtual void insert(DT _val)
+{
+    SingleNode* newNode = new SingleNode {_val};
+    if (head == nullptr)
+        head = currentPosition = newNode;
+    else
+    {
+        newNode->setNext(currentPosition->getNext());
+	currentPosition->setNext(newNode);
+    }
+};
+\end{lstlisting}
 
-% 而 \verb|remove| 这么复杂的原因是, 我们总是从 \verb|currentPosition|
-% 开始, 遍历并寻找需要删除的节点, 如果找到结尾没有找到, 则返回头部继续找,
-% 直到找到一圈还没有找到, 就什么也不做. 在上述过程中, 删除找到的第一个匹
-% 配的节点. 如果删除的节点不是 \verb|currentPosition|, 则
-% \verb|currentPosition| 不动, 否则 \verb|currentPosition| 变成当前
-% \verb|currentPosition| 的下一个位置. 这个 \verb|remove| 从设计角度看,
-% 毫无意义.
+而 \verb|remove| 这么复杂的原因是, 我们总是从 \verb|currentPosition|
+开始, 遍历并寻找需要删除的节点, 如果找到结尾没有找到, 则返回头部继续找,
+直到找到一圈还没有找到, 就什么也不做. 在上述过程中, 删除找到的第一个匹
+配的节点. 如果删除的节点不是 \verb|currentPosition|, 则
+\verb|currentPosition| 不动, 否则 \verb|currentPosition| 变成当前
+\verb|currentPosition| 的下一个位置. 这个 \verb|remove| 从设计角度看,
+毫无意义.
 
-% 现在我们再来看双链表的设计:
-% \begin{lstlisting}[language=C++]
-% template<typename DT>
-% class DoubleList : public List<DT>
-% {
-% private:
-%     class DoubleNode : public Node<DT>
-%     {
-%     private:
-% 	DoubleNode* next;
-% 	DoubleNode* previous;
-%     public:
-% 	virtual DoubleNode* getNext() const
-% 	{
-% 	    return next;
-% 	}
-% 	virtual DoubleNode* getPrevious() const
-% 	{
-% 	    return previous;
-% 	}
-% 	virtual void setNext(DoubleNode* _nt)
-% 	{
-% 	    next = _nt;
-% 	}
-% 	virtual void setPrevious(DoubleNode* _pv)
-% 	{
-% 	    previous = _pv;
-% 	}
+现在我们再来看双链表的设计:
+\begin{lstlisting}[language=C++]
+template<typename DT>
+class DoubleList : public List<DT>
+{
+private:
+    class DoubleNode : public Node<DT>
+    {
+    private:
+	DoubleNode* next;
+	DoubleNode* previous;
+    public:
+	virtual DoubleNode* getNext() const
+	{
+	    return next;
+	}
+	virtual DoubleNode* getPrevious() const
+	{
+	    return previous;
+	}
+	virtual void setNext(DoubleNode* _nt)
+	{
+	    next = _nt;
+	}
+	virtual void setPrevious(DoubleNode* _pv)
+	{
+	    previous = _pv;
+	}
 		
-% 	DoubleNode(DT _val) : Node<DT>(_val)
-% 	{
-% 	    next = nullptr;
-% 	    previous = nullptr;
-% 	}
-%     };
-%     DoubleNode* head = nullptr;
-%     DoubleNode* currentPosition = nullptr;
-%     ...
-% }
-% \end{lstlisting}
+	DoubleNode(DT _val) : Node<DT>(_val)
+	{
+	    next = nullptr;
+	    previous = nullptr;
+	}
+    };
+    DoubleNode* head = nullptr;
+    DoubleNode* currentPosition = nullptr;
+    ...
+}
+\end{lstlisting}
 
-% 这个类和 \verb|SingleList| 类一样, 从 \verb|List<DT>| 类派生, 它的节点
-% 也从 \verb|Node<DT>| 抽象类派生. 它的 \verb|insert| 和 \verb|remove| 和 \verb|SingleList| 的情形
+这个类和 \verb|SingleList| 类一样, 从 \verb|List<DT>| 类派生, 它的节点
+也从 \verb|Node<DT>| 抽象类派生. 它的 \verb|insert| 和 \verb|remove| 和 \verb|SingleList| 的情形
 
-% 我们现在有: verb|BnaryTree|,
-% verb|BinarySearchTree|, \verb|AvlTree|, \verb|SplayTree|.
+我们现在有: verb|BnaryTree|,
+verb|BinarySearchTree|, \verb|AvlTree|, \verb|SplayTree|.
 
-% 让我们来看看, 应该怎样理清它们的逻辑关系.
+让我们来看看, 应该怎样理清它们的逻辑关系.
 
-% 乍一看似乎并不复杂, \verb|AvlTree|, \verb|SplayTree| 都是一种二叉搜索
-% 树, 而 verb|BinarySearchTree| 是一种二叉树. 所以从 verb|BinaryTree| 派
-% 生出 \verb|BinarySearchTree|, 再从 \verb|BinarySearchTree| 派生出
-% \verb|AvlTree|, \verb|SplayTree|. 但稍微一想, 就会有问题,
-% \verb|rotate| 这个操作, 在哪个类实现好?
+乍一看似乎并不复杂, \verb|AvlTree|, \verb|SplayTree| 都是一种二叉搜索
+树, 而 verb|BinarySearchTree| 是一种二叉树. 所以从 verb|BinaryTree| 派
+生出 \verb|BinarySearchTree|, 再从 \verb|BinarySearchTree| 派生出
+\verb|AvlTree|, \verb|SplayTree|. 但稍微一想, 就会有问题,
+\verb|rotate| 这个操作, 在哪个类实现好?
 
-% 显然 \verb|AvlTree| 和 \verb|SplayTree| 都要用到它, 于是这个操作放在
-% \verb|BinarySearchTree| 中? 但这个设计就很迷, 因为单纯的二叉树并不需要
-% 这个操作, 我们不能要求程序员如此高瞻远瞩. 另外, 二叉树还有很多用法, 比
-% 如表达式树, 如果我们把旋转放到了二叉树基类, 于是另一个毫无关系的表达式
-% 树就突然多了一个莫名其妙的操作.
+显然 \verb|AvlTree| 和 \verb|SplayTree| 都要用到它, 于是这个操作放在
+\verb|BinarySearchTree| 中? 但这个设计就很迷, 因为单纯的二叉树并不需要
+这个操作, 我们不能要求程序员如此高瞻远瞩. 另外, 二叉树还有很多用法, 比
+如表达式树, 如果我们把旋转放到了二叉树基类, 于是另一个毫无关系的表达式
+树就突然多了一个莫名其妙的操作.
 
-% 一个可以考虑的设计是, 抽象二叉树类, 问: 到底什么才是二叉树的本质操作?
+一个可以考虑的设计是, 抽象二叉树类, 问: 到底什么才是二叉树的本质操作?
 
-% 我个人认为是三种遍历: 前序遍历, 中序遍历和后续遍历. 其余功能可以不问.
-% 所以我们就可以把这三种操作, 作为二叉树抽象类的纯虚函数. 然后从二叉树类
-% 派生出 AVL 树, Splay 树.
+我个人认为是三种遍历: 前序遍历, 中序遍历和后续遍历. 其余功能可以不问.
+所以我们就可以把这三种操作, 作为二叉树抽象类的纯虚函数. 然后从二叉树类
+派生出 AVL 树, Splay 树.
 
 
-% \section{散列表}
+\section{散列表}
 
-% 我们已经学习了平衡树, 这是一种能使我们的全部操作都保持 $\Theta(\log
-% n)$ 效率的数据结构(最坏情形或平摊情形). 在这个基础上, 一个显然的问题
-% 是: 我们还能效率再高一点么? 比如: 对所有操作, 其最坏情形或者至少平摊情
-% 形是 $\Theta(1)$ ? 那就意味着任何一个单步操作, 不论是查找, 插入还是删
-% 除, 都只需要常数时间, 或者说, 其操作时间和数据集本身的大小无关. 当数据
-% 规模趋于无穷时(或充分大时), 这些基本操作所需的时间不变. 直觉告诉我们,
-% 即便对平摊情形, 这也是不可能的. 但是, 我们能否在一些具体的限制条件下
-% (比如数据总量是有确定上界的, 而且这个上界不会导致我们系统的内存溢出),
-% 在部分基本操作上(比如至少查找, 插入和删除这三个最基本操作), 满足单个操
-% 作是 $\Theta(1)$ 的效率? 我们这一章给出一种数据结构, 来逼近这一要求.
-% 之所以说逼近, 是因为在实际操作中, 你必须比较小心各种限制, 才能真正实现
-% 这个目的.
+我们已经学习了平衡树, 这是一种能使我们的全部操作都保持 $\Theta(\log
+n)$ 效率的数据结构(最坏情形或平摊情形). 在这个基础上, 一个显然的问题
+是: 我们还能效率再高一点么? 比如: 对所有操作, 其最坏情形或者至少平摊情
+形是 $\Theta(1)$ ? 那就意味着任何一个单步操作, 不论是查找, 插入还是删
+除, 都只需要常数时间, 或者说, 其操作时间和数据集本身的大小无关. 当数据
+规模趋于无穷时(或充分大时), 这些基本操作所需的时间不变. 直觉告诉我们,
+即便对平摊情形, 这也是不可能的. 但是, 我们能否在一些具体的限制条件下
+(比如数据总量是有确定上界的, 而且这个上界不会导致我们系统的内存溢出),
+在部分基本操作上(比如至少查找, 插入和删除这三个最基本操作), 满足单个操
+作是 $\Theta(1)$ 的效率? 我们这一章给出一种数据结构, 来逼近这一要求.
+之所以说逼近, 是因为在实际操作中, 你必须比较小心各种限制, 才能真正实现
+这个目的.
+
+在第4章中，我们讨论了搜索树 ADT，它允许对一组元素进行各种操作。在本章中，我们讨论散列表 ADT，它只支持二叉搜索树所允许的操作的一个子集。
+
+散列表的实现通常称为哈希。哈希是一种用于执行插入、删除和查找的技术，平均时间复杂度为常数。需要对元素进行排序的操作效率不高。
+因此，诸如 \verb|findMin|、\verb|findMax| 以及在线性时间内按排序顺序打印整个表的操作是不支持的。
+
+本章的核心数据结构是散列表。我们将...
+
+\begin{itemize}
+    \item 看到几种实现散列表的方法。
+    \item 从分析的角度比较这些方法。
+    \item 展示哈希的多种应用。
+    \item 比较散列表与二叉搜索树。
+\end{itemize}
+
+\subsection{总体概念}
+% 5.1
+
+理想的散列表数据结构仅仅是一个包含项的固定大小的数组。如第4章所讨论的，通常在项的某个部分（即数据成员）上执行搜索。
+这被称为键。例如，一个项可能由一个字符串（作为键）和附加的数据成员组成（例如，一个名字是大型员工结构的一部分）。
+我们将表的大小称为 \texttt{TableSize}，理解这是哈希数据结构的一部分，而不仅仅是一些全局浮动的变量。
+通常的约定是让表从 0 到 \texttt{TableSize-1} 运行；我们很快就会看到原因。
+
+每个键都被映射到 0 到 \texttt{TableSize-1} 范围内的某个数字，并放置在适当的单元格中。
+这种映射被称为哈希函数，理想情况下应该简单易算，并确保任何两个不同的键得到不同的单元格。
+由于单元格数量有限而键的供应几乎是无穷无尽的，这显然是不可能的，因此我们寻求一个哈希函数，
+将键均匀分布在单元格中。
+
+$$
+h(key) \to x, \quad 0 \leq x < T - 1, key \in \text{key space}.
+$$
+
+图5.1 是一个完美情况的典型例子。在这个例子中，john哈希到3，phil哈希到4，dave哈希到6，mary哈希到7。
+
+\begin{center}
+    \includegraphics[width=0.3\textwidth]{images/hash_example.png}
+\end{center}
+
+这就是哈希的基本概念。唯一剩下的问题包括选择一个函数，决定当两个键哈希到同一个值时该怎么做（这被称为碰撞），以及决定表的大小。
+
+\subsection{哈希函数}
+% 5.2
+
+% 如果输入的键是整数，那么简单地返回\texttt{Key mod TableSize}通常是一个合理的策略，除非\texttt{Key}碰巧有一些不理想的特性。
+% 在这种情况下，哈希函数的选择需要仔细考虑。例如，如果表大小是 10 而键都以零结尾，那么标准哈希函数是一个不好的选择。
+% 出于我们将在后面看到的原因，为了避免上述情况，通常最好确保表大小是素数。当输入键是随机整数时，这个函数不仅非常简单易算，而且还能均匀分布键。
+
+首先是表的大小，按照上节课我们讨论过的情况，我们将表的大小定为素数。我们来看一些最简单的实现。
+
+通常，键是具有唯一性的字符串；在这种情况下，哈希函数需要仔细选择。一个选择是将字符串中字符的ASCII值相加。图5.2中的例程实现了这种策略。
+然后通过取模使结果落在表的范围内。这个函数简单易算，而且对于随机字符串，它通常能很好地分布键。
+
+\begin{lstlisting}[language=C++]
+int hash( const string & key, int tableSize )
+{
+  int hashVal = 0;
+  for( char ch : key )
+    hashVal += ch;
+  return hashVal % tableSize;
+}
+\end{lstlisting}  
+
+图5.2中描述的哈希函数简单易实现，并且能快速计算出答案。然而，如果表大小很大，该函数不能很好地分布键。
+例如，假设\texttt{TableSize = 10,007}（10,007是一个素数）。假设所有键都是八个或更少字符长。
+由于一个ASCII字符有一个整数值，该值总是最多 127，（英文！）哈希函数通常只能假设值在 0 到 1,016 之间，即\(127 \times 8\). 
+这显然不是一个公平的分布！
+
+另一个哈希函数显示在图 5.3 中。这个哈希函数假设\texttt{Key}至少有三个字符。值27代表英文字母表中字母的数量，加上空格，而 729 是\(27^2\)。
+见过 27 进制么？
+\begin{lstlisting}[language=C++]
+int hash( const string & key, int tableSize )
+{
+  return ( key[ 0 ] + 27 * key[ 1 ] + 729 * key[ 2 ] ) % tableSize;
+}  
+\end{lstlisting}
+这个函数只检查前三个字符，但如果这些是随机的，并且表大小是 10,007，和之前一样，那么我们期望一个合理的公平分布。
+不幸的是，英语不是随机的。虽然有三个字符（忽略空格）的\(26^3 = 17,576\) 种可能组合，但检查一个相当大的在线词典显示，
+不同组合的数量实际上只有 2,851。即使这些组合没有冲突，也只有28 \%的表可以实际被哈希到。
+因此，这个函数，尽管容易计算，但如果哈希表相当大，也是不合适的。
+
+图5.4显示了第三种哈希函数的尝试。这个哈希函数涉及键中的所有字符，并且可以预期会很好地分布
+（它计算\(\sum_{i=0}^{\text{KeySize}-1} \text{Key[KeySize} - i - 1] \cdot 37^i\)并将结果带入适当的范围）。
+代码通过使用 Horner 规则计算一个多项式。例如，另一种计算\(h_k = k_0 + 37k_1 + 37^2k_2\) 的方法是使用公式 \(h_k = ((k_2) \times 37 + k_1) \times 37 + k_0\)。
+Horner规则将此扩展到 n 次多项式。
+
+\begin{lstlisting}[language=C++]
+/**
+ * A hash routine for string objects.
+*/
+unsigned int hash( const string & key, int tableSize )
+{
+  unsigned int hashVal = 0;
+  for( char ch : key )
+    hashVal = 37 * hashVal + ch;
+  return hashVal % tableSize;
+}  
+\end{lstlisting}
+
+为啥 37? 素数！顺便说一下，Horner 规则在中国叫秦九韶算法，是中国古代的一种多项式求值算法。秦九韶是一个人！这个算法出现在他的作品《数书九章》
+（不是《九章算术》，这个在汉代，里面提到了类似的思想，但不完整）中。
+秦九韶是南宋人，但可以认为是浙大校友！因为他设计了西溪校区门口的道古桥。
+
+哈希函数利用了允许溢出并使用无符号整数来避免引入负数的事实。
+
+图5.4中描述的哈希函数不一定在表分布方面是最好的，但它具有极端简单性的优点，
+并且计算速度相当快。如果键非常长，哈希函数将花费太长时间来计算。在这种情况下，
+通常的做法是不全用所有的字符。键的长度和属性将影响选择。例如，键可能是一个完整的街道地址。
+哈希函数可能包括来自街道地址的几个字符，以及可能来自城市名称和邮政编码的几个字符。
+一些程序员通过仅使用奇数位置的字符来实现他们的哈希函数，
+其想法是节省计算哈希函数的时间将弥补稍微不均匀分布的函数。
+
+主要的编程细节是冲突解决。如果插入一个元素时，它与已经插入的元素具有相同的哈希值，
+那么我们就有了冲突，需要解决它。有几种方法可以处理这个问题。我们将讨论两种最简单的方法：
+分离链接和开放寻址；然后我们将看看一些最近发现的替代方法。
+
+\subsection{分离链接}
+% 5.3
+
+第一种策略，通常称为分离链接，是保留所有具有相同哈希值的元素的列表。我们可以使用标准库 \verb|list| 实现。
+如果空间紧张，可能更倾向于避免使用它们（因为这些 list 是双向链接的，并且浪费空间）。
+在本节中，我们假设键是前10个完全平方数，并且哈希函数简单地为 $\text{hash}(x) = x \mod 10$。
+（表大小不是素数，但出于简单起见，这里使用它。）图5.5显示了结果的分离链接哈希表。
+
+\begin{center}
+  \includegraphics[width = 0.5 \textwidth]{images/seprate_chaining.png}
+\end{center}
+
+为了执行搜索，我们使用哈希函数来确定要遍历哪个列表。然后搜索适当的列表。为了执行插入，
+我们检查适当的列表，看看元素是否已经存在（如果期望有重复项，则通常保留一个额外的数据成员，并在匹配时递增该数据成员）。
+如果元素是新的，它可以插入到列表的前面，因为这样很方便，而且经常发生最近插入的元素是最有可能在不久的将来被访问的元素。
+
+分离链接实现的类接口如图5.6所示。哈希表存储一个链表数组，这些链表在构造函数中分配。
+
+\begin{lstlisting}
+template <typename HashedObj>
+class HashTable
+{
+public:
+  explicit HashTable( int size = 101 );
+  bool contains( const HashedObj & x ) const;
+  void makeEmpty( );
+  bool insert( const HashedObj & x );
+  bool insert( HashedObj && x );
+  bool remove( const HashedObj & x );
+private:
+  vector<list<HashedObj> > theLists;
+  int currentSize;
+  // The array of Lists
+  void rehash( );
+  size_t myhash( const HashedObj & x ) const;
+};  
+\end{lstlisting}
+
+类接口说明了 C++11 之前的一个语法点：在声明列表时，两个 \verb|>| 之间需要一个空格；因为 \verb|>>| 是C++的标记，
+并且因为它比 \verb|>| 长，所以 \verb|>>| 将被识别为标记。在 C++11 中，情况不再是这样。
+
+正如二叉搜索树只适用于可比较的对象一样，本章中的哈希表只适用于提供哈希函数和等价操作符（操作符==或操作符!=，或可能两者都有）的对象。
+
+我们不再要求哈希函数同时接受对象和表大小作为参数，而是让我们的哈希函数只接受对象作为参数并返回适当的整型。
+这样做的标准机制使用函数对象，哈希表的协议在C++11中引入。具体来说，在C++11中，哈希函数可以通过函数对象模板来表示：
+
+\begin{lstlisting}
+template <typename Key>
+class hash
+{
+  public:
+  size_t operator() ( const Key & k ) const;
+};
+\end{lstlisting}
+
+也就是说这是一个模板类，它有一个 \verb|operator()| 函数，它接受一个键并返回一个 \verb|size_t|。这个类的实例可以用作哈希表的哈希函数。
+
+默认为标准类型如 \verb|int| 和 \verb|string| 提供了此模板的实现；因此，图5.4中描述的哈希函数可以如下实现：
+
+\begin{lstlisting}[language=C++]
+template <>
+class hash<string>
+{
+public:
+    size_t operator()( const string & key )
+    {
+        size_t hashVal = 0;
+
+        for( char ch : key )
+            hashVal = 37 * hashVal + ch;
+
+        return hashVal;
+    }
+};
+\end{lstlisting}
+
+类型 \verb|size\_t| 是一个无符号整型，代表一个对象的大小；因此，它保证能够存储一个数组索引。
+实现哈希表算法的类可以调用通用哈希函数对象来生成一个整型 \verb|size\_t|，然后将结果缩放到一个合适的数组索引。
+在我们的哈希表中，这体现在图5.7中显示的私有成员函数 \verb|myhash|中。
+
+\begin{lstlisting}[language=C++]
+size_t myhash( const HashedObj & x ) const
+{
+  static hash<HashedObj> hf;
+  return hf( x ) % theLists.size( );
+}  
+\end{lstlisting}
+
+图5.8展示了一个 \verb|Employee| 类，它可以存储在通用哈希表中，使用 \verb|name| 成员作为键。\verb|Employee|
+类通过提供等价操作符和一个哈希函数对象实现了 \verb|HashedObj| 要求。
+
+\begin{lstlisting}[language=C++]
+// Example of an Employee class
+class Employee
+{
+public:
+  const string & getName( ) const
+  { return name; }
+  bool operator==( const Employee & rhs ) const
+  { return getName( ) == rhs.getName( ); }
+  bool operator!=( const Employee & rhs ) const
+  { return !( *this == rhs); }
+  // Additional public members not shown
+private:
+  string name;
+  double salary;
+  int seniority;
+  // Additional private members not shown
+};
+  
+template<>
+class hash<Employee>
+{
+public:
+  size_t operator()( const Employee & item )
+  {
+    static hash<string> hf;
+    return hf( item.getName( ) );
+  }
+};
+\end{lstlisting}
+
+这份代码只是一个示例。
+
+实现 \verb|makeEmpty|、\verb|contains| 和 \verb|remove| 的代码如图5.9所示。
+
+接下来是插入例程。如果待插入的项目已经存在，那么我们什么也不做；
+否则，我们将其放入列表中（见图5.10）。元素可以放在列表中的任何位置；
+使用 \verb|push\_back| 在大多数情况下是最方便的，\verb|whichList| 是一个引用变量；关于这种使用引用变量的讨论，
+请参见第1.5.2节。
+
+除了使用链表来解决冲突之外，还可以使用任何方案；
+二叉搜索树甚至另一个哈希表都可以工作，但我们期望如果表很大并且哈希函数很好，所有列表都应该很短，
+因此基本的分离链接不会尝试任何复杂的东西。
+
+我们定义哈希表的负载因子 $\lambda$ 为哈希表中的元素数量与表大小的比率。在上面的例子 (Fig 5.5) 中，$\lambda = 1.0$. 
+列表的平均长度是 $\lambda$. 执行搜索所需的努力是评估哈希函数所需的常数时间加上遍历列表的时间。
+在不成功的搜索中，需要检查的节点数量平均是 $\lambda$. 一个成功的搜索需要遍历大约 $1 + (\lambda/2)$ 个链接。
+为了理解这一点，请注意正在搜索的列表包含存储匹配项的一个节点加上零个或多个其他节点。
+在具有 $N$ 个元素和 $M$ 个列表的表中， ``其他节点'' 的预期数量是 $(N - 1)/M = \lambda - 1/M$, 
+这基本上就是 $\lambda$, 因为 $M$ 被假定为很大。平均而言，一半的 ``其他节点'' 被搜索，因此结合匹配节点，
+我们得到平均搜索成本(期望)为 $1 + \lambda/2$ 个节点。这个分析表明，表的大小并不是很重要，
+但负载因子是。分离链接哈希的一般规则是使表大小大约与预期的元素数量一样大
+（换句话说，让 $\lambda \approx 1$）。在图 5.10 中的代码中，如果负载因子超过 $1$，
+我们通过在第10行调用 \verb|rehash| 来扩展表大小。\verb|rehash| 在第5.5节中讨论。如前所述，
+保持表大小为素数也是一个好主意，以确保良好的分布。
+
+上周我们讨论散列表就像同学们在教室中找座位一样，如果发现冲突，直接坐腿上大家都觉得很变态。但刚刚大家接受的分离链表法，
+本质上就是接受了这个方案。那么有没有不那么变态的方案呢？
+
+\subsection{无链表的哈希表}
+% 5.4
+
+分离链接哈希的缺点是使用链表。这可能会因为分配新单元格所需的时间（尤其是在其他语言中）而稍微减慢算法速度，并且基本上需要实现第二种数据结构。
+解决与链表冲突的替代方法是尝试其他单元格直到找到一个空单元格。更正式地说，单元格$h_0(x), h_1(x), h_2(x), \ldots$被依次尝试，
+其中$h_i(x) = (\text{hash}(x) + f(i)) \mod \text{TableSize}$，$f(0) = 0$. 
+函数$f$是冲突解决策略。因为所有数据都进入表中，所以在这种方案中需要一个比分离链接哈希更大的表。
+通常，对于不使用分离链接的哈希表，负载因子应低于$\lambda = 0.5$. 我们称这样的表为探测哈希表。
+我们现在来看三种常见的冲突解决策略。
+
+\subsubsection{线性探测}
+% 5.4.1 
+
+在线性探测中，$f$是$i$的线性函数，通常是$f(i) = i$. 这相当于尝试单元格序列（带环绕）以寻找空单元格。
+图5.11显示了使用与之前相同的哈希函数 (\verb|mod 10|) 和冲突解决策略 $f(i) = i$ 将键 \{89, 18, 49, 58, 69\} 插入哈希表的结果。
+
+当 49 被插入时，第一次冲突发生；它被放入下一个可用位置，即位置 0 ，该位置是空的。
+键 58 与 18 和 89 发生冲突，然后 49 在三个位置之后找到一个空单元格。
+69 的冲突以类似方式处理。只要表足够大，总能找到空单元格，但这样做的时间可能会变得很长。
+更糟糕的是，即使表相对空，占用单元格的块也会开始形成。这种效应，称为初级聚集，
+意味着任何哈希到该簇的键都将需要几次尝试来解决冲突，然后它将添加到该簇中。
+
+虽然我们这里不会执行计算，但可以证明，使用线性探测的预期探测次数大约为 
+$$
+\frac{1}{2}(1 + \frac{1}{(1 - \lambda)^2})
+$$
+用于插入和不成功的搜索，以及
+$$
+\frac{1}{2}(1 + \frac{1}{(1 - \lambda)})
+$$
+用于成功的搜索。计算有些复杂。从代码中很容易看出，插入和不成功的搜索需要相同数量的探测。
+片刻的思考表明，平均而言，成功的搜索应该比不成功的搜索花费更少的时间。
+
+\subsubsection{二次探测}
+% 5.4.2
+
+二次探测是一种消除线性探测主要聚集问题的冲突解决方法。正如你所期望的，二次探测的冲突函数是二次的。一个流行的选择是$f(i) = i^2$. 
+图5.13展示了使用这个冲突函数在与线性探测示例相同的输入上得到的哈希表结果。
+
+当 49 与 89 发生冲突时，下一个尝试的位置是相邻的单元格。这个单元格是空的，所以 49 被放置在那里。
+接下来，58 在位置 8 发生冲突。然后，相邻的单元格被尝试，但另一个冲突发生了。在尝试下一个单元格时发现了一个空单元格，
+该单元格距离为$2^2 = 4$. 因此，58 被放置在单元格 2 中。69 也发生了同样的情况。
+
+对于线性探测，让哈希表几乎满是一个坏主意，因为性能会下降。对于二次探测，情况更加严重：一旦表超过半满，甚至在表大小不是素数的情况下，
+在表半满之前，就没有保证能找到一个空单元格。这是因为在表的一半中，最多可以使用作为解决冲突的替代位置。
+
+实际上，我们现在可以证明，如果表是半空的，并且表大小是素数，那么我们总是能够插入一个新元素。
+
+\noindent \textbf{定理 5.1} 如果使用二次探测，并且表大小是素数，那么只要表至少有一半是空的，总是可以插入一个新元素。
+
+\begin{proof}
+设表大小，$\text{TableSize}$, 是一个大于 $3$ 的奇数素数。我们证明前 $[\text{TableSize}/2]$ 个替代位置
+（包括初始位置$h_0(x)$）
+都是不同的。其中两个位置是 $h(x) + i^2 \pmod{\text{TableSize}}$ 和 $h(x) + j^2 \pmod{\text{TableSize}}$，
+任取其中$0 \leq i, j \leq [\text{TableSize}/2]$. 假设，为了矛盾，这些位置相同，但$i \neq j$. 那么
+\begin{align*}
+  h(x) + i^2 &\equiv h(x) + j^2 \pmod{\text{TableSize}} \\
+  i^2 &\equiv j^2 \pmod{\text{TableSize}} \\
+  i^2 - j^2 &\equiv 0 \pmod{\text{TableSize}} \\
+  (i - j)(i + j) &\equiv 0 \pmod{\text{TableSize}}
+\end{align*}
+  
+由于$\text{TableSize}$是素数，因此要么$(i - j)$要么$(i + j)$等于 $0$（模$\text{TableSize}$）。
+由于$i$和$j$是不同的，第一种情况是不可能的。由于$0 \leq i, j \leq [\text{TableSize}/2]$, 
+第二种情况也是不可能的。因此，前$[\text{TableSize}/2]$个替代位置是不同的。
+如果最多$[\text{TableSize}/2]$个位置被占用，那么足够多次尝试后总能找到空位。
+\end{proof}
+
+如果表甚至超过半满，插入可能会失败（尽管这种情况极不可能）。因此，重要的是要记住这一点。同样重要的是，
+表大小必须是素数。如果表大小不是素数，替代位置的数量可能会大大减少。例如，如果表大小为16，那么唯一的替代位置将在距离1、4或9处。
+
+在探测哈希表中不能执行标准删除，因为单元格可能已经引起了冲突，使其无法通过。
+例如，如果我们删除89，那么几乎所有的find操作都会失败。因此，探测哈希表需要延迟删除，
+尽管在这种情况下实际上并没有延迟。
+
+实现探测哈希表所需的类接口如图5.14所示。我们不是使用列表数组，而是使用哈希表条目单元格的数组。
+嵌套类HashEntry存储信息成员中条目的状态；这个状态可以是ACTIVE、EMPTY或DELETED。
+
+我们使用一个标准的枚举类型。
+
+\begin{lstlisting}[language=C++]
+enum EntryType { ACTIVE, EMPTY, DELETED };
+\end{lstlisting}
+
+构建表（图5.15）包括为每个单元格将info成员设置为EMPTY。contains(x)，如图5.16所示，涉及私有成员函数isActive和findPos。
+私有成员函数findPos执行冲突解决。我们在插入例程中确保哈希表至少是表中元素数量的两倍，因此二次解决总是有效的。
+在图5.16中，被标记为已删除的元素计为在表中。这可能会导致问题，因为表可能会过早地变得太满。我们将在本章后面讨论这个问题。
+
+第12至15行表示进行二次解决的快速方法。根据二次解决函数的定义，$f(i) = f(i - 1) + 2i - 1$，
+所以下一个要尝试的单元格是从之前尝试的单元格开始的距离，并且这个距离在连续探测中每次增加2。
+
+\begin{lstlisting}
+template <typename HashedObj>
+class HashTable
+{
+public:
+  explicit HashTable( int size = 101 );
+  bool contains( const HashedObj & x ) const;
+  void makeEmpty( );
+  bool insert( const HashedObj & x );
+  bool insert( HashedObj && x );
+  bool remove( const HashedObj & x );
+  enum EntryType { ACTIVE, EMPTY, DELETED };
+private:
+  struct HashEntry
+  {
+    HashedObj element;
+    EntryType info;
+    HashEntry( const HashedObj & e = HashedObj{ }, EntryType i = EMPTY )
+    : element{ e }, info{ i } { }
+    HashEntry( HashedObj && e, EntryType i = EMPTY )
+    : element{ std::move( e ) }, info{ i } { }
+  };
+  vector<HashEntry> array;
+  int currentSize;
+  bool isActive( int currentPos ) const;
+  int findPos( const HashedObj & x ) const;
+  void rehash( );
+  size_t myhash( const HashedObj & x ) const;
+};  
+\end{lstlisting}
+
+如果新位置超出了数组范围，可以通过减去$\text{TableSize}$将其放回范围内。这比明显的方法更快，因为它避免了似乎需要的乘法和除法。
+一个重要的警告：第9行和第10行的测试顺序很重要。不要改变它！
+
+最后的例程是插入。如果$x$已经存在，我们不做任何事情。这是一个简单的修改，可以做一些其他事情。否则，
+我们将其放在$\text{findPos}$例程建议的位置。代码显示在图5.17中。如果负载因子超过0.5，表就满了，我们扩大哈希表。这称为rehashing，并在第5.5节中讨论。图5.17还显示了remove。
+
+虽然二次探测消除了初级聚集，但哈希到同一位置的元素将探测相同的替代单元格。这被称为次级聚集。次级聚集是一个轻微的理论问题。
+模拟结果表明，它通常导致每次搜索多于半个探测。以下技术消除了这一点，但代价是计算一个额外的哈希函数。
 
 % \subsection{基本想法}
 
