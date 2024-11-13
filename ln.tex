@@ -4672,7 +4672,8 @@ unsigned int hash( const string & key, int tableSize )
   for( char ch : key )
     hashVal = 37 * hashVal + ch;
   return hashVal % tableSize;
-}  
+//  ((key[0] * 37 + key[1]) * 37 + key[2]) * 37 + key[3]  
+  }  
 \end{lstlisting}
 
 为啥 37? 素数！顺便说一下，Horner 规则在中国叫秦九韶算法，是中国古代的一种多项式求值算法。秦九韶是一个人！这个算法出现在他的作品《数书九章》
@@ -4933,7 +4934,7 @@ enum EntryType { ACTIVE, EMPTY, DELETED };
 第12至15行表示进行二次解决的快速方法。根据二次解决函数的定义，$f(i) = f(i - 1) + 2i - 1$，
 所以下一个要尝试的单元格是从之前尝试的单元格开始的距离，并且这个距离在连续探测中每次增加2。
 
-\begin{lstlisting}
+\begin{lstlisting}[language=C++]
 template <typename HashedObj>
 class HashTable
 {
@@ -4970,8 +4971,114 @@ private:
 最后的例程是插入。如果$x$已经存在，我们不做任何事情。这是一个简单的修改，可以做一些其他事情。否则，
 我们将其放在$\text{findPos}$例程建议的位置。代码显示在图5.17中。如果负载因子超过0.5，表就满了，我们扩大哈希表。这称为rehashing，并在第5.5节中讨论。图5.17还显示了remove。
 
+\begin{lstlisting}[language=C++]
+explicit HashTable( int size = 101 ) : array( nextPrime( size ) )
+{ makeEmpty( ); }
+  
+void makeEmpty( )
+{
+  currentSize = 0;
+  for( auto & entry : array )
+    entry.info = EMPTY;
+}  
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++]
+bool contains( const HashedObj & x ) const
+{ return isActive( findPos( x ) ); }
+
+int findPos( const HashedObj & x ) const
+{
+  int offset = 1;
+  int currentPos = myhash( x );
+  
+  while( array[ currentPos ].info != EMPTY &&
+         array[ currentPos ].element != x )
+  {
+    currentPos += offset; // Compute ith probe
+    offset += 2;
+    if( currentPos >= array.size( ) )
+      currentPos-= array.size( );
+  }
+  
+  return currentPos;
+}
+
+bool isActive( int currentPos ) const
+{ return array[ currentPos ].info == ACTIVE; }  
+\end{lstlisting}
+
 虽然二次探测消除了初级聚集，但哈希到同一位置的元素将探测相同的替代单元格。这被称为次级聚集。次级聚集是一个轻微的理论问题。
 模拟结果表明，它通常导致每次搜索多于半个探测。以下技术消除了这一点，但代价是计算一个额外的哈希函数。
+
+\begin{lstlisting}[language=C++]
+bool insert( const HashedObj & x )
+{
+  // Insert x as active
+  int currentPos = findPos( x );
+  if( isActive( currentPos ) )
+    return false;
+  
+  array[ currentPos ].element = x;
+  array[ currentPos ].info = ACTIVE;
+  
+  // Rehash; see Section 5.5
+  if( ++currentSize > array.size( ) / 2 )
+    rehash( );
+  
+  return true;
+}
+
+bool remove( const HashedObj & x )
+{
+  int currentPos = findPos( x );
+  if( !isActive( currentPos ) )
+    return false;
+  
+  array[ currentPos ].info = DELETED;
+  return true;
+}
+\end{lstlisting}
+
+\subsubsection{双重哈希}
+% 5.4.3 
+
+我们将要研究的最后一个冲突解决方法是双重哈希。对于双重哈希，
+一个流行的选择是 $f(i) = i \cdot \text{hash}_2(x)$. 
+这个公式说我们对$x$应用第二个哈希函数，并在距离 
+$\text{hash}_2(x), 2\text{hash}_2(x), \ldots$ 处探测。
+选择 $\text{hash}_2(x)$ 的一个糟糕选择将是灾难性的。
+例如，明显选择$\text{hash}_2(x) = x \mod 9$ 如果99被插入到前面例子的输入中将不会有帮助。
+因此，函数绝不能评估为零。同样重要的是要确保所有单元格都可以被探测（这在下面的例子中是不可能的，因为表大小不是素数）。
+这样一个函数是 $\text{hash}_2(x) = R - (x \mod R)$，其中$R$是一个小于$\text{TableSize}$的素数，
+将会很好地工作。如果我们选择$R = 7$，那么图5.18显示了像以前一样插入相同键的结果。
+
+\begin{center}
+  \includegraphics[width = 0.75 \textwidth]{images/double_hash.PNG}
+\end{center}
+
+当49被插入时，第一次冲突发生。$\text{hash}_2(49) = 7 - 0 = 7$，
+所以49被插入到位置6。$\text{hash}_2(58) = 7 - 2 = 5$，
+所以58被插入到位置3。最后，69发生冲突，并在距离$\text{hash}_2(69) = 7 - 6 = 1$处被插入。
+如果我们尝试在位置0插入60，我们将会发生冲突。由于$\text{hash}_2(60) = 7 - 4 = 3$，
+我们然后会尝试位置3、6、9，然后是2，直到找到一个空位。
+通常可以找到一些坏情况，但这里没有太多。
+
+正如我们之前所说，我们的示例哈希表的大小不是素数。我们这样做是为了计算哈希函数的方便，
+但值得看看为什么在使用双重哈希时确保表大小为素数很重要。如果我们尝试将23插入表中，
+它会与58发生冲突。由于$\text{hash}_2(23) = 7 - 2 = 5$，并且表大小为10，
+我们实际上只有一个替代位置，而且它已经被占用了。因此，如果表大小不是素数，
+可能会过早地耗尽替代位置。然而，如果双重哈希正确实现，模拟结果表明预期的探测次数几乎与随机冲突解决策略相同。
+这使得双重哈希在理论上很有趣。然而，二次探测不需要使用第二个哈希函数，
+因此在实践中可能更简单、更快，特别是对于像字符串这样的键，其哈希函数的计算成本较高。
+
+\subsection{重新哈希}
+% 5.5 
+
+如果表变得太满，操作的运行时间将开始变得过长，对于使用二次解决的开放寻址哈希，插入可能会失败。
+这可能会发生在有太多删除操作与插入操作交错进行的情况下。那么，
+一个解决方案是构建另一个大约是原来两倍大的表（带有相关的新哈希函数），
+然后扫描整个原始哈希表，为每个（未删除的）元素计算新的哈希值并将其插入到新表中。
 
 % \subsection{基本想法}
 
