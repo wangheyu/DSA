@@ -7,3 +7,9 @@
 *.o
 *.out
 test
+exam
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.xdv
