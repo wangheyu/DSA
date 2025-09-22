@@ -802,10 +802,17 @@ $T(n) = 4 T(n / 2) + n^2 / \log n$, 那么 $T(n) = $ ?
 % 使用它们的程序不一定需要知道使用了哪种实现。就像客户只需要感受到鸡汤好喝就行了，
 % 没必要知道鸡汤是怎么熬出来的，以及鸡生前好不好看。
 
-任何概念上的抽象数据结构(ADTs)，我们都需要解决两个基本设计：
+设计一个概念上的抽象数据结构(ADTs)，和我们数学中给一个概念尽管有一定的类似，但在具体的定义逻辑上有点区别。
+数学中的一个定义，要求能严格地判定一个具体的对象，是否属于这个概念。但在计算机逻辑中，我们更多地从实际意义出发，
+考虑这个概念的属性和行为。比如什么是鸡？一个数学上的严格定义，可能是一个生物学的定义，或者是一个进化论的定义。
+但在计算机逻辑中，我们更多地考虑鸡的属性和行为，比如它有羽毛，会下蛋，会叫，会跑，会吃，会跳，会飞(虽然飞不高)，等等。
+
+有时称这种定义逻辑为“鸭子类型”(Duck Typing)，即如果它走路像鸭子，叫声像鸭子，那么它就是鸭子。
+
+因此对于一个抽象的数据结构概念，我们都需要解决两个基本设计：
 \begin{itemize}
-  \item 数据的类型；
-  \item 允许的操作。
+  \item 数据的构成和类型；
+  \item 对这些数据的操作。
 \end{itemize}
 我们通过一个非常具体而简单的例子来讨论设计抽象数据结构 (ADTs) 的一般性策略，也就是一个列表（List）。
 
@@ -835,7 +842,8 @@ $T(n) = 4 T(n / 2) + n^2 / \log n$, 那么 $T(n) = $ ?
 （例如，上述 \verb|find(1)| 返回什么？）。我们还可以添加像 \verb|next| 和
 \verb|previous| 这样的操作，它们会将位置作为参数，并分别返回后继和前驱的位置。
 
-一个完善的设计应该尽可能避免无法处理的异常。
+一个完善的设计应该尽可能避免无法处理的异常。比如，\verb|findKth(100)| 应该返回一个错误代码,
+而不是死循环或者因为访问不该访问的内存空间导致程序崩溃。
 
 \subsubsection{列表的简单数组实现}
 %3.2.1 
@@ -977,6 +985,7 @@ int main() {
 
 但这个实现违背了 ADTs 将数据结构和操作统一定义的要求。尽管这段代码使用了 C++ 的语法，
 但并没有体现 C++ 的设计原则。C++ 的设计原则本质上就是 ADTs 的设计原则，即数据结构和操作应该统一在一起，
+正如鸡的颜色和行为应该统一在一起。
 这样形成的 ADT 被称为类 (class) 或者对象 (object)。而这种设计原则，就是面向对象设计 (Object-Oriented Design)。
 
 
@@ -1085,7 +1094,8 @@ int main() {
 % % 数和析构函数. 它们的都相当于一个带空参数的空函数. 和 C++ 其他函数一样,
 % % 构造函数可以重载, 但析构不会重载(为什么?).
 
-现在来考虑如何设计和实现 ArrayList. 
+现在来考虑如何设计和实现 ArrayList. 我们直接使用 C++ 来完成。在这个过程中，我们的主要注意力不要过度集中在具体的 C++ 语法上，
+而是要关注 C++ 的设计逻辑和原则。相比怎样做，更应该问的是为什么这么做。
 % 这里我们不实现 \verb|next| 和 \verb|previous| 操作, 因为过于平凡. 
 % 而且一旦增加这两个操作, 我们就必须在数据成员中增加一个 \verb|currentPosition|. 
 % (为什么?)
@@ -1110,7 +1120,7 @@ typedef int t_idx;
 class ArrayList
 {
 private:
-	t_idx size = 0;			/**< List 的大小. */
+	t_idx size = 0;			      /**< List 的大小. */
 	t_ele *data = nullptr;		/**< 存放数据的内存区域. */
 
 public:
@@ -1177,71 +1187,565 @@ public:
 #endif
 \end{lstlisting}
 
-这里说明几点:
+这个设计的核心是类的定义：
 
-\begin{itemize}
-  \item 关键字 \verb|const| 放在函数后面, 表示这个函数不会改动类的数据
-    和结构, 可以认为是一个静态操作的标记；
-  \item 由于还未学习 C++ 的很多特性, 因此这里采用了宏和 \verb|typedef|
-    对数据做了抽象. 在后续的学习中, C++ 会有更好的机制；
-  \item 这里的注释符合 Doxygen 的规范, 便于自动生成文档. 这也是推荐的
-    注释格式. 建议使用适当的工具辅助你产生规范的注释；
-  \item 除了 \verb|next| 和 \verb|previous|, 这个设计也没有考虑出错和
-    报错. 留待后续讨论.
-  \item 关键字 \verb|nullptr| 是 C++ 0x 标准中新增的, 用来代替宏
-    \verb|NULL|. \verb|NULL| 其实就是一个 \verb|#define NULL 0| 的宏,
-    而 \verb|nullptr| 是一个类型安全的指针空值. 
-\end{itemize}
+\begin{verbatim*}
+  class ArrayList
+  {};  
+\end{verbatim*}
 
-尽管 ADTs 设计的理想是完善，但是我们也要避免因为追求完美而影响设计的实施。因此，
-追求理想的同时，也要注意可行性，不要期待第一次就写出完美的设计和代码。
-如果某个语法点你暂时还没有搞清楚，那么就先用你能理解的方式实现它，等到后续学习中再回来完善它。
+这是一个空类。它可以这样调用：
 
-在这份设计中，\verb|class| 关键字后面跟着的是类名 \verb|ArrayList|, 
-说明我们需要设计的是一个名为 \verb|ArrayList| 的类（即 ADT ）。注意到设计的 \verb|ArrayList| 类中既包含了数据成员，也包含了操作成员。
-这个和我们的 ADTs 的设计原则是一致的。
-
-而 \verb|private| 和 \verb|public| 关键字, 则分别规定了数据成员和操作成员的可访问性。
-数据成员 \verb|size| 和 \verb|data| 是私有的, 只能被类内部的成员函数访问. 
-而操作成员则是共有的, 可以被类内和外部的函数访问. 这也是面向对象的设计原则. 它引出的一个设计逻辑被称为封装性，
-一个完美的封装性可以理解为，设计 ADT 数据结构的目的是为用户提供一种数据类型，比如这里的 \verb|ArrayList|,
-实际上就是一种功能更加完善的数组。当用户使用它时，我们应该严格区分，哪些数据和操作时允许用户访问的，哪些不允许。
-并分别用 \verb|private| 和 \verb|public| 关键字来加以区分。
-
-这一点听上去似乎很技术，但其实是自然的。我们设计一个 ADT，其实是创造一个概念。比如 \verb|ArrayList| 就是数组这个概念。
-我们可以类比上帝创造一个概念，比如鸡，他会创造一个鸡的概念，然后规定鸡的属性和行为。比如鸡有颜色、体重、性别等属性，
-鸡会叫、会吃、会跑等行为。这里依据这个概念创建的具体的一只鸡，如果我们希望改变它的体重，在真实的世界中，我们不能直接修改它的体重数值，
-我们只能通过公共接口，比如喂它吃东西，或者让它拼命运动来实现。
-
-所以大家考虑数据结构之所以要区分 \verb|private| 和 \verb|public|, 根本原因就是避免到处是上帝，特别是每一个用户都是上帝。这样的世界肯定不稳定，
-这样的软件也是一样。当然，所有的事情都有相对性。什么是本质 \verb|private| 的，什么是本质 \verb|public| 的，这个界限并不是绝对的，
-根据不同的应用场景和设计师，都会不一样。比如即便是鸡，一种极端的操作是狠狠咬它一口，那么即便不算直接修改属性，也差不多了。
-
-正如世界上不存在鸡，因为鸡是一个抽象的概念。任何具体的一只鸡，都是这个概念的具象化，在面向对象的设计中，我们把这个概念的具象化称为实例 (instance)。
-
-比如 \verb|A| 是 一个 \verb|ArrayList| 的实例:
 \begin{verbatim}
 ArrayList A;
-A.insert(34, 0);
-A.insert(12, 1);
-A.insert(52, 2);
-A.insert(16, 3);
-A.insert(12, 4);
 \end{verbatim}
 
-为了将一个抽象的概念具象化，我们必须说明，它是如何被创造的。正如一个类的声明当中，必须要有一个构造函数 (constructor)。
-如果设计师没有显式地声明一个构造函数，编译器会自动生成一个缺省的构造函数。这个缺省的构造函数相当于一个空函数。
+我们把它放到一个主函数中去：
+\begin{lstlisting}
+#include <iostream>
 
-比如上面代码中，\verb|ArrayList() {};| 实际上就是一个缺省的构造函数。它没有参数，也没有任何操作。
+class ArrayList
+{};  
 
-但注意，
-\begin{verbatim*}
-	t_idx size = 0;			/**< List 的大小. */
-	t_ele *data = nullptr;		/**< 存放数据的内存区域. */  
-\end{verbatim*}
-这两句语句，实际上显式指定了成员变量的值。这是一种防止未定义的变量的推荐做法。
+int main()
+{
+  ArrayList A;
+  std::cout << "address of A: " << &A << std::endl;
+  return 0;
+}
+\end{lstlisting}
 
-但作为数值，用户需要的初始化数值很可能是一个具体的序列，比如 \verb|34, 12, 52, 16, 12|.
+这是一个完整的类和它的实例。这个程序是正确的，同时似乎什么也没有。但我们注意到，
+实际上我们设计了一个类 \verb|ArrayList|, 并且创建了一个实例 \verb|A|. \verb|ArrayList| 
+是一个被我们创造出来的新类型，它可以像经典类型，比如 \verb|int| 那样产生实际变量，或者说，实例。
+这些变量，会有独立的地址。从这个意义上说，其实程序已经默默实现了许多功能。
+
+我们无法讨论这个新类型 \verb|ArrayList| 的具体能存放什么样的数据，因为它是一个空类。现在我们来增加设计细节。
+
+\begin{lstlisting}
+  class ArrayList
+  {
+    private:
+      int size;      // List 的大小.
+      double *data;  // 存放数据的内存区域.
+    public:
+      void init(int _maxSize); // 初始化 List, 最大容量为 maxSize.
+      void printList();  // 列出表内全部元素.
+  };  
+\end{lstlisting}
+
+按照设计，任何一个列表，应该有一个有限的长度，所以我们增加了一个数据成员 \verb|size| 来表示列表的长度。
+然后我们需要为列表存放的数据准备一个连续的空间，这个连续空间，我们通过首元素的地址 \verb|data| 来访问。
+所以这两点就是我们设计的类 \verb|ArrayList| 的数据成员。这里应当注意到，这两个属性是互相依赖的，
+数据长度必须和 \verb|data| 所指向的内存空间长度一致，否则就是一个可能会导致非法访问的严重错误。
+我们显然不希望用户随意修改这两个数据，只能以我们允许的方式来访问和修改这些数据，同时由我们来承担确保数据正确性的责任。
+所以我们把这两个数据成员都定义为 \verb|private|，也就是只有我们在实现类的成员函数时，才能访问和修改它们。外部用户，
+不能直接访问。比如下面是一个错误的例子： 
+
+\begin{lstlisting}
+  class ArrayList
+  {
+    private:
+      int size;      // List 的大小.
+      double *data;  // 存放数据的内存区域.
+    public:
+      void init(int _maxSize); // 初始化 List, 最大容量为 maxSize.
+      void printList();  // 列出表内全部元素.
+  };  
+
+  int main()
+  {
+    ArrayList A;
+    A.size = 10; // ERROR, size 是 private 的.
+    return 0;
+  }
+\end{lstlisting}
+
+所以封装的意义就在于明确责任的划分。作为类设计师，对类的正确性负责，然后用户使用类提供的功能，去完成自己的任务。用户不需要知道类的内部实现细节，
+只需要知道类提供了哪些功能，如何使用这些功能就可以了。这种划分在现代软件设计中是非常重要的。
+
+我们注意到上面的类实现中，并没有提供成员函数的实现细节。一个推荐的设计原则是，类的声明和实现应该分开。类的声明一般放在一个头文件 (header file) 中，
+而类的实现放在一个源文件 (source file) 中。这样做的好处是，用户只需要包含头文件，就可以使用类的功能，而不需要关心实现细节。这样也有利于代码的维护和升级。
+
+所以我们这里将类声明放在 \verb|ArrayList02.h|, 将实现放在 \verb|ArrayList02.cpp| 中。然后用 \verb|main02.cpp| 来测试这个类。
+
+\begin{lstlisting}[language=C++]
+// ArrayList02.h
+  class ArrayList
+  {
+    private:
+      int size;      // List 的大小.
+      double *data;  // 存放数据的内存区域.
+    public:
+      void init(int _maxSize); // 初始化 List, 最大容量为 maxSize.
+      void insert(double _val, int _pos); // 在指定位置插入一个元素.
+      void printList();  // 列出表内全部元素.
+  };  
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++]
+// ArrayList02.cpp
+#include "ArrayList02.h"
+#include <iostream>
+void ArrayList::init(int _maxSize)
+{
+  size = _maxSize;
+  data = new double[size];
+  for (int i = 0; i < size; i++)
+    data[i] = 0.0;
+}
+
+void ArrayList::printList()
+{
+  for (int i = 0; i < size; i++)
+    std::cout << data[i] << " ";
+  std::cout << std::endl;
+}
+
+void ArrayList::insert(double _val, int _pos)
+{
+  if (_pos < 0 || _pos >= size)
+  {
+    std::cerr << "Error: position out of range." << std::endl;
+    return;
+  }
+  for (int i = size - 1; i > _pos; i--)
+    data[i] = data[i - 1];
+  data[_pos] = _val;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++]
+\\main02.cpp
+#include <iostream>
+#include "ArrayList02.h"
+int main()
+{
+  ArrayList A;
+  A.init(10);
+  A.insert(34, 0);
+  A.insert(12, 1);
+  A.printList();
+  return 0;
+}
+
+\end{lstlisting}
+
+这里注意一下类的成员函数的实现。成员函数的实现必须在函数名前加上类名和作用域解析符 \verb|::|。 这是 C++ 的语法要求。
+另外，成员函数的实现可以直接访问类的 \verb|private| 成员。比如上面的 \verb|insert| 函数中，我们直接访问了 \verb|size| 和 \verb|data|。
+
+一旦一个类被声明，我们就可以像一个普通类型那样使用它。比如上面的 \verb|main02.cpp| 中，我们创建了一个 \verb|ArrayList| 的实例 \verb|A|。
+但必须在任何使用的文件中用 \verb|#include "ArrayList02.h"| 来包含类的声明。这就导致一个问题，如果有两个文件同时使用了 \verb|ArrayList02.h|,
+然后这两个文件又互相发生了包含，就会导致重复定义错误。比如我们设计了一个排序类使用了这个 \verb|ArrayList| 类，我们又设计了一个搜索类也使用了这个 \verb|ArrayList| 类，
+然后排序类中也可能使用了搜索类，这就导致重复定义。我们注意到系统自带的头文件，比如 \verb|<iostream>|, 似乎能很好的解决这个问题。
+实际上，这个问题可以通过预处理指令来解决。我们在头文件的开头和结尾加上如下代码：
+\begin{lstlisting}[language=C++]
+#ifndef __CRAZYFISH_ARRAYLIST__
+#define __CRAZYFISH_ARRAYLIST__
+// 头文件内容
+#else
+// DO NOTHING.
+#endif
+\end{lstlisting}
+这样就能确保头文件只被包含一次。这个技巧是 C/C++ 编程中非常常用的。
+
+另一个可以改进的地方，是我们的 \verb|init| 函数。这个函数显然是起到初始化实例的作用。
+但 C++ 有一个专门的机制来处理实例的初始化，这就是构造函数 (constructor)。
+实际上，C++ 要求每一个类都必须有一个构造函数。如果没有显式地定义一个构造函数，编译器会自动生成一个缺省的构造函数。
+也就是说，我们上面定义的空类和含 \verb|init| 函数的类，实际上都包含了默认初始化，它的作用是创造类所需要的内存空间，
+并将数据成员初始化为默认值。注意这个默认值并不一定是零，而是未定义的垃圾值。所以，相比使用 \verb|init| 函数或者默认构造函数，
+更好的方式是显式地定义一个构造函数，来确保数据成员被正确初始化。C++ 当中，构造函数的名字必须和类名一致，并且没有返回值。比如我们可以这样定义构造函数：
+\begin{lstlisting}[language=C++]
+  ArrayList(int _maxSize)
+  {
+    size = _maxSize;
+    data = new double[size];
+    for (int i = 0; i < size; i++)
+      data[i] = 0.0;
+  }
+\end{lstlisting}
+然后在 \verb|main| 函数中，我们可以这样创建实例：
+\begin{lstlisting}[language=C++]
+  ArrayList A(10);
+\end{lstlisting}
+
+在这个例子中，我们创建了一个大小为 10 的 \verb|ArrayList| 实例 \verb|A|。构造函数会被自动调用，完成内存的分配和数据的初始化。
+而且初始化的数据是我们期望的零值，而不是未定义的垃圾值。
+
+C++ 允许函数重载，即允许定义多个同名函数，只要它们的参数列表不同即可。构造函数也可以重载。 比如我们可以定义一个缺省的构造函数，
+如果用户没有提供列表的大小，就默认创建一个空表：
+\begin{lstlisting}[language=C++]
+  ArrayList()
+  {
+    size = 0;
+    data = nullptr;
+  }
+\end{lstlisting}
+
+更新的 C++ 标准 (C++11) 还允许在定义数据成员时，直接给出默认值。比如我们可以这样定义数据成员：
+\begin{lstlisting}[language=C++]
+  private:
+    int size = 0;            /**< List 的大小. */
+    double *data = nullptr;     /**< 存放数据的内存区域. */
+\end{lstlisting}
+这样，即便是缺省初始函数，也能确保数据成员被正确初始化。不过这里要注意，一旦有任何一个构造函数被定义，缺省构造函数就不会再被自动生成了。
+
+因此，对于初始构造函数的基本逻辑，我们总结如下：
+\begin{itemize}
+  \item 如果没有显式定义任何构造函数，编译器会自动生成一个缺省构造函数；
+  \item 如果定义了任何一个构造函数，缺省构造函数就不会再被自动生成；
+  \item 构造函数可以重载，可以有多个同名的构造函数，只要参数列表不同即可；
+  \item 构造函数没有返回值；
+  \item 构造函数的名字必须和类名一致；
+  \item C++11 允许在定义数据成员时，直接给出默认值。
+\end{itemize}
+而对于构造函数设计的建议：
+\begin{itemize}
+  \item 如果类数据和功能足够复杂，建议显式地定义多种构造函数；
+  \item 如果类的数据成员和功能非常简单，建议使用缺省构造函数，并总是使用数据成员初始化；
+\end{itemize}
+
+
+如果构造函数是一个类创建具体实例时，第一个被调用的函数，主要任务是创造实例的内存空间并初始化数据成员。
+那么析构函数 (destructor) 则是当一个实例被删除时，最后一个被调用的函数。主要任务是确保实例所占用的资源，
+特别是内存被正确释放。通常情况，如果一个类中没有动态分配内存，析构函数可以是一个空函数，或者根本不定义析构函数。
+因为编译器会自动生成一个缺省的析构函数，这个缺省的析构函数会自动释放实例所占用的内存空间。
+但如果一个类中有动态分配内存，比如上面的 \verb|ArrayList| 类中，我们通过 \verb|new| 运算符动态分配了一块内存，
+那么我们必须显式地定义析构函数，确保这块内存被正确释放。否则，这块内存将永远不会被释放，导致内存泄漏 (memory leak)。
+这一点除了内存使用效率问题以外，也是一个安全问题。因为如果内存没有被正确释放，
+可能会导致内存泄漏 (memory leak) 或者悬挂指针 (dangling pointer) 等严重安全问题。
+
+析构函数的名字必须是类名前加上一个波浪号 \verb|~|，并且没有返回值，也一般没有参数。比如我们可以这样定义析构函数：
+\begin{lstlisting}[language=C++]
+  ~ArrayList()
+  {
+    if (data != nullptr)
+      delete[] data;
+    data = nullptr;
+    size = 0;
+  }
+\end{lstlisting}
+
+在我们的例子中，列表其实是有足够的复杂性，因此建议显式地定义构造函数。同时因为存在动态内存分配，
+我们必须显式地定义析构函数，确保内存被正确释放。
+我们下面将更新后的设计 \verb|ArrayList03.h| 和 \verb|ArrayList03.cpp|，
+以及测试 程序 \verb|main03.cpp| 列出如下：
+\begin{lstlisting}[language=C++]
+// ArrayList03.h
+#ifndef __CRAZYFISH_ARRAYLIST__
+#define __CRAZYFISH_ARRAYLIST__
+#include <iostream>
+class ArrayList
+{
+private:
+  int size = 0;			      /**< List 的大小. */
+  double *data = nullptr;		/**< 存放数据的内存区域. */
+public:
+  ArrayList(){};
+  ArrayList(int _maxSize)
+  {
+    size = _maxSize;
+    data = new double[size];
+    for (int i = 0; i < size; i++)
+      data[i] = 0.0;
+  }
+  ~ArrayList()
+  {
+    if (data != nullptr)
+      delete[] data;
+    data = nullptr;
+    size = 0;
+  }
+  void insert(double _val, int _pos); // 在指定位置插入一个元素.
+  void printList() const;  // 列出表内全部元素.
+};
+#else
+/// DO NOTHING.
+#endif
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++]
+// ArrayList03.cpp
+#include "ArrayList03.h"
+#include <iostream>
+void ArrayList::printList() const
+{
+  for (int i = 0; i < size; i++)
+    std::cout << data[i] << " ";
+  std::cout << std::endl;
+}
+
+void ArrayList::insert(double _val, int _pos)
+{
+  if (_pos < 0 || _pos >= size)
+  {
+    std::cerr << "Error: position out of range." << std::endl;
+    return;
+  }
+  for (int i = size - 1; i > _pos; i--)
+    data[i] = data[i - 1];
+  data[_pos] = _val;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[language=C++]
+// main03.cpp
+#include <iostream> 
+#include "ArrayList03.h"
+int main()
+{
+  ArrayList A(10);
+  A.insert(34, 0);
+  A.insert(12, 1);
+  A.printList();
+  return 0; 
+}
+\end{lstlisting}
+
+以上代码尽管简单，已经包含了一些我们推荐的设计原则。比如：
+\begin{itemize}
+  \item 类的声明和实现分开，分别放在头文件和源文件，但构造函数和析构函数放在头文件中；
+  \item 头文件使用预处理指令防止重复包含；
+  \item 数据成员使用默认初始化；
+  \item 对于复杂的类，显式定义构造函数和析构函数；
+  \item 析构函数确保动态分配的内存被正确释放；
+\end{itemize}
+
+在继续讨论我们的类设计之前，我们首先考虑一个重要的问题：函数的形参是如何传递数据的。这一点在 C 语言中已经讨论过，
+如果大家还记得传值调用 (call by value) 和传址调用 (call by address) 的区别，那么这里就不再赘述。
+但 C++ 引入了一个新的机制，称为传引用调用 (call by reference)。这个机制的核心是引用 (reference)。
+举个例子：
+\begin{lstlisting}[language=C++]
+void foo(int &x) // x 是一个引用
+{
+  x = x + 1; // 改变 x 的值
+}
+int main()
+{
+  int a = 10;
+  foo(a); // 传引用调用
+  std::cout << "a = " << a << std::endl; // a 的值变成了 11
+  return 0;
+}
+\end{lstlisting}
+引用调用做到了和传址调用一样的效果，但语法上更简洁，更接近传值调用。引用，可以认为是同一块内存的另一个名字。当一个形参是引用时，
+它和实参指向同一块内存，因此在函数内部对形参的修改，直接影响实参的值。也就是说，上面的 \verb|foo| 函数中，形参 \verb|x| 是 \verb|a| 的另一个名字，
+因此对 \verb|x| 的修改，直接影响了 \verb|a| 的值。
+引用的意义和传址调用一样，都是为了避免传值调用时，数据被复制一份，从而影响效率的问题。由于类的实例可能非常大，因此传引用调用是类成员函数的推荐方式。
+特别是当形参指向一个类的实例时。
+
+除了参数传递以外，类的实例发生复制确实是一个敏感的时刻，以至于 C++ 专门为此设计了复制构造函数 (copy constructor) 和赋值操作符 (assignment operator)。
+
+前者发生在从一个已存在的实例复制一个新的实例。比如：
+\begin{lstlisting}[language=C++]
+  ArrayList A(10);
+  ArrayList B = A; // ERROR, 默认的复制构造函数会导致严重错误.
+\end{lstlisting}
+和构造函数和析构函数一样，C++ 也要求每一个类都必须有一个复制构造函数 (copy constructor)。 如果没有显式地定义一个复制构造函数，
+编译器会自动生成一个缺省的复制构造函数。这个缺省的复制构造函数会逐个复制类的每个数据成员，
+但对于指针类型的数据成员，它只会复制指针的值，而不会复制指针指向的内存。
+这就可能导致多个实例共享同一块内存，从而在一个实例被销毁时，另一个实例的指针变成悬挂指针 (dangling pointer)，引发严重的错误。
+
+要解决这个问题，我们需要显式地定义一个复制构造函数，确保每个实例都有自己独立的内存空间。比如我们可以这样定义复制构造函数：
+\begin{lstlisting}[language=C++]
+  ArrayList(const ArrayList &other)
+  {
+    size = other.size;
+    if (other.data != nullptr)
+    {
+      data = new double[size];
+      for (int i = 0; i < size; i++)
+        data[i] = other.data[i];
+    }
+    else
+    {
+      data = nullptr;
+    }
+  }
+\end{lstlisting}
+
+这样，当我们复制一个 \verb|ArrayList| 实例时，会为新的实例分配独立的内存，并复制数据内容，而不是共享内存。
+注意到这里使用了引用调用，以避免 
+\begin{lstlisting}[language=C++]
+  ArrayList B = A; 
+\end{lstlisting}
+时，实参 \verb|A| 被复制给形参 \verb|other|，影响效率。但是因为传引用调用，\verb|other| 和 \verb|A| 指向同一块内存，
+因此我们存在通过 \verb|other| 修改 \verb|A| 的数据成员。为避免意外修改，我们把形参声明为 \verb|const|，
+表示这个函数不会修改 \verb|other| 的数据成员。这是 \verb|const| 关键字的作用之一，放在引用或指针前面，
+表示这个引用或指针指向的数据是只读的。
+
+除了复制，还有一个相关的操作是赋值 (assignment)。比如：
+\begin{lstlisting}[language=C++]
+  ArrayList A(10);
+  ArrayList B;
+  B = A; // ERROR, 默认的赋值操作会导致严重错误.
+\end{lstlisting}
+注意 \verb|=| 在声明时和赋值时的区别。和复制构造函数一样，C++ 也要求每一个类都必须有一个赋值操作符 (assignment operator)。
+如果没有显式地定义一个赋值操作符，编译器会自动生成一个缺省的赋值操作符。这个缺省的赋值操作符也会逐个复制类的每个数据成员，
+同样会导致多个实例共享同一块内存的问题。
+
+因为赋值是一个运算符，所以赋值操作符必须是一个成员函数，名字是 \verb|operator=|。比如我们可以这样定义赋值操作符：
+\begin{lstlisting}[language=C++]
+  ArrayList& operator=(const ArrayList &other)
+  {
+    if (this != &other) // 防止自赋值
+    {
+      if (data != nullptr)
+        delete[] data; // 释放原有内存
+      size = other.size;
+      if (other.data != nullptr)
+      {
+        data = new double[size];
+        for (int i = 0; i < size; i++)
+          data[i] = other.data[i];
+      }
+      else
+      {
+        data = nullptr;
+      }
+    }
+    return *this;
+  }
+\end{lstlisting}
+
+我们将上面的语法全部纳入我们的设计，得到最终的设计 \verb|ArrayList04.h| 和 \verb|ArrayList04.cpp|, 以及测试程序 \verb|main04.cpp| 如下：
+\begin{lstlisting}[language=C++]
+// ArrayList04.h
+#ifndef __CRAZYFISH_ARRAYLIST__
+#define __CRAZYFISH_ARRAYLIST__
+#include <iostream>
+/// 元素的类型.
+typedef double t_ele;
+/// 元素下标的类型.
+typedef int t_idx;
+/// 代表不存在的下标位置.
+#define NIL -1
+class ArrayList
+{
+private:
+  t_idx size = 0;			      /**< List 的大小. */
+  t_ele *data = nullptr;		/**< 存放数据的内存区域. */
+public:
+  ArrayList(){};
+  ArrayList(t_idx _maxSize)
+  {
+    size = _maxSize;
+    data = new t_ele[size];
+    for (t_idx i = 0; i < size; i++)
+      data[i] = 0.0;
+  }
+  ~ArrayList()
+  {
+    if (data != nullptr)
+      delete[] data;  
+    data = nullptr;
+    size = 0;
+  }
+  ArrayList(const ArrayList &other)
+  {
+    size = other.size;
+    if (other.data != nullptr)
+    {
+      data = new t_ele[size];
+      for (t_idx i = 0; i < size; i++)
+        data[i] = other.data[i];
+    }
+    else
+    {
+      data = nullptr;
+    }
+  }
+  ArrayList& operator=(const ArrayList &other)
+  {
+    if (this != &other) // 防止自赋值
+    {
+      if (data != nullptr)  
+        delete[] data; // 释放原有内存
+      size = other.size;
+      if (other.data != nullptr)
+      {
+        data = new t_ele[size];
+        for (t_idx i = 0; i < size; i++)
+          data[i] = other.data[i];
+      }
+      else
+      {
+        data = nullptr;
+      }
+    }
+    return *this;
+  }
+  void printList() const;  // 列出表内全部元素.
+  void insert(t_ele _val, t_idx _pos); // 在指定位置插入指定元素值.
+};
+#else
+/// DO NOTHING.
+#endif
+\end{lstlisting}  
+\begin{lstlisting}[language=C++]
+// ArrayList04.cpp
+#include "ArrayList04.h"
+#include <iostream>
+void ArrayList::printList() const
+{
+  for (t_idx i = 0; i < size; i++)
+    std::cout << data[i] << " ";
+  std::cout << std::endl;
+} 
+void ArrayList::insert(t_ele _val, t_idx _pos)
+{
+  if (_pos < 0 || _pos >= size)
+  {
+    std::cerr << "Error: position out of range." << std::endl;
+    return;
+  }
+  for (t_idx i = size - 1; i > _pos; i--)
+    data[i] = data[i - 1];
+  data[_pos] = _val;
+}
+\end{lstlisting}
+\begin{lstlisting}[language=C++]
+// main04.cpp
+#include <iostream> 
+#include "ArrayList04.h"
+int main()
+{
+  ArrayList A(10);
+  A.insert(34, 0);
+  A.insert(12, 1);  
+  A.printList();
+  ArrayList B = A; // 调用复制构造函数
+  B.insert(52, 1);
+  B.printList();
+  A.printList(); // A 不受影响
+  ArrayList C;
+  C = B; // 调用赋值操作符
+  C.insert(16, 2);
+  C.printList();
+  B.printList(); // B 不受影响
+  return 0; 
+}
+\end{lstlisting}
+
+% \begin{itemize}
+%   \item 关键字 \verb|const| 放在函数后面, 表示这个函数不会改动类的数据
+%     和结构, 可以认为是一个静态操作的标记；
+%   \item 由于还未学习 C++ 的很多特性, 因此这里采用了宏和 \verb|typedef|
+%     对数据做了抽象. 在后续的学习中, C++ 会有更好的机制；
+%   \item 这里的注释符合 Doxygen 的规范, 便于自动生成文档. 这也是推荐的
+%     注释格式. 建议使用适当的工具辅助你产生规范的注释；
+%   \item 除了 \verb|next| 和 \verb|previous|, 这个设计也没有考虑出错和
+%     报错. 留待后续讨论.
+%   \item 关键字 \verb|nullptr| 是 C++ 0x 标准中新增的, 用来代替宏
+%     \verb|NULL|. \verb|NULL| 其实就是一个 \verb|#define NULL 0| 的宏,
+%     而 \verb|nullptr| 是一个类型安全的指针空值. 
+% \end{itemize}
+
+% 
+
+我们现在来补充一些功能使我们的设计更加丰富。首先是初始化。上面的设计中, 我们只能通过指定一个
+最大容量来初始化一个列表. 这显然不够灵活.。
+用户很可能需要的初始化数值很可能是一个具体的序列，比如 \verb|34, 12, 52, 16, 12|.
 
 为此, 我们重载一个新的构造函数（重载的意思就是两个函数名完全一样的函数，但在具体调用时，根据不同的参数列表来区分）:
 
@@ -1276,791 +1780,923 @@ ArrayList::ArrayList(std::initializer_list<t_ele> _l)
 ArrayList A{34, 12, 52, 16, 12};
 \end{verbatim}
 
-在测试 \verb|insert| 和 \verb|findKth| 时, 如果用户提供了错误的
-\verb|_pos|, 那么会导致数组越界, 但编译器语法检查会无视这一点. 甚至在
-测试运行时, 这样的语句也未必会导致系统运行错误.
-\begin{verbatim}
-std::cout << A.findKth(10) << std::endl;
-\end{verbatim}
-我们只有在做内存泄漏检查时才能发现这一点:
-\begin{verbatim}
-valgrind ./test
-\end{verbatim}
-为了解决这个问题, 我们需要自己制定错误异常检测和退出机制. 我们现在并不
-打算介绍完整的 C++ 异常信号机制, 而是用手工代码来强调这个问题的必要性.
-我们需要在每次外部调用位置信息的时候, 对它是否越界做一个检查: 
-\begin{verbatim}
-t_ele ArrayList::findKth(t_idx _pos) 
-{
-     if (_pos > size)
-         _error_exit(1);
-     return data[_pos];
-};
-\end{verbatim}
-然后设计一个类的内部(私有)函数来统一处理出错信息. 因为我们可能的错误也
-许不止这一个.
-\begin{verbatim}
-/** 
-* 异常退出.
-* 
-* @param _err_code 出错代码.
-*  1 : 越界错误.
-* 
-*/
-void _error_exit(t_err _err_code);
-\end{verbatim}
-由此, 我们还需要规定一个统一的出错码 \verb|_err_code|, 以及它的类型
-\verb|t_err|. 作为退出函数, 我们则调用了 \verb|cstdlib| 库中的
-\verb|exit| 函数, 并用一个 $-1$ 参数表示这不是一个正常的退出. 这个信息
-会通过一种信号机制传递给操作系统. 我们这里先不用去理会.
+% 在测试 \verb|insert| 和 \verb|findKth| 时, 如果用户提供了错误的
+% \verb|_pos|, 那么会导致数组越界, 但编译器语法检查会无视这一点. 甚至在
+% 测试运行时, 这样的语句也未必会导致系统运行错误.
+% \begin{verbatim}
+% std::cout << A.findKth(10) << std::endl;
+% \end{verbatim}
+% 我们只有在做内存泄漏检查时才能发现这一点:
+% \begin{verbatim}
+% valgrind ./test
+% \end{verbatim}
+% 为了解决这个问题, 我们需要自己制定错误异常检测和退出机制. 我们现在并不
+% 打算介绍完整的 C++ 异常信号机制, 而是用手工代码来强调这个问题的必要性.
+% 我们需要在每次外部调用位置信息的时候, 对它是否越界做一个检查: 
+% \begin{verbatim}
+% t_ele ArrayList::findKth(t_idx _pos) 
+% {
+%      if (_pos > size)
+%          _error_exit(1);
+%      return data[_pos];
+% };
+% \end{verbatim}
+% 然后设计一个类的内部(私有)函数来统一处理出错信息. 因为我们可能的错误也
+% 许不止这一个.
+% \begin{verbatim}
+% /** 
+% * 异常退出.
+% * 
+% * @param _err_code 出错代码.
+% *  1 : 越界错误.
+% * 
+% */
+% void _error_exit(t_err _err_code);
+% \end{verbatim}
+% 由此, 我们还需要规定一个统一的出错码 \verb|_err_code|, 以及它的类型
+% \verb|t_err|. 作为退出函数, 我们则调用了 \verb|cstdlib| 库中的
+% \verb|exit| 函数, 并用一个 $-1$ 参数表示这不是一个正常的退出. 这个信息
+% 会通过一种信号机制传递给操作系统. 我们这里先不用去理会.
 
-现在, 我们的实现会捕捉越界错误, 并且给出警告后强制退出. 作为引入异常处
-理机制的最后一个需要提醒的地方, 我们注意到 \verb|findKth| 函数, 不能再
-在后面施加 \verb|const| 参数了. 尽管它概念上仍然是一个静态操作, 但它有
-可能因为下标越界而强制退出, 这是一个非静态的行为. 
-\begin{verbatim}
-void ArrayList::_error_exit(t_err _err_code)
-{
-  switch (_err_code)
-  {
-    case 1:
-      std::cerr << "Out of the range of the position." << std::endl;
-    default:
-      makeEmpty();
-      std::exit(-1);
-  }
-};
-\end{verbatim}
+% 现在, 我们的实现会捕捉越界错误, 并且给出警告后强制退出. 作为引入异常处
+% 理机制的最后一个需要提醒的地方, 我们注意到 \verb|findKth| 函数, 不能再
+% 在后面施加 \verb|const| 参数了. 尽管它概念上仍然是一个静态操作, 但它有
+% 可能因为下标越界而强制退出, 这是一个非静态的行为. 
+% \begin{verbatim}
+% void ArrayList::_error_exit(t_err _err_code)
+% {
+%   switch (_err_code)
+%   {
+%     case 1:
+%       std::cerr << "Out of the range of the position." << std::endl;
+%     default:
+%       makeEmpty();
+%       std::exit(-1);
+%   }
+% };
+% \end{verbatim}
 
-我们补充一些指针的知识。
+% 我们补充一些指针的知识。
 
-\begin{itemize}
-  \item 指针是一个变量, 其值是另一个变量的地址. 比如 \verb|int *p;|, 
-    \verb|p| 是一个指向 \verb|int| 类型的指针. 
-  \item 指针的运算, 比如 \verb|p++|, 是指针的运算, 而不是指向的变量的运算.
-  \item 指针的运算是按照指针的类型来的. 比如 \verb|p++|, 是将 \verb|p| 的值
-    加上 \verb|sizeof(int)|.
-  \item 如果 \verb|double * q|. 则 \verb|q++|, 是将 \verb|q| 的值
-    加上 \verb|sizeof(double)|.
-  \item 内存中的每一个数据都有一个地址, 也即一个指针. 比如 \verb|&a|, 是
-    变量 \verb|a| 的地址.
-\end{itemize}
+% \begin{itemize}
+%   \item 指针是一个变量, 其值是另一个变量的地址. 比如 \verb|int *p;|, 
+%     \verb|p| 是一个指向 \verb|int| 类型的指针. 
+%   \item 指针的运算, 比如 \verb|p++|, 是指针的运算, 而不是指向的变量的运算.
+%   \item 指针的运算是按照指针的类型来的. 比如 \verb|p++|, 是将 \verb|p| 的值
+%     加上 \verb|sizeof(int)|.
+%   \item 如果 \verb|double * q|. 则 \verb|q++|, 是将 \verb|q| 的值
+%     加上 \verb|sizeof(double)|.
+%   \item 内存中的每一个数据都有一个地址, 也即一个指针. 比如 \verb|&a|, 是
+%     变量 \verb|a| 的地址.
+% \end{itemize}
 
-我们下面这段代码演示了指针和一般变量的关系：
+% 我们下面这段代码演示了指针和一般变量的关系：
 
-\begin{lstlisting}[language=C++]
-  #include <iostream>
+% \begin{lstlisting}[language=C++]
+%   #include <iostream>
 
-  int main()
-  {
-      int A = 100;
-      int *B = &A;
-      std::cout << "A = " << A << std::endl;
-      std::cout << "The address of A is:" << &A << std::endl;
-      std::cout << "B = " << B << std::endl;
-      std::cout << "The value of B is:" << *B << std::endl;
-      A = 200;
-      std::cout << "A = " << A << std::endl;
-      std::cout << "The address of A is:" << &A << std::endl;
-      std::cout << "B = " << B << std::endl;
-      std::cout << "The value of B is:" << *B << std::endl;
-      *B = 300;
-      std::cout << "A = " << A << std::endl;
-      std::cout << "The address of A is:" << &A << std::endl;
-      std::cout << "B = " << B << std::endl;
-      std::cout << "The value of B is:" << *B << std::endl;
-      B = new int;
-      *B = 400;
-      std::cout << "A = " << A << std::endl;
-      std::cout << "The address of A is:" << &A << std::endl;
-      std::cout << "B = " << B << std::endl;
-      std::cout << "The value of B is:" << *B << std::endl;
-      return 0;
-  }  
-\end{lstlisting}
-我们可以用 gdb 观察它的执行情况。
+%   int main()
+%   {
+%       int A = 100;
+%       int *B = &A;
+%       std::cout << "A = " << A << std::endl;
+%       std::cout << "The address of A is:" << &A << std::endl;
+%       std::cout << "B = " << B << std::endl;
+%       std::cout << "The value of B is:" << *B << std::endl;
+%       A = 200;
+%       std::cout << "A = " << A << std::endl;
+%       std::cout << "The address of A is:" << &A << std::endl;
+%       std::cout << "B = " << B << std::endl;
+%       std::cout << "The value of B is:" << *B << std::endl;
+%       *B = 300;
+%       std::cout << "A = " << A << std::endl;
+%       std::cout << "The address of A is:" << &A << std::endl;
+%       std::cout << "B = " << B << std::endl;
+%       std::cout << "The value of B is:" << *B << std::endl;
+%       B = new int;
+%       *B = 400;
+%       std::cout << "A = " << A << std::endl;
+%       std::cout << "The address of A is:" << &A << std::endl;
+%       std::cout << "B = " << B << std::endl;
+%       std::cout << "The value of B is:" << *B << std::endl;
+%       return 0;
+%   }  
+% \end{lstlisting}
+% 我们可以用 gdb 观察它的执行情况。
 
-指针和数组的关系是非常密切的。我们可以用指针来访问数组的元素。比如：
+% 指针和数组的关系是非常密切的。我们可以用指针来访问数组的元素。比如：
 
-\begin{lstlisting}[language=C++]
-  #include <iostream>
+% \begin{lstlisting}[language=C++]
+%   #include <iostream>
 
-  int main()
-  {
-      int A[5] = {1, 2, 3, 4, 5};
-      int *B = A;
-      for (int i = 0; i < 5; i++)
-          std::cout << B[i] << std::endl;
-      return 0;
-  }
-\end{lstlisting}
+%   int main()
+%   {
+%       int A[5] = {1, 2, 3, 4, 5};
+%       int *B = A;
+%       for (int i = 0; i < 5; i++)
+%           std::cout << B[i] << std::endl;
+%       return 0;
+%   }
+% \end{lstlisting}
 
-与之相关的还有一个概念是左值引用(reference)。我们先别管左值 (lvalue), 引用是一个变量的别名。比如：
+% 与之相关的还有一个概念是左值引用(reference)。我们先别管左值 (lvalue), 引用是一个变量的别名。比如：
 
-\begin{lstlisting}[language=C++]
-  #include <iostream>
+% \begin{lstlisting}[language=C++]
+%   #include <iostream>
 
-  int main()
-  {
-      int A = 100;
-      int &B = A;
-      std::cout << "A = " << A << std::endl;
-      std::cout << "B = " << B << std::endl;
-      A = 200;
-      std::cout << "A = " << A << std::endl;
-      std::cout << "B = " << B << std::endl;
-      B = 300;
-      std::cout << "A = " << A << std::endl;
-      std::cout << "B = " << B << std::endl;
-      return 0;
-  }
-\end{lstlisting}
+%   int main()
+%   {
+%       int A = 100;
+%       int &B = A;
+%       std::cout << "A = " << A << std::endl;
+%       std::cout << "B = " << B << std::endl;
+%       A = 200;
+%       std::cout << "A = " << A << std::endl;
+%       std::cout << "B = " << B << std::endl;
+%       B = 300;
+%       std::cout << "A = " << A << std::endl;
+%       std::cout << "B = " << B << std::endl;
+%       return 0;
+%   }
+% \end{lstlisting}
 
-我们下面先继续完善我们的 ArrayList:
+% 我们下面先继续完善我们的 ArrayList:
 
-\begin{lstlisting}[language=C++]
-  #include <iostream>
-  #include <initializer_list>
+% \begin{lstlisting}[language=C++]
+%   #include <iostream>
+%   #include <initializer_list>
   
-  #define NIL -1
+%   #define NIL -1
   
-  typedef double t_ele;
+%   typedef double t_ele;
   
-  class ArrayList
-  {
-  private:
-      int size = 0;
-      t_ele *data = nullptr;
-  public:
-      ArrayList(){};
-      ArrayList(std::initializer_list<t_ele> _l)
-      {
-          size = _l.size();
-          data = new t_ele [size];
-          int i = 0;
-          for (t_ele e : _l)
-          {
-              data[i] = e;
-              i++;
-          }
-      };
+%   class ArrayList
+%   {
+%   private:
+%       int size = 0;
+%       t_ele *data = nullptr;
+%   public:
+%       ArrayList(){};
+%       ArrayList(std::initializer_list<t_ele> _l)
+%       {
+%           size = _l.size();
+%           data = new t_ele [size];
+%           int i = 0;
+%           for (t_ele e : _l)
+%           {
+%               data[i] = e;
+%               i++;
+%           }
+%       };
   
-      void printList()
-      {
-          std::cout << "Values: " << std::endl;
-          for (int i = 0; i < size; i++)
-              std::cout << data[i] << "\t";
-          std::cout << std::endl;    
-      };
-      void makeEmpty()
-      {
-          size = 0;
-          if (data != nullptr)
-              delete [] data;
-          data = nullptr;             // avoid double free.
-      }
-      int find(t_ele _v);             // return the pos of the first ele equals to _v, NIL if not found.
-      void insert(t_ele _v, int _p);  // insert _v after pos _p.
-      void push_ahead(t_ele _v);      // insert _v to the first pos.
-      void remove(t_ele _v);          // remove the first ele equals to _v, do nothing if not found.
-      ~ArrayList()
-      {
-          if (data != nullptr)        // avoid double free.
-              makeEmpty();
-      }
-  };
+%       void printList()
+%       {
+%           std::cout << "Values: " << std::endl;
+%           for (int i = 0; i < size; i++)
+%               std::cout << data[i] << "\t";
+%           std::cout << std::endl;    
+%       };
+%       void makeEmpty()
+%       {
+%           size = 0;
+%           if (data != nullptr)
+%               delete [] data;
+%           data = nullptr;             // avoid double free.
+%       }
+%       int find(t_ele _v);             // return the pos of the first ele equals to _v, NIL if not found.
+%       void insert(t_ele _v, int _p);  // insert _v after pos _p.
+%       void push_ahead(t_ele _v);      // insert _v to the first pos.
+%       void remove(t_ele _v);          // remove the first ele equals to _v, do nothing if not found.
+%       ~ArrayList()
+%       {
+%           if (data != nullptr)        // avoid double free.
+%               makeEmpty();
+%       }
+%   };
   
-  void ArrayList::push_ahead(t_ele _v)
-  {
-      if (size == 0)
-      {
-          data = new t_ele;
-          *data = _v;
-          size ++;
-          return;        
-      }
-      t_ele *new_data = new t_ele[size + 1];
-      *new_data = _v;
-      for (int i = 1; i < size + 1; i++)
-          new_data[i] = data[i - 1];  
-      delete [] data;         
-      data = new_data;
-      size ++; 
-  }
+%   void ArrayList::push_ahead(t_ele _v)
+%   {
+%       if (size == 0)
+%       {
+%           data = new t_ele;
+%           *data = _v;
+%           size ++;
+%           return;        
+%       }
+%       t_ele *new_data = new t_ele[size + 1];
+%       *new_data = _v;
+%       for (int i = 1; i < size + 1; i++)
+%           new_data[i] = data[i - 1];  
+%       delete [] data;         
+%       data = new_data;
+%       size ++; 
+%   }
   
-  int ArrayList::find(t_ele _v)
-  {
-      for (int i = 0; i < size; i++)
-          if (_v == data[i])
-              return i;
-      return NIL;
-  }
+%   int ArrayList::find(t_ele _v)
+%   {
+%       for (int i = 0; i < size; i++)
+%           if (_v == data[i])
+%               return i;
+%       return NIL;
+%   }
   
-  void ArrayList::remove(t_ele _v)
-  {
-      int idx = find(_v);
-      if (idx == NIL)
-          return;
-      t_ele *new_data = new t_ele [size - 1];
-      for (int i = 0; i < idx; i++)
-          new_data[i] = data[i];
-      for (int i = idx + 1; i < size; i++)
-          new_data[i - 1] = data[i];
-      delete [] data;         // ???
-      data = new_data;
-      size --;                // ???
-  }
+%   void ArrayList::remove(t_ele _v)
+%   {
+%       int idx = find(_v);
+%       if (idx == NIL)
+%           return;
+%       t_ele *new_data = new t_ele [size - 1];
+%       for (int i = 0; i < idx; i++)
+%           new_data[i] = data[i];
+%       for (int i = idx + 1; i < size; i++)
+%           new_data[i - 1] = data[i];
+%       delete [] data;         // ???
+%       data = new_data;
+%       size --;                // ???
+%   }
   
-  int main()
-  {
-      ArrayList A {1, 2, 3, 4, 5};
-      A.push_ahead(3.1);
-      A.push_ahead(4.1);
-      A.push_ahead(5.1);
+%   int main()
+%   {
+%       ArrayList A {1, 2, 3, 4, 5};
+%       A.push_ahead(3.1);
+%       A.push_ahead(4.1);
+%       A.push_ahead(5.1);
       
-      A.printList();
-      A.remove(3.1);
-      A.printList();
-      A.makeEmpty();
-      A.printList();
-      return 0;
-  }
+%       A.printList();
+%       A.remove(3.1);
+%       A.printList();
+%       A.makeEmpty();
+%       A.printList();
+%       return 0;
+%   }
 
-\end{lstlisting}
+% \end{lstlisting}
 
-很多同学注意到我上节课的代码中，有一些 bug，比如 \verb|delete [] data| 写成了 \verb|delete data|.
-这是一个很严重的错误，因为 \verb|delete| 只会释放一个元素的内存，而 \verb|delete []| 才会释放一个数组的内存。
-还有 \verb|remove| 成功之后忘记了 \verb|size--|.
+% 很多同学注意到我上节课的代码中，有一些 bug，比如 \verb|delete [] data| 写成了 \verb|delete data|.
+% 这是一个很严重的错误，因为 \verb|delete| 只会释放一个元素的内存，而 \verb|delete []| 才会释放一个数组的内存。
+% 还有 \verb|remove| 成功之后忘记了 \verb|size--|.
 
-其实还有一个隐藏的较深的错误，就是 \verb|makeEmpty| 函数中，忘了 \verb|data = nullptr| 语句。
-这个语句是为了避免重复释放内存。如果没有这句话，如果用户主动调用了 \verb|makeEmpty|, 
-那么在 \verb|~ArrayList| 就会第二次调用 \verb|makeEmpty|, 导致 \verb|delete [] data| 被执行两次。
-这种错误被称为 double free. 所以涉及动态内存操作时，我们需要格外仔细。
+% 其实还有一个隐藏的较深的错误，就是 \verb|makeEmpty| 函数中，忘了 \verb|data = nullptr| 语句。
+% 这个语句是为了避免重复释放内存。如果没有这句话，如果用户主动调用了 \verb|makeEmpty|, 
+% 那么在 \verb|~ArrayList| 就会第二次调用 \verb|makeEmpty|, 导致 \verb|delete [] data| 被执行两次。
+% 这种错误被称为 double free. 所以涉及动态内存操作时，我们需要格外仔细。
 
-一种避免错误的机制是严格规定那些操作是动态的，那些是静态的。
-比如 \verb|printList|, \verb|find| 是静态的，我们在函数声明时，
-加上关键字 \verb|const| 来标记。这是一个多义的关键字。当出现在函数声明之后，
-表明这个函数是静态的。如果出现在指针声明当中，比如 \verb|const int * p|, 
-则表示指针指向的数据是常量的，一旦赋值，不可改变。同样的，如果一个引用在声明时有 \verb|const|,
-则表示这个引用指向的数据是常量的，比如 
-\verb|const int & r = a|, 则 \verb|r| 不能改变 \verb|a| 的值，相当于一个只读的别名。
+% 一种避免错误的机制是严格规定那些操作是动态的，那些是静态的。
+% 比如 \verb|printList|, \verb|find| 是静态的，我们在函数声明时，
+% 加上关键字 \verb|const| 来标记。这是一个多义的关键字。当出现在函数声明之后，
+% 表明这个函数是静态的。如果出现在指针声明当中，比如 \verb|const int * p|, 
+% 则表示指针指向的数据是常量的，一旦赋值，不可改变。同样的，如果一个引用在声明时有 \verb|const|,
+% 则表示这个引用指向的数据是常量的，比如 
+% \verb|const int & r = a|, 则 \verb|r| 不能改变 \verb|a| 的值，相当于一个只读的别名。
 
-这些细节，我们会在后续的讨论中强调。
+% 这些细节，我们会在后续的讨论中强调。
 
 
-\begin{lstlisting}[language=C++]
-  #include <iostream>
-  #include <initializer_list>
+% \begin{lstlisting}[language=C++]
+%   #include <iostream>
+%   #include <initializer_list>
   
-  #define NIL -1
+%   #define NIL -1
   
-  typedef double t_ele;
+%   typedef double t_ele;
   
-  class ArrayList
-  {
-  private:
-      int size = 0;
-      t_ele *data = nullptr;
-  public:
-      ArrayList(){};
-      ArrayList(std::initializer_list<t_ele> _l)
-      {
-          size = _l.size();
-          data = new t_ele [size];
-          int i = 0;
-          for (t_ele e : _l)
-          {
-              data[i] = e;
-              i++;
-          }
-      };
+%   class ArrayList
+%   {
+%   private:
+%       int size = 0;
+%       t_ele *data = nullptr;
+%   public:
+%       ArrayList(){};
+%       ArrayList(std::initializer_list<t_ele> _l)
+%       {
+%           size = _l.size();
+%           data = new t_ele [size];
+%           int i = 0;
+%           for (t_ele e : _l)
+%           {
+%               data[i] = e;
+%               i++;
+%           }
+%       };
   
-      void printList() const
-      {
-          std::cout << "Values: " << std::endl;
-          for (int i = 0; i < size; i++)
-              std::cout << data[i] << "\t";
-          std::cout << std::endl;    
-      };
-      void makeEmpty()
-      {
-          size = 0;
-          if (data != nullptr)
-              delete [] data;
-          data = nullptr;             // avoid double free.
-      }
-      int find(t_ele _v) const;             // return the pos of the first ele equals to _v, NIL if not found.
-      void insert(t_ele _v, int _p);  // insert _v after pos _p.
-      void push_ahead(t_ele _v);      // insert _v to the first pos.
-      void remove(t_ele _v);          // remove the first ele equals to _v, do nothing if not found.
-      ~ArrayList()
-      {
-          if (data != nullptr)        // avoid double free.
-              makeEmpty();
-      }
-  };
+%       void printList() const
+%       {
+%           std::cout << "Values: " << std::endl;
+%           for (int i = 0; i < size; i++)
+%               std::cout << data[i] << "\t";
+%           std::cout << std::endl;    
+%       };
+%       void makeEmpty()
+%       {
+%           size = 0;
+%           if (data != nullptr)
+%               delete [] data;
+%           data = nullptr;             // avoid double free.
+%       }
+%       int find(t_ele _v) const;             // return the pos of the first ele equals to _v, NIL if not found.
+%       void insert(t_ele _v, int _p);  // insert _v after pos _p.
+%       void push_ahead(t_ele _v);      // insert _v to the first pos.
+%       void remove(t_ele _v);          // remove the first ele equals to _v, do nothing if not found.
+%       ~ArrayList()
+%       {
+%           if (data != nullptr)        // avoid double free.
+%               makeEmpty();
+%       }
+%   };
   
-  void ArrayList::push_ahead(t_ele _v)
-  {
-      if (size == 0)
-      {
-          data = new t_ele;
-          *data = _v;
-          size ++;
-          return;        
-      }
-      t_ele *new_data = new t_ele[size + 1];
-      *new_data = _v;
-      for (int i = 1; i < size + 1; i++)
-          new_data[i] = data[i - 1];  
-      delete [] data;         
-      data = new_data;
-      size ++; 
-  }
+%   void ArrayList::push_ahead(t_ele _v)
+%   {
+%       if (size == 0)
+%       {
+%           data = new t_ele;
+%           *data = _v;
+%           size ++;
+%           return;        
+%       }
+%       t_ele *new_data = new t_ele[size + 1];
+%       *new_data = _v;
+%       for (int i = 1; i < size + 1; i++)
+%           new_data[i] = data[i - 1];  
+%       delete [] data;         
+%       data = new_data;
+%       size ++; 
+%   }
   
-  int ArrayList::find(t_ele _v) const
-  {
-      for (int i = 0; i < size; i++)
-          if (_v == data[i])
-              return i;
-      return NIL;
-  }
+%   int ArrayList::find(t_ele _v) const
+%   {
+%       for (int i = 0; i < size; i++)
+%           if (_v == data[i])
+%               return i;
+%       return NIL;
+%   }
   
-  void ArrayList::remove(t_ele _v)
-  {
-      int idx = find(_v);
-      if (idx == NIL)
-          return;
-      t_ele *new_data = new t_ele [size - 1];
-      for (int i = 0; i < idx; i++)
-          new_data[i] = data[i];
-      for (int i = idx + 1; i < size; i++)
-          new_data[i - 1] = data[i];
-      delete [] data;         // ???
-      data = new_data;
-      size --;                // ???
-  }
+%   void ArrayList::remove(t_ele _v)
+%   {
+%       int idx = find(_v);
+%       if (idx == NIL)
+%           return;
+%       t_ele *new_data = new t_ele [size - 1];
+%       for (int i = 0; i < idx; i++)
+%           new_data[i] = data[i];
+%       for (int i = idx + 1; i < size; i++)
+%           new_data[i - 1] = data[i];
+%       delete [] data;         // ???
+%       data = new_data;
+%       size --;                // ???
+%   }
   
-  int main()
-  {
-      ArrayList A {1, 2, 3, 4, 5};
-      A.push_ahead(3.1);
-      A.push_ahead(4.1);
-      A.push_ahead(5.1);
+%   int main()
+%   {
+%       ArrayList A {1, 2, 3, 4, 5};
+%       A.push_ahead(3.1);
+%       A.push_ahead(4.1);
+%       A.push_ahead(5.1);
       
-      A.printList();
-      A.remove(3.1);
-      A.printList();
-      A.makeEmpty();
-      A.printList();
-      return 0;
-  }
+%       A.printList();
+%       A.remove(3.1);
+%       A.printList();
+%       A.makeEmpty();
+%       A.printList();
+%       return 0;
+%   }
 
-\end{lstlisting}
+% \end{lstlisting}
 
-正确使用指针和引用，是 C++ 编程的关键。它们的一个重要应用是函数参数传递。
+% 正确使用指针和引用，是 C++ 编程的关键。它们的一个重要应用是函数参数传递。
+
+% \begin{lstlisting}[language=C++]
+%   #include <iostream>
+
+%   class Chicken
+%   {
+%     private:
+%       int age = 24;
+%       char name[7] = "Kunkun";
+%     public:
+%       char *getName()
+%       {
+%         return name;
+%       }
+%       void setAge(int _age)
+%       {
+%         age = _age;
+%       }
+%       int getAge()
+%       {
+%         return age;
+%       }
+%       Chicken(){};
+%       Chicken(int _age)
+%       {
+%         age = _age;
+%       }
+%       ~Chicken(){};
+%       void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
+%   };
+
+%   void show(Chicken _c)
+%   {
+%     std::cout << "Hi! Everyone, I'm " << _c.getName() << ", " << _c.getAge() << " years old." << std::endl;
+%   }
+  
+%   int main()
+%   {
+%     Chicken kun;
+%     show(kun);
+%     return 0;
+%   }
+% \end{lstlisting}
+
+% 这里我们注意到第一个指针的应用是传递了 \verb|name|. 字符串作为一个数组，我们用首地址传递。这是 C 语言的传统。但这样的传递是不安全的。
+% 因为我们可以通过这个指针修改 \verb|name| 的内容。
+% 这是一个潜在的 bug。
+
+% \begin{lstlisting}[language=C++]
+%   #include <iostream>
+
+%   class Chicken
+%   {
+%     private:
+%       int age = 24;
+%       char name[7] = "Kunkun";
+%     public:
+%       char *getName()
+%       {
+%         name[0] = 'I';   // ???
+%         return name;
+%       }
+%       void setAge(int _age)
+%       {
+%         age = _age;
+%       }
+%       int getAge()
+%       {
+%         return age;
+%       }
+%       Chicken(){};
+%       Chicken(int _age)
+%       {
+%         age = _age;
+%       }
+%       ~Chicken(){};
+%       void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
+%   };
+
+%   void show(Chicken _c)
+%   {
+%     std::cout << "Hi! Everyone, I'm " << _c.getName() << ", " << _c.getAge() << " years old." << std::endl;
+%   }
+  
+%   int main()
+%   {
+%     Chicken kun;
+%     show(kun);
+%     return 0;
+%   }
+% \end{lstlisting}
+
+
+% 我们可以通过将 \verb|getName| 函数改为 \verb|const| 来避免这个问题。
+
+% \begin{lstlisting}[language=C++]
+%   #include <iostream>
+
+%   class Chicken
+%   {
+%     private:
+%       int age = 24;
+%       char name[7] = "Kunkun";
+%     public:
+%       char *getName() const  /// ???
+%       {
+% //        name[0] = 'I';   // ???
+%         return name;
+%       }
+%       void setAge(int _age)
+%       {
+%         age = _age;
+%       }
+%       int getAge()
+%       {
+%         return age;
+%       }
+%       Chicken(){};
+%       Chicken(int _age)
+%       {
+%         age = _age;
+%       }
+%       ~Chicken(){};
+%       void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
+%   };
+
+%   void show(Chicken _c)
+%   {
+%     std::cout << "Hi! Everyone, I'm " << _c.getName() << ", " << _c.getAge() << " years old." << std::endl;
+%   }
+  
+%   int main()
+%   {
+%     Chicken kun;
+%     show(kun);
+%     return 0;
+%   }
+% \end{lstlisting}
+
+% 你会注意到上面的代码仍然是错的。因为 \verb|const| 限定是问心不问行的。也就是说，你连留下修改的可能性都不允许！
+% 这里既然你传递了指针，难免有人会犯错，犯错的可能性都不允许！所以办法就是直接限定返回的指针也是 \verb|const| 的，不能修改。
+% 这样就从设计底层上避免了这个问题。
+
+% \begin{lstlisting}[language=C++]
+%   #include <iostream>
+
+%   class Chicken
+%   {
+%     private:
+%       int age = 24;
+%       char name[7] = "Kunkun";
+%     public:
+%       const char *getName() const  /// !
+%       {
+% //        name[0] = 'I';   // ???
+%         return name;    /// 这里做了自动类型转换。
+%       }
+%       void setAge(int _age)
+%       {
+%         age = _age;
+%       }
+%       int getAge()
+%       {
+%         return age;
+%       }
+%       Chicken(){};
+%       Chicken(int _age)
+%       {
+%         age = _age;
+%       }
+%       ~Chicken(){};
+%       void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
+%   };
+
+%   void show(Chicken _c)  // 这里发生了什么？
+%   {
+%     std::cout << "Hi! Everyone, I'm " << _c.getName() << ", " << _c.getAge() << " years old." << std::endl;
+%   }
+  
+%   int main()
+%   {
+%     Chicken kun;
+%     show(kun);
+%     return 0;
+%   }
+% \end{lstlisting}
+
+% 第二个问题是，\verb|show| 调用的时候，发生了参数复制。这是因为我们传递的是一个对象，而不是一个指针。这样的传递会导致对象的复制。这是一个效率问题。
+% 经典的 C 语言中，我们可以通过传递指针来避免这个问题。
+
+% \begin{lstlisting}[language=C++]
+%   #include <iostream>
+
+%   class Chicken
+%   {
+%     private:
+%       int age = 24;
+%       char name[7] = "Kunkun";
+%     public:
+%       const char *getName() const  /// !
+%       {
+%         return name;    /// 这里做了自动类型转换。
+%       }
+%       void setAge(int _age)
+%       {
+%         age = _age;
+%       }
+%       int getAge()
+%       {
+%         return age;
+%       }
+%       Chicken(){};
+%       Chicken(int _age)
+%       {
+%         age = _age;
+%       }
+%       ~Chicken(){};
+%       void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
+%   };
+
+%   void show(Chicken *_c)  // 这里发生了什么？
+%   {
+%     std::cout << "Hi! Everyone, I'm " << _c->getName() << ", " << _c->getAge() << " years old." << std::endl;
+%   }
+  
+%   int main()
+%   {
+%     Chicken kun;
+%     show(&kun);
+%     return 0;
+%   }
+% \end{lstlisting}
+
+% 但这会造成函数接口形式的不一致。这里 \verb|_c->getName()| 等价于 \verb|(*_c).getName()|. 我们可以通过引用来避免这个问题。
+
+% \begin{lstlisting}[language=C++]
+%   #include <iostream>
+
+%   class Chicken
+%   {
+%     private:
+%       int age = 24;
+%       char name[7] = "Kunkun";
+%     public:
+%       const char *getName() const  /// !
+%       {
+%         return name;    /// 这里做了自动类型转换。
+%       }
+%       void setAge(int _age)
+%       {
+%         age = _age;
+%       }
+%       int getAge()
+%       {
+%         return age;
+%       }
+%       Chicken(){};
+%       Chicken(int _age)
+%       {
+%         age = _age;
+%       }
+%       ~Chicken(){};
+%       void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
+%   };
+
+%   void show(Chicken &_c)  // 这里发生了什么？
+%   {
+%     std::cout << "Hi! Everyone, I'm " << _c.getName() << ", " << _c.getAge() << " years old." << std::endl;
+%   }
+  
+%   int main()
+%   {
+%     Chicken kun;
+%     show(kun);
+%     return 0;
+%   }
+% \end{lstlisting}
+
+% 由于左值引用是别名，所以对于调用函数的用户来说，是感受不到任何区别的。但它同时又避免了复制。这是 C++ 的一个重要特性。
+
+% \begin{lstlisting}[language=c++]
+  
+% #include <iostream>
+% #include <initializer_list>
+
+% #define NIL -1
+
+% typedef double t_ele;
+
+% class ArrayList
+% {
+% private:
+%     int size = 0;
+%     t_ele *data = nullptr;
+% public:
+%     ArrayList(){};
+%     ArrayList(std::initializer_list<t_ele> _l)   // 这里不能左值引用，为啥？
+%     {
+%         size = _l.size();
+%         data = new t_ele [size];
+%         int i = 0;
+%         for (t_ele e : _l)
+%         {
+%             data[i] = e;
+%             i++;
+%         }
+%     };
+
+%     void printList() const
+%     {
+%         std::cout << "Values: " << std::endl;
+%         for (int i = 0; i < size; i++)
+%             std::cout << data[i] << "\t";
+%         std::cout << std::endl;    
+%     };
+%     void makeEmpty()
+%     {
+%         size = 0;
+%         if (data != nullptr)
+%             delete [] data;
+%         data = nullptr;             // avoid double free.
+%     }
+%     int find(const t_ele &_v) const; // 左值引用，避免复制。当 t_ele 是复杂数据结构时。
+%     void insert(const t_ele &_v, int _p);  // insert _v after pos _p. 同理。
+%     void push_ahead(const t_ele &_v);      // insert _v to the first pos.
+%     void remove(const t_ele &_v);          // remove the first ele equals to _v, do nothing if not found.
+%     ~ArrayList()
+%     {
+%         if (data != nullptr)        // avoid double free.
+%             makeEmpty();
+%     }
+% };
+
+% void ArrayList::push_ahead(const t_ele &_v)
+% {
+%     if (size == 0)
+%     {
+%         data = new t_ele;
+%         *data = _v;
+%         size ++;
+%         return;        
+%     }
+%     t_ele *new_data = new t_ele[size + 1];
+%     *new_data = _v;
+%     for (int i = 1; i < size + 1; i++)
+%         new_data[i] = data[i - 1];  
+%     delete [] data;         
+%     data = new_data;
+%     size ++; 
+% }
+
+% int ArrayList::find(const t_ele& _v) const
+% {
+%     for (int i = 0; i < size; i++)
+%         if (_v == data[i])
+%             return i;
+%     return NIL;
+% }
+
+% void ArrayList::remove(const t_ele &_v)
+% {
+%     int idx = find(_v);
+%     if (idx == NIL)
+%         return;
+%     t_ele *new_data = new t_ele [size - 1];
+%     for (int i = 0; i < idx; i++)
+%         new_data[i] = data[i];
+%     for (int i = idx + 1; i < size; i++)
+%         new_data[i - 1] = data[i];
+%     delete [] data;         // ???
+%     data = new_data;
+%     size --;                // ???
+% }
+
+% int main()
+% {
+%     ArrayList A {1, 2, 3, 4, 5};
+%     A.push_ahead(3.1);
+%     A.push_ahead(4.1);
+%     A.push_ahead(5.1);
+    
+%     A.printList();
+%     A.remove(3.1);
+%     A.printList();
+%     A.makeEmpty();
+%     A.printList();
+%     return 0;
+% }
+% \end{lstlisting}
+
+% 拷贝构造和复制。
+
+% % 现在我们为我们的 ArrayList 增加 C++ 的风格。我们看一下：
+% % \begin{verbatim}
+% %   int find(t_ele _v) const;
+% % \end{verbatim}
+% % 这个函数有什么问题没有？当它在外部被调用，比如：
+% % \begin{verbatim}
+% %   int B = 3;
+% %   std::cout << A.find(B) << std::endl;
+% % \end{verbatim}
+% % 会发生什么？实际上 
+
+我们给出 \verb|ArrayList.h| 的完整代码，以及 \verb|ArrayList.cpp| 的完整代码，和 一个测试程序 \verb|testArrayList.cpp|.
 
 \begin{lstlisting}[language=C++]
-  #include <iostream>
-
-  class Chicken
-  {
-    private:
-      int age = 24;
-      char name[7] = "Kunkun";
-    public:
-      char *getName()
-      {
-        return name;
-      }
-      void setAge(int _age)
-      {
-        age = _age;
-      }
-      int getAge()
-      {
-        return age;
-      }
-      Chicken(){};
-      Chicken(int _age)
-      {
-        age = _age;
-      }
-      ~Chicken(){};
-      void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
-  };
-
-  void show(Chicken _c)
-  {
-    std::cout << "Hi! Everyone, I'm " << _c.getName() << ", " << _c.getAge() << " years old." << std::endl;
-  }
-  
-  int main()
-  {
-    Chicken kun;
-    show(kun);
-    return 0;
-  }
-\end{lstlisting}
-
-这里我们注意到第一个指针的应用是传递了 \verb|name|. 字符串作为一个数组，我们用首地址传递。这是 C 语言的传统。但这样的传递是不安全的。
-因为我们可以通过这个指针修改 \verb|name| 的内容。
-这是一个潜在的 bug。
-
-\begin{lstlisting}[language=C++]
-  #include <iostream>
-
-  class Chicken
-  {
-    private:
-      int age = 24;
-      char name[7] = "Kunkun";
-    public:
-      char *getName()
-      {
-        name[0] = 'I';   // ???
-        return name;
-      }
-      void setAge(int _age)
-      {
-        age = _age;
-      }
-      int getAge()
-      {
-        return age;
-      }
-      Chicken(){};
-      Chicken(int _age)
-      {
-        age = _age;
-      }
-      ~Chicken(){};
-      void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
-  };
-
-  void show(Chicken _c)
-  {
-    std::cout << "Hi! Everyone, I'm " << _c.getName() << ", " << _c.getAge() << " years old." << std::endl;
-  }
-  
-  int main()
-  {
-    Chicken kun;
-    show(kun);
-    return 0;
-  }
-\end{lstlisting}
-
-
-我们可以通过将 \verb|getName| 函数改为 \verb|const| 来避免这个问题。
-
-\begin{lstlisting}[language=C++]
-  #include <iostream>
-
-  class Chicken
-  {
-    private:
-      int age = 24;
-      char name[7] = "Kunkun";
-    public:
-      char *getName() const  /// ???
-      {
-//        name[0] = 'I';   // ???
-        return name;
-      }
-      void setAge(int _age)
-      {
-        age = _age;
-      }
-      int getAge()
-      {
-        return age;
-      }
-      Chicken(){};
-      Chicken(int _age)
-      {
-        age = _age;
-      }
-      ~Chicken(){};
-      void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
-  };
-
-  void show(Chicken _c)
-  {
-    std::cout << "Hi! Everyone, I'm " << _c.getName() << ", " << _c.getAge() << " years old." << std::endl;
-  }
-  
-  int main()
-  {
-    Chicken kun;
-    show(kun);
-    return 0;
-  }
-\end{lstlisting}
-
-你会注意到上面的代码仍然是错的。因为 \verb|const| 限定是问心不问行的。也就是说，你连留下修改的可能性都不允许！
-这里既然你传递了指针，难免有人会犯错，犯错的可能性都不允许！所以办法就是直接限定返回的指针也是 \verb|const| 的，不能修改。
-这样就从设计底层上避免了这个问题。
-
-\begin{lstlisting}[language=C++]
-  #include <iostream>
-
-  class Chicken
-  {
-    private:
-      int age = 24;
-      char name[7] = "Kunkun";
-    public:
-      const char *getName() const  /// !
-      {
-//        name[0] = 'I';   // ???
-        return name;    /// 这里做了自动类型转换。
-      }
-      void setAge(int _age)
-      {
-        age = _age;
-      }
-      int getAge()
-      {
-        return age;
-      }
-      Chicken(){};
-      Chicken(int _age)
-      {
-        age = _age;
-      }
-      ~Chicken(){};
-      void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
-  };
-
-  void show(Chicken _c)  // 这里发生了什么？
-  {
-    std::cout << "Hi! Everyone, I'm " << _c.getName() << ", " << _c.getAge() << " years old." << std::endl;
-  }
-  
-  int main()
-  {
-    Chicken kun;
-    show(kun);
-    return 0;
-  }
-\end{lstlisting}
-
-第二个问题是，\verb|show| 调用的时候，发生了参数复制。这是因为我们传递的是一个对象，而不是一个指针。这样的传递会导致对象的复制。这是一个效率问题。
-经典的 C 语言中，我们可以通过传递指针来避免这个问题。
-
-\begin{lstlisting}[language=C++]
-  #include <iostream>
-
-  class Chicken
-  {
-    private:
-      int age = 24;
-      char name[7] = "Kunkun";
-    public:
-      const char *getName() const  /// !
-      {
-        return name;    /// 这里做了自动类型转换。
-      }
-      void setAge(int _age)
-      {
-        age = _age;
-      }
-      int getAge()
-      {
-        return age;
-      }
-      Chicken(){};
-      Chicken(int _age)
-      {
-        age = _age;
-      }
-      ~Chicken(){};
-      void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
-  };
-
-  void show(Chicken *_c)  // 这里发生了什么？
-  {
-    std::cout << "Hi! Everyone, I'm " << _c->getName() << ", " << _c->getAge() << " years old." << std::endl;
-  }
-  
-  int main()
-  {
-    Chicken kun;
-    show(&kun);
-    return 0;
-  }
-\end{lstlisting}
-
-但这会造成函数接口形式的不一致。这里 \verb|_c->getName()| 等价于 \verb|(*_c).getName()|. 我们可以通过引用来避免这个问题。
-
-\begin{lstlisting}[language=C++]
-  #include <iostream>
-
-  class Chicken
-  {
-    private:
-      int age = 24;
-      char name[7] = "Kunkun";
-    public:
-      const char *getName() const  /// !
-      {
-        return name;    /// 这里做了自动类型转换。
-      }
-      void setAge(int _age)
-      {
-        age = _age;
-      }
-      int getAge()
-      {
-        return age;
-      }
-      Chicken(){};
-      Chicken(int _age)
-      {
-        age = _age;
-      }
-      ~Chicken(){};
-      void sing() {std::cout << "Chiken you are so beatiful!" << std::endl;}      
-  };
-
-  void show(Chicken &_c)  // 这里发生了什么？
-  {
-    std::cout << "Hi! Everyone, I'm " << _c.getName() << ", " << _c.getAge() << " years old." << std::endl;
-  }
-  
-  int main()
-  {
-    Chicken kun;
-    show(kun);
-    return 0;
-  }
-\end{lstlisting}
-
-由于左值引用是别名，所以对于调用函数的用户来说，是感受不到任何区别的。但它同时又避免了复制。这是 C++ 的一个重要特性。
-
-\begin{lstlisting}[language=c++]
-  
+#ifndef __CRAZYFISH_ARRAYLIST__
+#define __CRAZYFISH_ARRAYLIST__
 #include <iostream>
-#include <initializer_list>
-
-#define NIL -1
-
+/// 元素的类型.
 typedef double t_ele;
-
+/// 元素下标的类型.
+typedef int t_idx;
+/// 代表不存在的下标位置.
+#define NIL -1
 class ArrayList
 {
 private:
-    int size = 0;
-    t_ele *data = nullptr;
+  t_idx size = 0;			      /**< List 的大小. */
+  t_ele *data = nullptr;		/**< 存放数据的内存区域. */
 public:
-    ArrayList(){};
-    ArrayList(std::initializer_list<t_ele> _l)   // 这里不能左值引用，为啥？
+  ArrayList(){};
+  ArrayList(t_idx _maxSize)
+  {
+    size = _maxSize;
+    data = new t_ele[size];
+    for (t_idx i = 0; i < size; i++)
+      data[i] = 0.0;
+  }
+  ~ArrayList()
+  {
+    if (data != nullptr)
+      delete[] data;  
+    data = nullptr;
+    size = 0;
+  }
+  ArrayList(const ArrayList &other)
+  {
+    size = other.size;
+    if (other.data != nullptr)
     {
-        size = _l.size();
-        data = new t_ele [size];
-        int i = 0;
-        for (t_ele e : _l)
-        {
-            data[i] = e;
-            i++;
-        }
-    };
-
-    void printList() const
-    {
-        std::cout << "Values: " << std::endl;
-        for (int i = 0; i < size; i++)
-            std::cout << data[i] << "\t";
-        std::cout << std::endl;    
-    };
-    void makeEmpty()
-    {
-        size = 0;
-        if (data != nullptr)
-            delete [] data;
-        data = nullptr;             // avoid double free.
+      data = new t_ele[size];
+      for (t_idx i = 0; i < size; i++)
+        data[i] = other.data[i];
     }
-    int find(const t_ele &_v) const; // 左值引用，避免复制。当 t_ele 是复杂数据结构时。
-    void insert(const t_ele &_v, int _p);  // insert _v after pos _p. 同理。
-    void push_ahead(const t_ele &_v);      // insert _v to the first pos.
-    void remove(const t_ele &_v);          // remove the first ele equals to _v, do nothing if not found.
-    ~ArrayList()
+    else
     {
-        if (data != nullptr)        // avoid double free.
-            makeEmpty();
+      data = nullptr;
     }
+  }
+  ArrayList(std::initializer_list<t_ele> list)
+  {
+    size = list.size();
+    data = new t_ele[size];
+    t_idx i = 0;
+    for (t_ele e : list)
+    {
+      data[i] = e;
+      i++;
+    }
+  }
+  ArrayList& operator=(const ArrayList &other)
+  {
+    if (this != &other) // 防止自赋值
+    {
+      if (data != nullptr)  
+        delete[] data; // 释放原有内存
+      size = other.size;
+      if (other.data != nullptr)
+      {
+        data = new t_ele[size];
+        for (t_idx i = 0; i < size; i++)
+          data[i] = other.data[i];
+      }
+      else
+      {
+        data = nullptr;
+      }
+    }
+    return *this;
+  }
+  void printList() const;  // 列出表内全部元素.
+  void insert(t_ele _val, t_idx _pos); // 在指定位置插入指定元素值.
 };
-
-void ArrayList::push_ahead(const t_ele &_v)
-{
-    if (size == 0)
-    {
-        data = new t_ele;
-        *data = _v;
-        size ++;
-        return;        
-    }
-    t_ele *new_data = new t_ele[size + 1];
-    *new_data = _v;
-    for (int i = 1; i < size + 1; i++)
-        new_data[i] = data[i - 1];  
-    delete [] data;         
-    data = new_data;
-    size ++; 
-}
-
-int ArrayList::find(const t_ele& _v) const
-{
-    for (int i = 0; i < size; i++)
-        if (_v == data[i])
-            return i;
-    return NIL;
-}
-
-void ArrayList::remove(const t_ele &_v)
-{
-    int idx = find(_v);
-    if (idx == NIL)
-        return;
-    t_ele *new_data = new t_ele [size - 1];
-    for (int i = 0; i < idx; i++)
-        new_data[i] = data[i];
-    for (int i = idx + 1; i < size; i++)
-        new_data[i - 1] = data[i];
-    delete [] data;         // ???
-    data = new_data;
-    size --;                // ???
-}
-
-int main()
-{
-    ArrayList A {1, 2, 3, 4, 5};
-    A.push_ahead(3.1);
-    A.push_ahead(4.1);
-    A.push_ahead(5.1);
-    
-    A.printList();
-    A.remove(3.1);
-    A.printList();
-    A.makeEmpty();
-    A.printList();
-    return 0;
-}
+#else
+/// DO NOTHING.
+#endif
 \end{lstlisting}
 
-拷贝构造和复制。
-
-% 现在我们为我们的 ArrayList 增加 C++ 的风格。我们看一下：
-% \begin{verbatim}
-%   int find(t_ele _v) const;
-% \end{verbatim}
-% 这个函数有什么问题没有？当它在外部被调用，比如：
-% \begin{verbatim}
-%   int B = 3;
-%   std::cout << A.find(B) << std::endl;
-% \end{verbatim}
-% 会发生什么？实际上 
+\begin{lstlisting}[language=C++]
+#include "ArrayList.h"
+#include <iostream>
+void ArrayList::printList() const
+{
+  for (t_idx i = 0; i < size; i++)
+    std::cout << data[i] << " ";
+  std::cout << std::endl;
+} 
+void ArrayList::insert(t_ele _val, t_idx _pos)
+{
+  if (_pos < 0 || _pos >= size)
+  {
+    std::cerr << "Error: position out of range." << std::endl;
+    return;
+  }
+  for (t_idx i = size - 1; i > _pos; i--)
+    data[i] = data[i - 1];
+  data[_pos] = _val;
+}
+\end{lstlisting}
+\begin{lstlisting}[language=C++]
+// main.cpp
+#include <iostream> 
+#include "ArrayList04.h"
+int main()
+{
+  ArrayList A(5);
+  A.insert(34, 0);
+  A.insert(12, 1);  
+  A.printList();
+  ArrayList B = A; // 调用复制构造函数
+  B.insert(52, 1);
+  B.printList();
+  A.printList(); // A 不受影响
+  ArrayList C;
+  C = B; // 调用赋值操作符
+  C.insert(16, 2);
+  C.printList();
+  B.printList(); // B 不受影响
+  ArrayList D {1, 2, 3, 4, 5};
+  D.printList();
+  return 0; 
+}
+\end{lstlisting}
 
 \subsection{表的单链表(SingleLinkedList)实现}
 我们之前介绍了变量，地址，指针和引用之间的关系。这些虽然不是抽象的数学概念，

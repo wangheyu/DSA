@@ -15,7 +15,7 @@ typedef int t_idx;
 class ArrayList
 {
 private:
-	t_idx size = 0;			/**< List 的大小. */
+	t_idx size = 0;				/**< List 的大小. */
 	t_ele *data = nullptr;		/**< 存放数据的内存区域. */
 
 public:
