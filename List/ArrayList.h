@@ -2,7 +2,7 @@
 #define __CRAZYFISH_ARRAYLIST__
 
 #include <iostream>
-
+#include <initializer_list>
 /// 元素的类型.
 typedef double t_ele;
 
@@ -24,6 +24,17 @@ public:
 	 * 
 	 */
 	ArrayList(){};
+
+	ArrayList(std::initializer_list<t_ele> lst)
+	{
+		size = lst.size();
+		data = new t_ele[size];
+		t_idx i = 0;
+		for (auto val : lst)
+		{
+			data[i++] = val;
+		}
+	}
 
 	/** 
 	 * 析构函数.
