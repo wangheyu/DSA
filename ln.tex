@@ -4340,613 +4340,1044 @@ int main()
 %  #endif // __CRAZYFISH_SINGLELINKED_LIST__  
 % \end{lstlisting}
 
+我们先对齐一下代码：
 
-{\textbf{赋值操作符的 Copy and Swap 技巧}}
+\begin{lstlisting}[language=c++]
+#include <iostream>
+#include <initializer_list>
 
-这里注意到，我们修改了赋值操作符的实现。我们之前采用了一个传统的拷贝赋值函数的实现，但是这个实现是比较复杂的。
-目前更加流行的实现方式是 Copy and Swap 技巧。这个技巧的基本思路是，我们将赋值操作符的参数作为一个局部变量，然后交换它和当前对象的属性。
+template <typename T>
+class SingleLinkedList
+{
+private:
+    struct Node
+    {
+        T data;
+        Node *next = nullptr;
+        Node() : data(T()) {}
+        Node(T val) : data(val), next(nullptr) {}
+    };
+    Node *head = nullptr;
+    int size = 0;
+    void copyFrom(const SingleLinkedList &other);
 
-这里大家可能会说，这样的形式参数是一个拷贝，会不会很慢？实际上，现代编译器会自动优化这个过程，不会真的拷贝一份数据。实际的编译中，会对这个参数调用复制构造函数，
-而复制构造函数是引用的，因此不会在参数调用的时候发生复制。而复制构造函数将数据复制给了局部变量，编译器提供的 \verb|swap| 则交换了两个对象的数据。
-最终局部变量被销毁。这样的实现，逻辑简单，不容易出错。这是一个很好的实践。
+public:
+    SingleLinkedList() = default;
+    SingleLinkedList(std::initializer_list<T> lst)
+    {
+        size = lst.size();
+        Node *tail = nullptr;
+        for (auto val : lst)
+        {
+            Node *newNode = new Node(val);
+            if (head == nullptr)
+            {
+                head = newNode;
+                tail = head;
+            }
+            else
+            {
+                tail->next = newNode;
+                tail = newNode;
+            }
+        }
+    }
 
-比如在 \verb|list2 = list3| 这个命令中，首先在 \verb|operator=| 被调用时，\verb|list3| 会复制给 \verb|_l|，这时会调用复制构造函数，
-而复制构造函数会直接接收 \verb|list3| 作为复制源，在复制构造函数内部调用 \verb|_copy| 时，又把 \verb|list3| 作为参数传递给 \verb|_copy|，到这里由于现代编译器优化，
-一次复制都没有发生。真正的复制发生在 \verb|_copy| 内部，因为这是我们需要的。这个复制其实构建了一个新的链表，内容和 \verb|list3| 一样。然后，
-\verb|std::swap| 交换了 \verb|_l| 和 \verb|*this| 也就是 \verb|list2| 的数据内容。这里 \verb|swap| 其实完成的工作是交换了两个链表的数据内容，其实这是一个浅复制。
-最后局部变量 \verb|_l| 在这个函数 \verb|operator=| 结束时被销毁，这个销毁过程会调用 \verb|_l| 的析构函数，
-这个析构函数会释放 \verb|_l| 的内存。由此我们实现了全部的功能，并没有显式的地调用 \verb|_copy()| 和 \verb|_empty()|，然而又充分使用了它们的功能。整体上逻辑还很简单。
+    ~SingleLinkedList()
+    {
+        makeEmpty();
+    }
+    void makeEmpty();
+    void printList() const;
+    SingleLinkedList(const SingleLinkedList &other)
+    {
+        copyFrom(other);
+    }
+    SingleLinkedList &operator=(const SingleLinkedList &other);
+};
 
-% \begin{lstlisting}[language=c++]
-%   #ifndef __CRAZYFISH_SINGLELINKED_LIST__
-%   #define __CRAZYFISH_SINGLELINKED_LIST__
-  
-%   #include <iostream>
-%   #include <limits>
-%   #include <initializer_list>
-  
-%   template <typename T>
-%   class SingleLinkedList
-%   {
-%   private:
-%       class Node
-%       {
-%       private:
-%           T data;			        /**< 节点内存放的数据. */
-%           Node* next = nullptr;	/**< 指向下一个节点的指针. */
-%       public:
-%           /** 
-%            * 带数据初始化的构造函数.
-%            * 
-%            * @param _val 初始化的数据.
-%            */
-%            Node(const T& _val) {data = _val;};
-  
-%            friend class SingleLinkedList<T>;
-%       };
-  
-%       Node* head = nullptr;	        /**< 头指针. */
-%       Node* currentPos = nullptr;	    /**< 当前位置的指针. 除非是空链表, 否则该指针不能空. */
-%       int size = 0;		            /**< 节点总数. */
-%       void _makeEmpty();
-%       void _copy(const SingleLinkedList<T>& _l);
-%   public:
-%       /** 
-%        * 默认构造函数.
-%        * 
-%        */
-%       SingleLinkedList(){};
-  
-%       /** 
-%        * 默认析构函数.
-%        * 
-%        */
-%       ~SingleLinkedList();
-  
-%       /** 
-%        * 带列表初始化的构造函数.
-%        * 
-%        * @param _l 初始化列表.
-%        */
-%        SingleLinkedList(std::initializer_list<T> _l);
-  
-%       /** 
-%        * 列出表内全部元素.
-%        * 
-%        */
-%        void printList() const;
-  
-%       /** 
-%        * 删除表内全部元素, 使之成为空表.
-%        * 
-%        */
-%        void makeEmpty();
-  
-%       /** 
-%        * 查找指定元素.
-%        * 
-%        * @param _val 被查找的元素.  
-%        * 
-%        * @return 将当前位置移动到第一个找到的元素, 如果没有找到, 则当前
-%        * 位置不动.
-%        */
-%        void find(const T& _val);
-  
-%       /** 
-%        * 判定链表是否为空.
-%        * 
-%        * 
-%        * @return 空链表返回 true, 非空返回 false.
-%        */
-%       bool is_empty() const;
-  
-%       int getSize() const {return size;};
-  
-%       const T& getCurrentVal() const {return currentPos->data;};
-  
-%       void setCurrentVal(const T& _val) {currentPos->data = _val;};
-      
-%       SingleLinkedList(const SingleLinkedList<T>& _l);
-  
-%       SingleLinkedList<T>& operator=(const SingleLinkedList<T>& _l);
-%   };
-  
-%   template <typename T>
-%   SingleLinkedList<T>::SingleLinkedList(std::initializer_list<T> _l)
-%   {
-%       for (auto i = _l.begin(); i != _l.end(); ++i)
-%       {
-%           Node* newNode = new Node(*i);
-%           if (head == nullptr)
-%           {
-%               head = newNode;
-%               currentPos = head;
-%           }
-%           else
-%           {
-%               currentPos->next = newNode;
-%               currentPos = newNode;
-%           }
-%           ++size;
-%       }
-%       if (head != nullptr)
-%           currentPos = head;
-  
-%   }
-  
-%   template <typename T>
-%   void SingleLinkedList<T>::printList() const
-%   {
-%       Node* p = head;
-%       while (p != nullptr)
-%       {
-%           std::cout << p->data << " ";
-%           p = p->next;
-%       }
-%       std::cout << std::endl;
-%   }
-  
-%   template <typename T>
-%   void SingleLinkedList<T>::_makeEmpty()
-%   {
-%       Node* p = head;
-%       while (p != nullptr)
-%       {
-%           Node* t = p;
-%           p = p->next;
-%           delete t;
-%       }
-%   }
-  
-%   template <typename T>
-%   void SingleLinkedList<T>::makeEmpty()
-%   {
-%       _makeEmpty();
-%       head = nullptr;
-%       currentPos = nullptr;
-%       size = 0;
-%   }
-  
-%   template <typename T>
-%   SingleLinkedList<T>::~SingleLinkedList()
-%   {
-%       _makeEmpty();
-%   }
-  
-%   template <typename T>
-%   SingleLinkedList<T>::SingleLinkedList(const SingleLinkedList<T>& _l)
-%   {
-%       _copy(_l);
-%   }
-  
-%   template <typename T>
-%   SingleLinkedList<T>& SingleLinkedList<T>::operator=(const SingleLinkedList<T>& _l)
-%   {
-%       if (this == &_l)
-%           return *this;
-%       makeEmpty();
-%       _copy(_l);
-%       return *this;
-%   }
-  
-%   template <typename T>
-%   void SingleLinkedList<T>::_copy(const SingleLinkedList<T>& _l)
-%   {
-%       Node* p = _l.head;
-%       while (p != nullptr)
-%       {
-%           Node* newNode = new Node(p->data);
-%           if (head == nullptr)
-%           {
-%               head = newNode;
-%               currentPos = head;
-%           }
-%           else
-%           {
-%               currentPos->next = newNode;
-%               currentPos = newNode;
-%           }
-%           ++size;
-%           p = p->next;
-%       }
-%       if (head != nullptr)
-%         currentPos = head;
-%   }
-  
-%   #else 
-%       // DO NOTHING.
-%   #endif // __CRAZYFISH_SINGLELINKED_LIST__
-  
-% \end{lstlisting}
+template <typename T>
+void SingleLinkedList<T>::copyFrom(const SingleLinkedList<T> &other)
+{
+    makeEmpty();
+    if (other.head == nullptr)
+        return;
+    head = new Node(other.head->data);
+    const Node *currentOther = other.head->next;
+    Node *currentThis = head;
+    while (currentOther != nullptr)
+    {
+        currentThis->next = new Node(currentOther->data);
+        currentThis = currentThis->next;
+        currentOther = currentOther->next;
+    }
+    size = other.size;
+}
 
-% 现在我们继续讨论属于类的基本操作的移动构造和移动赋值。
+template <typename T>
+SingleLinkedList<T> &SingleLinkedList<T>::operator=(const SingleLinkedList<T> &other)
+{
+    if (this != &other)
+        copyFrom(other);
+    return *this;
+}
 
-% \begin{lstlisting}[language=c++]
-%   SingleLinkedList(SingleLinkedList<T>&& _l);
-%   SingleLinkedList<T>& operator=(SingleLinkedList<T>&& _l);
-% \end{lstlisting}
+template <typename T>
+void SingleLinkedList<T>::makeEmpty()
+{
+    Node *current = head;
+    while (current != nullptr)
+    {
+        Node *nextNode = current->next;
+        delete current;
+        current = nextNode;
+    }
+    head = nullptr;
+    size = 0;
+}
 
-% 这里我们需要注意，移动构造和移动赋值是 C++11 引入的新特性。它们的目的是避免不必要的内存拷贝，提高程序的效率。
-% 主要用于临时对象的处理。
+template <typename T>
+void SingleLinkedList<T>::printList() const
+{
+    const Node *current = head; // const 更语义化
+    while (current != nullptr)
+    {
+        std::cout << current->data << " ";
+        current = current->next;
+    }
+    std::cout << std::endl;
+}
 
-% \begin{lstlisting}[language=c++]
-% template <typename T>
-% SingleLinkedList<T>::SingleLinkedList(SingleLinkedList<T>&& _l) noexcept
-% {
-%     head = _l.head;
-%     currentPos = _l.currentPos;
-%     size = _l.size;
-%     _l.head = nullptr;
-%     _l.currentPos = nullptr;
-%     _l.size = 0;
-% }
-
-% template <typename T>
-% SingleLinkedList<T>& SingleLinkedList<T>::operator=(SingleLinkedList<T>&& _l) noexcept
-% {
-%     if (this == &_l)
-%         return *this;
-%     makeEmpty();
-%     head = _l.head;
-%     currentPos = _l.currentPos;
-%     size = _l.size;
-%     _l.head = nullptr;
-%     _l.currentPos = nullptr;
-%     _l.size = 0;
-%     return *this;
-% }
-% \end{lstlisting}
-
-% 我们这里先不必理会 \verb|noexcept| 关键字，它是一个 C++11 的新特性，用于指示函数是否会抛出异常。
-% 等我们后续介绍异常机制的时候再讨论。这里我们先关注一下为什么需要移动构造和移动赋值。
-
-% 这个设计原本的用意是为了避免不必要的内存拷贝。在 C++ 中，我们知道，
-% 如果一个常量对象被传递给一个构造函数，或者被赋值给另一个对象，那么这个对象的拷贝构造函数会被调用。
-% 但是在采用了编译器优化以后，这一点变得不那么有用。
-% 所以目前移动构造和移动赋值的最主要功能可能变成转移资源的所有权。它结合 \verb|std::move()| 函数，
-% 将一个变量的所有权转移到另一个变量，而不是拷贝。这样可以避免不必要的内存拷贝，提高程序的效率。
-
-这里说明一下，作业中在复制操作的时候出现字符串复制时的异常。这是因为我们原本的类设计不够封闭，
-以及字符串结构过于简单导致。这个例子恰好说明了封闭设计的重要性。
-
-接下去我们考虑实现 \verb|insert| 和 \verb|remove|, 也就是上一周的作业。
-
-\begin{lstlisting}[language=C++]
-
-  /**
-  * @brief 在当前位置之后插入一个值.
-  * 
-  * @param _val 插入的值.
-  */
- void insert (const T& _val);
-
- /**
-  * @brief 删除当前位置的下一个节点.
-  * 
-  */
- void remove ();
-
+int main()
+{
+    SingleLinkedList<int> list = {1, 2, 3, 4, 5};
+    list.printList();
+    SingleLinkedList<int> list2 = list; // 测试拷贝构造函数
+    list2.printList();
+    SingleLinkedList<double> dlist = {1.1, 2.2, 3.3};
+    dlist.printList();
+    return 0;
+}
 \end{lstlisting}
 
-这不是一对很好的设计。特别是 \verb|remove| 只能删除当前位置的下一个节点的值显得特别蠢。但这个是单链表结构造成的。
-如果你一定要删除当前节点的值，也不是做不到。你只需要删除当前节点的下一个节点，然后将下一个节点的值复制给当前节点即可。
-删除当前节点的值和删除当前节点不是同一件事。当然这样设计有点奇怪了。
+我们已经实现了基本的链表功能，包括构造、析构、打印、清空、复制等。 现在我们继续增加插入和删除功能。
+我们先增加一个插入到链表尾端的功能：
+\begin{lstlisting}
+void push_back(const T &val);  
+\end{lstlisting}
+它的实现思路是，创建一个新节点，然后将其插入到链表的尾端。如果链表为空，则新节点成为头节点。 否则，遍历链表找到尾节点，然后将新节点插入到尾节点之后。
+\begin{lstlisting}[language=c++]
+template <typename T>
+void SingleLinkedList<T>::push_back(const T &val)
+{
+    Node *newNode = new Node(val);
+    if (head == nullptr)
+    {
+        head = newNode;
+    }
+    else
+    {
+        Node *current = head;
+        while (current->next != nullptr)
+        {
+            current = current->next;
+        }
+        current->next = newNode;
+    }
+    size++;
+}
+\end{lstlisting}
+我们注意到，\verb|push_back| 函数的实现比较低效，因为每次插入都需要遍历链表找到尾节点。
+我们可以通过维护一个尾指针来优化这个操作。但是这样会导致代码复杂化，我们暂时不做这个优化。
 
-其实这里奇怪的根源都在这个 \verb|currentPos| 的设计上。这个设计提供给用户在链表上随机访问的能力，或者说，因为我们不像提供给用户对链表节点的直接指针访问，
-因为那样有安全隐患。因此这个 \verb|currentPos| 本质上就成为一个 ``允许的指针''。这个设计思路是自然的，但是与其这样做，不如干脆提供给用户一个具有完整功能的 ``指针''。
-在现代库设计中，这个 ``指针'' 通常是一个迭代器。
+相比之下，插入到链表头端的操作要简单得多：
+\begin{lstlisting}[language=c++]
+void push_front(const T &val);
+\end{lstlisting}
+它的实现思路是，创建一个新节点，然后将其插入到链表的头端。 如果链表为空，则新节点成为头节点。 否则，将新节点的 \verb|next| 指针指向当前头节点，然后将头指针指向新节点。
+\begin{lstlisting}[language=c++]
+template <typename T>
+void SingleLinkedList<T>::push_front(const T &val)
+{
+    Node *newNode = new Node(val);
+    if (head == nullptr)
+    {
+        head = newNode;
+    }
+    else
+    {
+        newNode->next = head;
+        head = newNode;
+    }
+    size++;
+}
+\end{lstlisting}
 
-但我们不要再纠结于一个概念上就有缺陷的设计，单链表上。让我们前进到双链表，然后看看是否可以将事情做的完美一些。
+接着我们考虑什么是一般性的插入/删除操作。比如，插入定义为在某个值之前插入一个新节点。删除定义为删除某个值。普遍的问题是：
+\begin{itemize}
+  \item 如果链表中有多个相同的值，应该插入/删除哪一个？我们这里的策略是，插入到第一个找到的值之前，删除第一个找到的值。
+  \item 如果链表中没有找到该值，应该怎么办？我们这里的策略是，不做任何操作。
+  \item 显然，不论删除还是插入，都需要遍历链表找到该值的位置。即我们需要一个 \verb|find| 函数，来找到该值的位置。
+  \item 考虑到我们的链表是单链表，因此在删除一个节点时，我们需要找到该节点的前驱节点。否则无法修改前驱节点的 \verb|next| 指针。
+\end{itemize}
 
-在这一部分，课本提供了一个可用的列表类模板的实现。我们的列表类将被命名为 List。请记住，List类将作为一个双向链表来实现，我们需要维护指向列表两端的指针。
-这样做可以使我们保持每个动态操作的时间成本为常数，只要操作发生在已知位置。已知位置可以是在任一端，或者是由迭代器指定的位置。
+总结以上认识，我们可以先设计一个 \verb|find_prev| 函数：
+\begin{lstlisting}[language=c++]
+Node* find_prev(const T &val) const;
+\end{lstlisting}
+它的实现思路是，从头节点开始，遍历链表，寻找第一个值为 \verb|val| 的节点。
+如果找到，则返回该节点的前驱节点，如果没找到，则返回 \verb|nullptr|。如果链表为空，或者第一个节点就是要找的节点，则返回 \verb|nullptr|。
+这个函数应该设置成内部函数，因为它是链表的内部实现细节，不应该暴露给用户。
+\begin{lstlisting}[language=c++]
+template <typename T>
+typename SingleLinkedList<T>::Node* SingleLinkedList<T>::find_prev(const T &val) const
+{
+    Node *current = head;
+    Node *prev = nullptr;
+    while (current != nullptr)
+    {
+        if (current->data == val)
+        {
+            return prev;
+        }
+        prev = current;
+        current = current->next;
+    }
+    return nullptr;
+}
+\end{lstlisting}
 
-在考虑设计时，我们需要提供四个类：
-\begin{enumerate}
-  \item \verb|List| 类本身，包含指向两端的链接，列表的大小，以及一系列方法。
-  \item \verb|Node| 类，很可能是一个私有嵌套类。一个节点包含数据和指向前一个和后一个节点的指针，以及相应的构造函数。
-  \item \verb|const_iterator| 类，抽象出位置 (currentPos) 的概念，是一个公共嵌套类。\verb|const_iterator| 存储一个指向 ``当前'' 节点的指针，
-  并提供基本迭代器操作的实现，所有这些都以重载操作符的形式呈现，如 \verb|=|，\verb|==|，\verb|!=| 和 \verb|++|。
-  \item \verb|iterator| 类，抽象出位置的概念，是一个公共嵌套类。\verb|iterator| 具有与 \verb|const_iterator| 相同的功能，
-  除了 \verb|operator*| 返回一个引用到正在查看的项目，而不是一个常量引用到项目。一个重要的技术问题是，
-  一个迭代器可以在任何需要 \verb|const_iterator| 的例程中使用，但反之则不然。换句话说，\verb|iterator| IS A \verb|const_iterator|。
-\end{enumerate}
+有了 \verb|find_prev| 函数，我们就可以实现插入、删除函数了。首先是插入函数：
+\begin{lstlisting}[language=c++]
+bool insert(const T &target, const T &val);
+\end{lstlisting}
+它的实现思路是，首先调用 \verb|find_prev| 函数找到目标节点的前驱节点。如果前驱节点为 \verb|nullptr|，则说明目标节点是头节点，
+或者链表为空。如果链表为空，则插入失败，返回 \verb|false|。如果目标节点是头节点，则调用 \verb|push_front| 函数插入新节点，返回 \verb|true|。
+否则，创建一个新节点，将其插入到前驱节点之后，返回 \verb|true|。
+\begin{lstlisting}[language=c++]
+template <typename T>
+bool SingleLinkedList<T>::insert(const T &target, const T &val)
+{
+    Node *prev = find_prev(target);
+    if (prev == nullptr)
+    {
+        // 目标节点是头节点，或者链表为空
+        if (head == nullptr)
+        {
+            // 链表为空
+            return false;
+        }
+        else
+        {
+            // 目标节点是头节点
+            push_front(val);
+            return true;
+        }
+    }
+    // 创建新节点
+    Node *newNode = new Node(val);
+    newNode->next = prev->next;
+    prev->next = newNode;
+    size++;
+    return true;
+}
+\end{lstlisting}
+然后是删除函数：
+\begin{lstlisting}[language=c++]
+bool remove(const T &val);
+\end{lstlisting}
+它的实现思路是，首先调用 \verb|find_prev| 函数找到目标节点的前驱节点。如果前驱节点为 \verb|nullptr|，则说明目标节点是头节点，
+或者链表为空。如果链表为空，则删除失败，返回 \verb|false|。如果目标节点是头节点，则将头指针指向下一个节点，删除头节点，返回 \verb|true|。
+否则，将前驱节点的 \verb|next| 指针指向目标节点的下一个节点，删除目标节点，返回 \verb|true|。
+\begin{lstlisting}[language=c++]
+template <typename T>
+bool SingleLinkedList<T>::remove(const T &val)
+{
+    Node *prev = find_prev(val);
+    if (prev == nullptr)
+    {
+        // 目标节点是头节点，或者链表为空
+        if (head == nullptr)
+        {
+            // 链表为空
+            return false;
+        }
+        else
+        {
+            // 目标节点是头节点
+            Node *toDelete = head;
+            head = head->next;
+            delete toDelete;
+            size--;
+            return true;
+        }
+    }
+    // 删除目标节点
+    Node *toDelete = prev->next;
+    if (toDelete == nullptr)
+    {
+        // 目标节点不存在 
+        return false;
+    }
+    prev->next = toDelete->next;
+    delete toDelete;
+    size--;
+    return true;
+}
+\end{lstlisting}
 
-因为迭代器类存储一个指向 ``当前节点'' 的指针，而且结束标记是一个有效的位置，所以在列表的末尾创建一个额外的节点来表示结束标记是有意义的。
-此外，我们可以在列表的前端创建一个额外的节点，逻辑上代表开始标记。这些额外的节点有时被称为哨兵节点；具体来说，前面的节点有时被称为 head 节点，
-后面的节点有时被称为 tail 节点。
+\subsection{右值和移动语义}
 
-使用这些额外节点的优点是，它们通过消除一系列特殊情况，大大简化了编码。例如，如果我们不使用头节点，那么删除第一个节点就成为一个特殊情况，
-因为我们必须在删除过程中重置列表对第一个节点的链接，而且一般来说，删除算法需要访问被删除节点之前的节点（如果没有头节点，第一个节点之前就没有节点）。
-图 3.9 显示了一个带有头节点和尾节点的双向链表。图 3.10 显示了一个空列表。
+在 C++11 中，引入了右值引用和移动语义的概念。右值引用是一种新的引用类型，使用 \verb|&&| 表示。 它可以绑定到一个将要被销毁的临时对象上，从而允许我们
+“移动”资源，而不是复制资源。 这对于提高性能非常有用，尤其是在处理大型对象时。
+
+为了说明这个问题，我们构建一个结构体 \verb|Node| 来表示链表的节点。 这个结构体包含一个整数数据和一个指向下一个节点的指针。
+\begin{lstlisting}[language=c++]
+#include <iostream>
+
+struct Node
+{
+    int data;
+    Node *next = nullptr;
+};
+
+int main()
+{
+    Node n0 = Node{0, nullptr};
+
+    Node &n1 = n0;
+    n1.data = 1;
+
+    std::cout << n0.data << std::endl;
+    return 0;
+}
+\end{lstlisting}
+在这个例子中，我们创建了一个节点 \verb|n0|，然后创建了一个左值引用 \verb|n1|，它引用了 \verb|n0|。 修改 \verb|n1| 的数据实际上修改了 \verb|n0| 的数据。
+这是我们之前介绍的引用，或这严格地说是左值引用。
+
+基本概念：
+\begin{itemize}
+  \item 左值（lvalue）：有“身份”的对象，能取地址、可以出现在赋值号左边。比如已命名变量、解引用结果、容器元素。
+  \item 右值（rvalue）：临时值或即将被销毁的值，通常没有持久身份。比如字面量、表达式中间结果、按值返回的临时对象。
+\end{itemize}
+
+
+\textbf{左值引用}：
+\begin{itemize}
+  \item 只能绑定到左值（有名字、可持久存在的对象）。
+  \item 用于给已有对象取别名，便于修改或避免拷贝。
+  \item 不能直接绑定到纯右值（除非加 const，见下条）。
+\end{itemize}
+
+\textbf{const 左值引用}：
+\begin{itemize}
+  \item 可以绑定到左值，也可以绑定到右值（临时对象）。
+  \item 是最常用的“按引用只读传参”方式，避免拷贝又能接收临时值。
+\end{itemize}
+
+\textbf{右值引用}：
+\begin{itemize}
+  \item 只能绑定到右值（临时、将亡的对象）。
+  \item 用于实现移动语义，允许“接管”资源而非拷贝。
+  \item 使得移动构造函数和移动赋值运算符成为可能。
+\end{itemize}
+
+右值引用可以绑定到一个临时对象上，这个临时对象没有名字，通常是在表达式中创建的。 例如：
+\begin{lstlisting}[language=c++]
+Node &&n2 = Node{2, nullptr};
+n2.data = 3;
+std::cout << n2.data << std::endl;
+\end{lstlisting}
+在这个例子中，我们创建了一个临时节点对象 \verb|Node{2, nullptr}|，然后创建了一个右值引用 \verb|n2|，它引用了这个临时对象。 
+这里由于 \verb|Node{2, nullptr}| 是一个临时对象，因此它没有名字，而且很快就会被销毁。 
+但是在 \verb|n2| 的作用域内，我们可以通过 \verb|n2| 来访问和修改这个临时对象的值。因此，右值引用本质上就是对临时对象的接管。
+
+对于非临时变量，我们不能使用右值引用来引用它们。 例如，下面的代码是错误的：
+\begin{lstlisting}[language=c++]
+Node n3 = Node{3, nullptr};
+Node &&n4 = n3; // 错误，不能将左值绑定到右值引用
+\end{lstlisting}
+编译器会报错，提示我们不能将一个左值绑定到一个右值引用上。 这是因为 \verb|n3| 是一个有名字的变量，它在内存中有一个固定的位置，而右值引用只能绑定到临时对象上。
+
+比如下面的代买：
+\begin{lstlisting}
+#include <iostream>
+#include <string>
+
+template <typename T>
+struct Node
+{
+    T data;
+    Node *next = nullptr;
+
+    Node() : data(T()) {}
+
+    // 左值/只读路径：拷贝 data
+    Node(const T& _val, Node *_next = nullptr)
+        : data(_val), next(_next) {
+        std::cout << "Node(const T&)\n";
+    }
+
+    // 右值路径：移动 data
+    Node(T&& _val, Node *_next = nullptr)
+        : data(std::move(_val)), next(_next) {
+        std::cout << "Node(T&&)\n";
+    }
+};
+
+int main() {
+    std::string s = "hello";
+
+    // 传左值 -> 命中 Node(const T&)
+    Node<std::string> n1(s);
+
+    // 传右值（临时） -> 命中 Node(T&&)
+    Node<std::string> n2(std::string("world"));
+
+    // 左值显式转换为右值 -> 命中 Node(T&&)
+    Node<std::string> n3(std::move(s));
+
+    std::cout << "s after move: \"" << s << "\" (valid but unspecified)\n";
+}  
+\end{lstlisting}
+
+这里出现了两个构造函数，一个是左值引用版本，另一个是右值引用版本。 当我们传递一个有名字的变量（左值）时，编译器会选择左值引用版本的构造函数。
+当我们传递一个临时对象（右值）时，编译器会选择右值引用版本的构造函数。 注意，我们还可以使用 \verb|std::move| 函数将一个左值显式地转换为右值，从而调用右
+值引用版本的构造函数。由此更加体现了通过右值引用来接管资源的思想，或者称移动资源。
+
+我们给 \verb|SingleLinkedList| 提供移动构造函数和移动赋值操作符：
+\begin{lstlisting}[language=c++]
+SingleLinkedList(SingleLinkedList<T>&& other) noexcept;
+SingleLinkedList<T>& operator=(SingleLinkedList<T>&& other) noexcept;
+\end{lstlisting}
+它们的实现思路是，将 \verb|other| 的资源（头指针和大小）接管到当前对象中，然后将 \verb|other| 的资源置空。
+\begin{lstlisting}[language=c++]
+SingleLinkedList(SingleLinkedList&& other) noexcept
+  : head(other.head), size(other.size) {
+    other.head = nullptr; other.size = 0;
+}
+SingleLinkedList& operator=(SingleLinkedList&& other) noexcept {
+    if (this != &other) {
+        makeEmpty();
+        head = other.head; size = other.size;
+        other.head = nullptr; other.size = 0;
+    }
+    return *this;
+}
+\end{lstlisting}
+这里我们使用了 \verb|noexcept| 关键字，表示这些函数不会抛出异常。 这是一个承诺，告诉编译器和用户，这些函数在任何情况下都不会抛出异常。 
+
+
+% {\textbf{赋值操作符的 Copy and Swap 技巧}}
+
+% 这里注意到，我们修改了赋值操作符的实现。我们之前采用了一个传统的拷贝赋值函数的实现，但是这个实现是比较复杂的。
+% 目前更加流行的实现方式是 Copy and Swap 技巧。这个技巧的基本思路是，我们将赋值操作符的参数作为一个局部变量，然后交换它和当前对象的属性。
+
+% 这里大家可能会说，这样的形式参数是一个拷贝，会不会很慢？实际上，现代编译器会自动优化这个过程，不会真的拷贝一份数据。实际的编译中，会对这个参数调用复制构造函数，
+% 而复制构造函数是引用的，因此不会在参数调用的时候发生复制。而复制构造函数将数据复制给了局部变量，编译器提供的 \verb|swap| 则交换了两个对象的数据。
+% 最终局部变量被销毁。这样的实现，逻辑简单，不容易出错。这是一个很好的实践。
+
+% 比如在 \verb|list2 = list3| 这个命令中，首先在 \verb|operator=| 被调用时，\verb|list3| 会复制给 \verb|_l|，这时会调用复制构造函数，
+% 而复制构造函数会直接接收 \verb|list3| 作为复制源，在复制构造函数内部调用 \verb|_copy| 时，又把 \verb|list3| 作为参数传递给 \verb|_copy|，到这里由于现代编译器优化，
+% 一次复制都没有发生。真正的复制发生在 \verb|_copy| 内部，因为这是我们需要的。这个复制其实构建了一个新的链表，内容和 \verb|list3| 一样。然后，
+% \verb|std::swap| 交换了 \verb|_l| 和 \verb|*this| 也就是 \verb|list2| 的数据内容。这里 \verb|swap| 其实完成的工作是交换了两个链表的数据内容，其实这是一个浅复制。
+% 最后局部变量 \verb|_l| 在这个函数 \verb|operator=| 结束时被销毁，这个销毁过程会调用 \verb|_l| 的析构函数，
+% 这个析构函数会释放 \verb|_l| 的内存。由此我们实现了全部的功能，并没有显式的地调用 \verb|_copy()| 和 \verb|_empty()|，然而又充分使用了它们的功能。整体上逻辑还很简单。
+
+% % \begin{lstlisting}[language=c++]
+% %   #ifndef __CRAZYFISH_SINGLELINKED_LIST__
+% %   #define __CRAZYFISH_SINGLELINKED_LIST__
   
-（之前我们的单链表因为没有哨兵节点就会有这样的现象：插入第一个元素的逻辑和插入后续元素的逻辑不一致，因为起始状态不同。同时 currentPos 有可能是一个 \verb|nullptr|，
-又增加了额外的逻辑判断。所以用若干个空节点来使逻辑一致是一个好办法）。
+% %   #include <iostream>
+% %   #include <limits>
+% %   #include <initializer_list>
+  
+% %   template <typename T>
+% %   class SingleLinkedList
+% %   {
+% %   private:
+% %       class Node
+% %       {
+% %       private:
+% %           T data;			        /**< 节点内存放的数据. */
+% %           Node* next = nullptr;	/**< 指向下一个节点的指针. */
+% %       public:
+% %           /** 
+% %            * 带数据初始化的构造函数.
+% %            * 
+% %            * @param _val 初始化的数据.
+% %            */
+% %            Node(const T& _val) {data = _val;};
+  
+% %            friend class SingleLinkedList<T>;
+% %       };
+  
+% %       Node* head = nullptr;	        /**< 头指针. */
+% %       Node* currentPos = nullptr;	    /**< 当前位置的指针. 除非是空链表, 否则该指针不能空. */
+% %       int size = 0;		            /**< 节点总数. */
+% %       void _makeEmpty();
+% %       void _copy(const SingleLinkedList<T>& _l);
+% %   public:
+% %       /** 
+% %        * 默认构造函数.
+% %        * 
+% %        */
+% %       SingleLinkedList(){};
+  
+% %       /** 
+% %        * 默认析构函数.
+% %        * 
+% %        */
+% %       ~SingleLinkedList();
+  
+% %       /** 
+% %        * 带列表初始化的构造函数.
+% %        * 
+% %        * @param _l 初始化列表.
+% %        */
+% %        SingleLinkedList(std::initializer_list<T> _l);
+  
+% %       /** 
+% %        * 列出表内全部元素.
+% %        * 
+% %        */
+% %        void printList() const;
+  
+% %       /** 
+% %        * 删除表内全部元素, 使之成为空表.
+% %        * 
+% %        */
+% %        void makeEmpty();
+  
+% %       /** 
+% %        * 查找指定元素.
+% %        * 
+% %        * @param _val 被查找的元素.  
+% %        * 
+% %        * @return 将当前位置移动到第一个找到的元素, 如果没有找到, 则当前
+% %        * 位置不动.
+% %        */
+% %        void find(const T& _val);
+  
+% %       /** 
+% %        * 判定链表是否为空.
+% %        * 
+% %        * 
+% %        * @return 空链表返回 true, 非空返回 false.
+% %        */
+% %       bool is_empty() const;
+  
+% %       int getSize() const {return size;};
+  
+% %       const T& getCurrentVal() const {return currentPos->data;};
+  
+% %       void setCurrentVal(const T& _val) {currentPos->data = _val;};
+      
+% %       SingleLinkedList(const SingleLinkedList<T>& _l);
+  
+% %       SingleLinkedList<T>& operator=(const SingleLinkedList<T>& _l);
+% %   };
+  
+% %   template <typename T>
+% %   SingleLinkedList<T>::SingleLinkedList(std::initializer_list<T> _l)
+% %   {
+% %       for (auto i = _l.begin(); i != _l.end(); ++i)
+% %       {
+% %           Node* newNode = new Node(*i);
+% %           if (head == nullptr)
+% %           {
+% %               head = newNode;
+% %               currentPos = head;
+% %           }
+% %           else
+% %           {
+% %               currentPos->next = newNode;
+% %               currentPos = newNode;
+% %           }
+% %           ++size;
+% %       }
+% %       if (head != nullptr)
+% %           currentPos = head;
+  
+% %   }
+  
+% %   template <typename T>
+% %   void SingleLinkedList<T>::printList() const
+% %   {
+% %       Node* p = head;
+% %       while (p != nullptr)
+% %       {
+% %           std::cout << p->data << " ";
+% %           p = p->next;
+% %       }
+% %       std::cout << std::endl;
+% %   }
+  
+% %   template <typename T>
+% %   void SingleLinkedList<T>::_makeEmpty()
+% %   {
+% %       Node* p = head;
+% %       while (p != nullptr)
+% %       {
+% %           Node* t = p;
+% %           p = p->next;
+% %           delete t;
+% %       }
+% %   }
+  
+% %   template <typename T>
+% %   void SingleLinkedList<T>::makeEmpty()
+% %   {
+% %       _makeEmpty();
+% %       head = nullptr;
+% %       currentPos = nullptr;
+% %       size = 0;
+% %   }
+  
+% %   template <typename T>
+% %   SingleLinkedList<T>::~SingleLinkedList()
+% %   {
+% %       _makeEmpty();
+% %   }
+  
+% %   template <typename T>
+% %   SingleLinkedList<T>::SingleLinkedList(const SingleLinkedList<T>& _l)
+% %   {
+% %       _copy(_l);
+% %   }
+  
+% %   template <typename T>
+% %   SingleLinkedList<T>& SingleLinkedList<T>::operator=(const SingleLinkedList<T>& _l)
+% %   {
+% %       if (this == &_l)
+% %           return *this;
+% %       makeEmpty();
+% %       _copy(_l);
+% %       return *this;
+% %   }
+  
+% %   template <typename T>
+% %   void SingleLinkedList<T>::_copy(const SingleLinkedList<T>& _l)
+% %   {
+% %       Node* p = _l.head;
+% %       while (p != nullptr)
+% %       {
+% %           Node* newNode = new Node(p->data);
+% %           if (head == nullptr)
+% %           {
+% %               head = newNode;
+% %               currentPos = head;
+% %           }
+% %           else
+% %           {
+% %               currentPos->next = newNode;
+% %               currentPos = newNode;
+% %           }
+% %           ++size;
+% %           p = p->next;
+% %       }
+% %       if (head != nullptr)
+% %         currentPos = head;
+% %   }
+  
+% %   #else 
+% %       // DO NOTHING.
+% %   #endif // __CRAZYFISH_SINGLELINKED_LIST__
+  
+% % \end{lstlisting}
 
-图 3.11 和图 3.12 显示了 \verb|List| 类的大纲和部分实现。
+% % 现在我们继续讨论属于类的基本操作的移动构造和移动赋值。
 
-我们可以在第 5 行看到私有嵌套 \verb|Node| 类声明的开始。我们使用 \verb|struct| 而不是 \verb|class| 关键字。
-在 C++ 中，\verb|struct| 是 C 编程语言的遗物。C++ 中的 \verb|struct| 本质上是一个类，其中的成员默认为 \verb|public|。
-请记住，在一个类中，成员默认为 \verb|private|。显然，\verb|struct| 关键字不是必需的，但你经常会看到它，程序员通常用它来表示一个类型，
-该类型主要包含直接访问的数据，而不是通过方法访问的数据。在我们的情况下，使 \verb|Node| 类的成员在 \verb|public| 中不会有问题，因为 \verb|Node| 类本身是私有的，
-并且在 \verb|List| 类外部无法访问。（接下去除非必要，否则我们都会接受课本的设定，并遵循目前主流程序员的默认规则。）
+% % \begin{lstlisting}[language=c++]
+% %   SingleLinkedList(SingleLinkedList<T>&& _l);
+% %   SingleLinkedList<T>& operator=(SingleLinkedList<T>&& _l);
+% % \end{lstlisting}
 
-在第 9 行，我们看到公共嵌套 \verb|const_iterator| 类声明的开始，在第 12 行，我们看到公共嵌套 \verb|iterator| 类声明的开始。
-这里用了继承，来体现 \verb|iterator| IS A \verb|const_iterator| 这一原则。注意我们这里的继承有一个 \verb|public| 声明，
-这表示子类将继承父类的 \verb|protected| 和 \verb|public| 成员，并且可以直接访问父类的\verb|protected| 和 \verb|public| 成员。
+% % 这里我们需要注意，移动构造和移动赋值是 C++11 引入的新特性。它们的目的是避免不必要的内存拷贝，提高程序的效率。
+% % 主要用于临时对象的处理。
 
-第 80 行到第 82 行包含了 \verb|List| 的数据成员，即指向头节点和尾节点的指针。我们还在一个数据成员中跟踪大小，以便 \verb|size| 方法可以在常数时间内实现。
-\verb|List| 类的其余部分由构造函数，Big-Five，和一系列方法组成。许多方法都是一行代码。\verb|begin| 和 \verb|end| 返回适当的迭代器；
-第 30 行的调用是典型的实现，我们返回一个构造的迭代器（因此，\verb|iterator| 和 \verb|const_iterator| 类都有一个构造函数，
-它接受一个指向 \verb|Node| 的指针作为其参数）。
-第 43 行到第 47 行的 \verb|clear| 方法通过重复删除项目，直到 \verb|List|为空。使用这种策略使 \verb|clear| 避免回收节点，
-因为节点回收现在被导向 \verb|pop_front|。第 48 行到第 67 行的方法都是通过巧妙地获取和使用适当的迭代器来工作。
-请记住，\verb|insert| 方法在位置之前插入，所以 \verb|push_back| 在 endmarker 之前插入，如要求的那样。
-在 \verb|pop_back| 中，注意到 \verb|erase(-end())| 创建一个对应于 endmarker 的临时迭代器，撤回临时迭代器，并使用该迭代器进行擦除。
-\verb|back| 中发生类似的行为。还要注意，在 \verb|pop_front| 和 \verb|pop_back| 操作的情况下，我们再次避免处理节点回收。
-图3.13 显示了 \verb|Node| 类，包括存储的项目，指向前一个和下一个 \verb|Node| 的指针，以及一个构造函数。所有的数据成员都是 \verb|public| 的。
-图3.14 显示了 \verb|const_iterator| 类，图 3.15 显示了 \verb|iterator| 类。正如我们前面提到的，图 3.15 中第 39 行的语法指示了一个称为继承的高级特性，
-意味着 \verb|iterator| IS-A \verb|const_iterator|。当 \verb|iterator| 类以这种方式编写时，它继承了 \verb|const_iterator| 的所有数据和方法。
-然后，它可以添加新的数据，添加新的方法，并覆盖（即，重新定义）现有的方法。在最一般的情况下，有显著的语法负担（通常导致代码中出现 \verb|virtual| 关键字，
-用于区分子类和父类中的同名成员）。
+% % \begin{lstlisting}[language=c++]
+% % template <typename T>
+% % SingleLinkedList<T>::SingleLinkedList(SingleLinkedList<T>&& _l) noexcept
+% % {
+% %     head = _l.head;
+% %     currentPos = _l.currentPos;
+% %     size = _l.size;
+% %     _l.head = nullptr;
+% %     _l.currentPos = nullptr;
+% %     _l.size = 0;
+% % }
+
+% % template <typename T>
+% % SingleLinkedList<T>& SingleLinkedList<T>::operator=(SingleLinkedList<T>&& _l) noexcept
+% % {
+% %     if (this == &_l)
+% %         return *this;
+% %     makeEmpty();
+% %     head = _l.head;
+% %     currentPos = _l.currentPos;
+% %     size = _l.size;
+% %     _l.head = nullptr;
+% %     _l.currentPos = nullptr;
+% %     _l.size = 0;
+% %     return *this;
+% % }
+% % \end{lstlisting}
+
+% % 我们这里先不必理会 \verb|noexcept| 关键字，它是一个 C++11 的新特性，用于指示函数是否会抛出异常。
+% % 等我们后续介绍异常机制的时候再讨论。这里我们先关注一下为什么需要移动构造和移动赋值。
+
+% % 这个设计原本的用意是为了避免不必要的内存拷贝。在 C++ 中，我们知道，
+% % 如果一个常量对象被传递给一个构造函数，或者被赋值给另一个对象，那么这个对象的拷贝构造函数会被调用。
+% % 但是在采用了编译器优化以后，这一点变得不那么有用。
+% % 所以目前移动构造和移动赋值的最主要功能可能变成转移资源的所有权。它结合 \verb|std::move()| 函数，
+% % 将一个变量的所有权转移到另一个变量，而不是拷贝。这样可以避免不必要的内存拷贝，提高程序的效率。
+
+% 这里说明一下，作业中在复制操作的时候出现字符串复制时的异常。这是因为我们原本的类设计不够封闭，
+% 以及字符串结构过于简单导致。这个例子恰好说明了封闭设计的重要性。
+
+% 接下去我们考虑实现 \verb|insert| 和 \verb|remove|, 也就是上一周的作业。
 
 % \begin{lstlisting}[language=C++]
-% #ifndef __CRAZYFISH_SINGLELINKED_LIST__
-% #define __CRAZYFISH_SINGLELINKED_LIST__
 
-% #include <iostream>
-% #include <limits>
-% #include <initializer_list>
+%   /**
+%   * @brief 在当前位置之后插入一个值.
+%   * 
+%   * @param _val 插入的值.
+%   */
+%  void insert (const T& _val);
 
-% /// 元素下标的类型.
-% typedef int t_idx;
+%  /**
+%   * @brief 删除当前位置的下一个节点.
+%   * 
+%   */
+%  void remove ();
 
-% /// 出错代码类型.
-% typedef int t_err;
-
-% template <typename T>
-% class SingleLinkedList
-% {
-% private:
-%     class Node
-%     {
-%         T data;			/**< 节点内存放的数据. */
-%         Node* next = nullptr;	/**< 指向下一个节点的指针. */
-
-%         /** 
-%          * 带数据初始化的构造函数.
-%          * 
-%          * @param _val 初始化的数据.
-%          */
-%          Node(const T& _val){data = _val;};
-
-%          friend class SingleLinkedList<T>;
-%     };
-%     Node* head = nullptr;	/**< 头指针. */
-%     Node* currentPos = nullptr;	/**< 当前位置的指针. 除非是空链表, 否则该指针不能空. */
-%     t_idx size = 0;		/**< 节点总数. */
-
-%     /** 
-%      * 异常退出.
-%      * 
-%      * @param _err_code 出错代码.
-%      *  1 : 越界错误.
-%      * 
-%      */
-%     void _error_exit(t_err _err_code);
-
-% public:
-%     /** 
-%      * 默认构造函数.
-%      * 
-%      */
-%     SingleLinkedList(){};
-
-%     /** 
-%      * 默认析构函数.
-%      * 
-%      */
-%     ~SingleLinkedList();
-
-%     /** 
-%      * 带列表初始化的构造函数.
-%      * 
-%      * @param _l 初始化列表.
-%      */
-%      SingleLinkedList(std::initializer_list<T> _l);
-
-%     /** 
-%      * 列出表内全部元素.
-%      * 
-%      */
-%      void printList() const;
-
-%     /** 
-%      * 删除表内全部元素, 使之成为空表.
-%      * 
-%      */
-%      void makeEmpty();
-
-%     /** 
-%      * 查找指定元素.
-%      * 
-%      * @param _val 被查找的元素.  
-%      * 
-%      * @return 将当前位置移动到第一个找到的元素, 如果没有找到, 则当前
-%      * 位置不动.
-%      */
-%      void find(const T& _val);
-
-%     /** 
-%      * 在当前位置之后插入指定元素. 空表则直接插入作为第一个元素. 插入
-%      * 完成后, 新的当前位置为插入的元素.
-%      * 
-%      * @param _val 插入的元素值.
-%      */
-%      void insert(const T& _val);
-
-%     /** 
-%      * 如果是空链表, 或者当前位置指向最后一个元素, 则什么也不做；如果
-%      * 只有一个元素, 删除该元素成为空链表；如果不止一个元素, 且当前位
-%      * 置不是最后一个元素, 则删除当前位置的下一个元素. 删除之后, 当前
-%      * 位置不动.
-%      * 
-%      */
-%      void remove();
-
-%     /** 
-%      * 返回指定序号元素值. (低效!) 如果链表内的元素不到 k 个, 则给出警
-%      * 告.
-%      * 
-%      * @param _pos 指定位置.
-%      * 
-%      * @return 指定元素值.
-%      */
-%      T& findKth(t_idx _pos);
-
-%     /** 
-%      * 将当前位置后移一位, 如果已经是最后一个元素, 则不变.
-%      * 
-%      */
-%      void next();
-
-%     /** 
-%      * 将当前位置前移一位, 如果已经是 head, 则不变. (低效!)
-%      * 
-%      */
-%      void previous();
-
-%     /** 
-%      * 判定链表是否为空.
-%      * 
-%      * 
-%      * @return 空链表返回 true, 非空返回 false.
-%      */
-%      bool is_empty() const;
-
-%     /** 
-%      * 得到当前位置的元素值. 静态版本.
-%      * 
-%      * 
-%      * @return 当前位置的元素值的静态引用.
-%      */
-%      const T& getCurrentVal() const; 
-% };
 % \end{lstlisting}
 
-% 我们仍然保留了
-% \begin{verbatim}
-% /// 元素下标的类型.
-% typedef int t_idx;
+% 这不是一对很好的设计。特别是 \verb|remove| 只能删除当前位置的下一个节点的值显得特别蠢。但这个是单链表结构造成的。
+% 如果你一定要删除当前节点的值，也不是做不到。你只需要删除当前节点的下一个节点，然后将下一个节点的值复制给当前节点即可。
+% 删除当前节点的值和删除当前节点不是同一件事。当然这样设计有点奇怪了。
 
-% /// 出错代码类型.
-% typedef int t_err;
-% \end{verbatim}
-% 因为这两种类型并不会频繁修改, \verb|typedef| 相对更加方便. 而对于数据
-% 本身的类型, 则用模板机制进行了抽象. 这样用户就可以在写应用代码时, 具体
-% 决定用什么类型. 因为链表是一种动态内存管理机制, 因此相对位置比绝对位置
-% 更有意义. 所以我们实现了 \verb|next| 和 \verb|previous| 操作. 为了配合
-% 这两个操作, 我们在基本属性中增加了 \verb|currentPos|. 请思考一下这个属
-% 性的必要性. 这里, 我们规定 \verb|currentPos| 除非在空链表中, 否则必须
-% 指向一个实际的元素, 不能是 \verb|nullptr|. 这个属性的引入, 其实增加了
-% 很多额外的工作量. 比如我们必须始终考虑确保这个属性的值的正确性. 特别是
-% 在 \verb|find| 操作中, 如何合理地规定它的变化. 同时, 这也导致
-% \verb|find| 不再能保持为一个静态操作. 事实上, 对每一个动态操作, 我们都
-% 要考虑每一个成员属性的正确性和一致性. 比如这里, 逻辑上我们可以通过
-% \verb|currentPos| 是否为 \verb|nullptr| 来判断这个链表是否为空链表. 但
-% 这个做法并不好. 因为它依赖于我们对 \verb|currentPos| 的特殊规定, 因此
-% 不如判定 \verb|head| 是否为 \verb|nullptr| 自然. 但这就导致一个一致性
-% 问题, 我们必须确保在空链表中, \verb|currentPos| 和 \verb|head| 总都是
-% \verb|nullptr|. 如果不一致, 那么说明代码出了问题. 合理的做法是在
-% \verb|is_empty| 中增加判定语句或断言 (assert) 来保证. 这就会更增加我们
-% 的代码量. 因此, 不要增加不必要的属性, 此外, 这里大家可以再体会一下确保
-% 只有一个 \verb|is_empty|, 也就是代码复用的意义所在.
+% 其实这里奇怪的根源都在这个 \verb|currentPos| 的设计上。这个设计提供给用户在链表上随机访问的能力，或者说，因为我们不像提供给用户对链表节点的直接指针访问，
+% 因为那样有安全隐患。因此这个 \verb|currentPos| 本质上就成为一个 ``允许的指针''。这个设计思路是自然的，但是与其这样做，不如干脆提供给用户一个具有完整功能的 ``指针''。
+% 在现代库设计中，这个 ``指针'' 通常是一个迭代器。
 
-% 关于模板类的函数实现, 有两个需要注意的问题. 首先, 如果没有必要, 不要再
-% 去考虑代码分离的问题, 也就是把实现单独写成一个 .cpp 文件是繁琐且无聊的.
-% 在开源机制下, 不如全部都写在 .h 文件内. 其次, 因为类的申明带有抽象的模
-% 板参数, 因此对每一个成员函数, 也必须跟上这种模板参数抽象机制. 也就是说,
-% 模板类的成员函数, 天然就是带模板参数的模板函数. 看一个具体的例子:
-% \begin{verbatim}
-% template <typename T>
-% void SingleLinkedList<T>::insert(const T& _val)
-% {
-%     ...
-% };
-% \end{verbatim}
-% 这里第一行表示下面定义的内容, 带有一个表示类型的模板参数 \verb|T|, 这
-% 里参数标识名一般需要和模板类一致, 否则会有严重的可读性问题. 第二行出现
-% 了两个 \verb|T|, 第一个是一个模板类的具体化, 也就是把第一行的参数
-% \verb|T| 传递过来, 然后形成一个具体的类 \verb|SingleLinkedList<T>|, 因
-% 此这个参数是不可缺少的, 而且本质上, 我们在一次编译中, 只实现一个针对具
-% 体 \verb|T| 的具体版本 (这里的逻辑关系和规则, 认真考虑一下!)；而第二个
-% \verb|T| 则是对第一行 \verb|T| 的直接引用.
+% 但我们不要再纠结于一个概念上就有缺陷的设计，单链表上。让我们前进到双链表，然后看看是否可以将事情做的完美一些。
 
-% 这里顺便说一下, 如果大家觉得每一个函数前都要写一行
-% \begin{verbatim}
-% template <typename T>
-% \end{verbatim}
-% 太烦, 可以考虑用
-% \begin{verbatim}
-% #define TEMPLATE template <typename T>
-% \end{verbatim}
-% 来替换, 特别是当模板参数非常多或复杂时.
+% 在这一部分，课本提供了一个可用的列表类模板的实现。我们的列表类将被命名为 List。请记住，List类将作为一个双向链表来实现，我们需要维护指向列表两端的指针。
+% 这样做可以使我们保持每个动态操作的时间成本为常数，只要操作发生在已知位置。已知位置可以是在任一端，或者是由迭代器指定的位置。
 
-% 对指针操作还不熟悉的同学, 请对照代码和课本仔细推敲. 特别是
-% \begin{verbatim}
-% template <typename T>
-% void SingleLinkedList<T>::insert(const T& _val)
-% {
-% 	Node *p = new Node(_val);
-% 	if (is_empty())
-% 		head = p;
-% 	else
-% 	{
-% 		p->next = currentPos->next;
-% 		currentPos->next = p;
-% 	}
-% 	currentPos = p;
-% 	size++;
-% };
+% 在考虑设计时，我们需要提供四个类：
+% \begin{enumerate}
+%   \item \verb|List| 类本身，包含指向两端的链接，列表的大小，以及一系列方法。
+%   \item \verb|Node| 类，很可能是一个私有嵌套类。一个节点包含数据和指向前一个和后一个节点的指针，以及相应的构造函数。
+%   \item \verb|const_iterator| 类，抽象出位置 (currentPos) 的概念，是一个公共嵌套类。\verb|const_iterator| 存储一个指向 ``当前'' 节点的指针，
+%   并提供基本迭代器操作的实现，所有这些都以重载操作符的形式呈现，如 \verb|=|，\verb|==|，\verb|!=| 和 \verb|++|。
+%   \item \verb|iterator| 类，抽象出位置的概念，是一个公共嵌套类。\verb|iterator| 具有与 \verb|const_iterator| 相同的功能，
+%   除了 \verb|operator*| 返回一个引用到正在查看的项目，而不是一个常量引用到项目。一个重要的技术问题是，
+%   一个迭代器可以在任何需要 \verb|const_iterator| 的例程中使用，但反之则不然。换句话说，\verb|iterator| IS A \verb|const_iterator|。
+% \end{enumerate}
 
-% template <typename T>
-% void SingleLinkedList<T>::remove()
-% {
-% 	if (is_empty() || currentPos->next == nullptr)
-% 		;
-% 	else if (head->next == nullptr)
-% 		makeEmpty();
-% 	else 
-% 	{
-% 		Node* p = currentPos->next;
-% 		currentPos->next = currentPos->next->next;
-% 		delete p;
-% 		size--;
-%         }
-% };
-% \end{verbatim}
-% 这两个函数的实现, 请考虑这里 \verb|Node* p| 的必要性和 \verb|delete|
-% 的执行时机.
+% 因为迭代器类存储一个指向 ``当前节点'' 的指针，而且结束标记是一个有效的位置，所以在列表的末尾创建一个额外的节点来表示结束标记是有意义的。
+% 此外，我们可以在列表的前端创建一个额外的节点，逻辑上代表开始标记。这些额外的节点有时被称为哨兵节点；具体来说，前面的节点有时被称为 head 节点，
+% 后面的节点有时被称为 tail 节点。
 
-% 此外要注意, \verb|findKth| 和 \verb|previous| 这两个函数都是
-% $\Theta(n)$ 代价的 (请证明一下). 因此效率低下, 在实际的单链表应用中,
-% 不会出现.
+% 使用这些额外节点的优点是，它们通过消除一系列特殊情况，大大简化了编码。例如，如果我们不使用头节点，那么删除第一个节点就成为一个特殊情况，
+% 因为我们必须在删除过程中重置列表对第一个节点的链接，而且一般来说，删除算法需要访问被删除节点之前的节点（如果没有头节点，第一个节点之前就没有节点）。
+% 图 3.9 显示了一个带有头节点和尾节点的双向链表。图 3.10 显示了一个空列表。
+  
+% （之前我们的单链表因为没有哨兵节点就会有这样的现象：插入第一个元素的逻辑和插入后续元素的逻辑不一致，因为起始状态不同。同时 currentPos 有可能是一个 \verb|nullptr|，
+% 又增加了额外的逻辑判断。所以用若干个空节点来使逻辑一致是一个好办法）。
 
-% 对于动态内存操作, 一个常见的错误是忘记释放内存, 这将导致内存泄漏. 系统
-% 提供了 \verb|valgrind| 工具, 可以做检查. 当然全局调试工具 \verb|gdb|
-% 也可以做到. 
+% 图 3.11 和图 3.12 显示了 \verb|List| 类的大纲和部分实现。
 
-% 接下去 3.3 \~ 3.5 节, 课本分析了标准 C++ 库 STL 里面 \verb|vector| 和
-% \verb|list| 的实现, 并给出了完整的代码. 请认真阅读, 学习. 课本的代码是
-% 一个简化版本, 但可以用. 请大家注意:
+% 我们可以在第 5 行看到私有嵌套 \verb|Node| 类声明的开始。我们使用 \verb|struct| 而不是 \verb|class| 关键字。
+% 在 C++ 中，\verb|struct| 是 C 编程语言的遗物。C++ 中的 \verb|struct| 本质上是一个类，其中的成员默认为 \verb|public|。
+% 请记住，在一个类中，成员默认为 \verb|private|。显然，\verb|struct| 关键字不是必需的，但你经常会看到它，程序员通常用它来表示一个类型，
+% 该类型主要包含直接访问的数据，而不是通过方法访问的数据。在我们的情况下，使 \verb|Node| 类的成员在 \verb|public| 中不会有问题，因为 \verb|Node| 类本身是私有的，
+% 并且在 \verb|List| 类外部无法访问。（接下去除非必要，否则我们都会接受课本的设定，并遵循目前主流程序员的默认规则。）
 
-% \begin{itemize}
-% \item \verb|vector| 中通过重载运算符 \verb|[]| 使之读取接口和标准数组一致；
-% \item Iterator 方法如何确保容器(container, 包括 \verb|vector| 和
-%   \verb|list|) 不发生越界错误, 特别是如何通过重载运算符, 保持具有一致
-%   的操作接口；
-% \item 继承的运用, 这里普通的 Iterator 是 Const Iterator 的一个派生. 
+% 在第 9 行，我们看到公共嵌套 \verb|const_iterator| 类声明的开始，在第 12 行，我们看到公共嵌套 \verb|iterator| 类声明的开始。
+% 这里用了继承，来体现 \verb|iterator| IS A \verb|const_iterator| 这一原则。注意我们这里的继承有一个 \verb|public| 声明，
+% 这表示子类将继承父类的 \verb|protected| 和 \verb|public| 成员，并且可以直接访问父类的\verb|protected| 和 \verb|public| 成员。
+
+% 第 80 行到第 82 行包含了 \verb|List| 的数据成员，即指向头节点和尾节点的指针。我们还在一个数据成员中跟踪大小，以便 \verb|size| 方法可以在常数时间内实现。
+% \verb|List| 类的其余部分由构造函数，Big-Five，和一系列方法组成。许多方法都是一行代码。\verb|begin| 和 \verb|end| 返回适当的迭代器；
+% 第 30 行的调用是典型的实现，我们返回一个构造的迭代器（因此，\verb|iterator| 和 \verb|const_iterator| 类都有一个构造函数，
+% 它接受一个指向 \verb|Node| 的指针作为其参数）。
+% 第 43 行到第 47 行的 \verb|clear| 方法通过重复删除项目，直到 \verb|List|为空。使用这种策略使 \verb|clear| 避免回收节点，
+% 因为节点回收现在被导向 \verb|pop_front|。第 48 行到第 67 行的方法都是通过巧妙地获取和使用适当的迭代器来工作。
+% 请记住，\verb|insert| 方法在位置之前插入，所以 \verb|push_back| 在 endmarker 之前插入，如要求的那样。
+% 在 \verb|pop_back| 中，注意到 \verb|erase(-end())| 创建一个对应于 endmarker 的临时迭代器，撤回临时迭代器，并使用该迭代器进行擦除。
+% \verb|back| 中发生类似的行为。还要注意，在 \verb|pop_front| 和 \verb|pop_back| 操作的情况下，我们再次避免处理节点回收。
+% 图3.13 显示了 \verb|Node| 类，包括存储的项目，指向前一个和下一个 \verb|Node| 的指针，以及一个构造函数。所有的数据成员都是 \verb|public| 的。
+% 图3.14 显示了 \verb|const_iterator| 类，图 3.15 显示了 \verb|iterator| 类。正如我们前面提到的，图 3.15 中第 39 行的语法指示了一个称为继承的高级特性，
+% 意味着 \verb|iterator| IS-A \verb|const_iterator|。当 \verb|iterator| 类以这种方式编写时，它继承了 \verb|const_iterator| 的所有数据和方法。
+% 然后，它可以添加新的数据，添加新的方法，并覆盖（即，重新定义）现有的方法。在最一般的情况下，有显著的语法负担（通常导致代码中出现 \verb|virtual| 关键字，
+% 用于区分子类和父类中的同名成员）。
+
+% % \begin{lstlisting}[language=C++]
+% % #ifndef __CRAZYFISH_SINGLELINKED_LIST__
+% % #define __CRAZYFISH_SINGLELINKED_LIST__
+
+% % #include <iostream>
+% % #include <limits>
+% % #include <initializer_list>
+
+% % /// 元素下标的类型.
+% % typedef int t_idx;
+
+% % /// 出错代码类型.
+% % typedef int t_err;
+
+% % template <typename T>
+% % class SingleLinkedList
+% % {
+% % private:
+% %     class Node
+% %     {
+% %         T data;			/**< 节点内存放的数据. */
+% %         Node* next = nullptr;	/**< 指向下一个节点的指针. */
+
+% %         /** 
+% %          * 带数据初始化的构造函数.
+% %          * 
+% %          * @param _val 初始化的数据.
+% %          */
+% %          Node(const T& _val){data = _val;};
+
+% %          friend class SingleLinkedList<T>;
+% %     };
+% %     Node* head = nullptr;	/**< 头指针. */
+% %     Node* currentPos = nullptr;	/**< 当前位置的指针. 除非是空链表, 否则该指针不能空. */
+% %     t_idx size = 0;		/**< 节点总数. */
+
+% %     /** 
+% %      * 异常退出.
+% %      * 
+% %      * @param _err_code 出错代码.
+% %      *  1 : 越界错误.
+% %      * 
+% %      */
+% %     void _error_exit(t_err _err_code);
+
+% % public:
+% %     /** 
+% %      * 默认构造函数.
+% %      * 
+% %      */
+% %     SingleLinkedList(){};
+
+% %     /** 
+% %      * 默认析构函数.
+% %      * 
+% %      */
+% %     ~SingleLinkedList();
+
+% %     /** 
+% %      * 带列表初始化的构造函数.
+% %      * 
+% %      * @param _l 初始化列表.
+% %      */
+% %      SingleLinkedList(std::initializer_list<T> _l);
+
+% %     /** 
+% %      * 列出表内全部元素.
+% %      * 
+% %      */
+% %      void printList() const;
+
+% %     /** 
+% %      * 删除表内全部元素, 使之成为空表.
+% %      * 
+% %      */
+% %      void makeEmpty();
+
+% %     /** 
+% %      * 查找指定元素.
+% %      * 
+% %      * @param _val 被查找的元素.  
+% %      * 
+% %      * @return 将当前位置移动到第一个找到的元素, 如果没有找到, 则当前
+% %      * 位置不动.
+% %      */
+% %      void find(const T& _val);
+
+% %     /** 
+% %      * 在当前位置之后插入指定元素. 空表则直接插入作为第一个元素. 插入
+% %      * 完成后, 新的当前位置为插入的元素.
+% %      * 
+% %      * @param _val 插入的元素值.
+% %      */
+% %      void insert(const T& _val);
+
+% %     /** 
+% %      * 如果是空链表, 或者当前位置指向最后一个元素, 则什么也不做；如果
+% %      * 只有一个元素, 删除该元素成为空链表；如果不止一个元素, 且当前位
+% %      * 置不是最后一个元素, 则删除当前位置的下一个元素. 删除之后, 当前
+% %      * 位置不动.
+% %      * 
+% %      */
+% %      void remove();
+
+% %     /** 
+% %      * 返回指定序号元素值. (低效!) 如果链表内的元素不到 k 个, 则给出警
+% %      * 告.
+% %      * 
+% %      * @param _pos 指定位置.
+% %      * 
+% %      * @return 指定元素值.
+% %      */
+% %      T& findKth(t_idx _pos);
+
+% %     /** 
+% %      * 将当前位置后移一位, 如果已经是最后一个元素, 则不变.
+% %      * 
+% %      */
+% %      void next();
+
+% %     /** 
+% %      * 将当前位置前移一位, 如果已经是 head, 则不变. (低效!)
+% %      * 
+% %      */
+% %      void previous();
+
+% %     /** 
+% %      * 判定链表是否为空.
+% %      * 
+% %      * 
+% %      * @return 空链表返回 true, 非空返回 false.
+% %      */
+% %      bool is_empty() const;
+
+% %     /** 
+% %      * 得到当前位置的元素值. 静态版本.
+% %      * 
+% %      * 
+% %      * @return 当前位置的元素值的静态引用.
+% %      */
+% %      const T& getCurrentVal() const; 
+% % };
+% % \end{lstlisting}
+
+% % 我们仍然保留了
+% % \begin{verbatim}
+% % /// 元素下标的类型.
+% % typedef int t_idx;
+
+% % /// 出错代码类型.
+% % typedef int t_err;
+% % \end{verbatim}
+% % 因为这两种类型并不会频繁修改, \verb|typedef| 相对更加方便. 而对于数据
+% % 本身的类型, 则用模板机制进行了抽象. 这样用户就可以在写应用代码时, 具体
+% % 决定用什么类型. 因为链表是一种动态内存管理机制, 因此相对位置比绝对位置
+% % 更有意义. 所以我们实现了 \verb|next| 和 \verb|previous| 操作. 为了配合
+% % 这两个操作, 我们在基本属性中增加了 \verb|currentPos|. 请思考一下这个属
+% % 性的必要性. 这里, 我们规定 \verb|currentPos| 除非在空链表中, 否则必须
+% % 指向一个实际的元素, 不能是 \verb|nullptr|. 这个属性的引入, 其实增加了
+% % 很多额外的工作量. 比如我们必须始终考虑确保这个属性的值的正确性. 特别是
+% % 在 \verb|find| 操作中, 如何合理地规定它的变化. 同时, 这也导致
+% % \verb|find| 不再能保持为一个静态操作. 事实上, 对每一个动态操作, 我们都
+% % 要考虑每一个成员属性的正确性和一致性. 比如这里, 逻辑上我们可以通过
+% % \verb|currentPos| 是否为 \verb|nullptr| 来判断这个链表是否为空链表. 但
+% % 这个做法并不好. 因为它依赖于我们对 \verb|currentPos| 的特殊规定, 因此
+% % 不如判定 \verb|head| 是否为 \verb|nullptr| 自然. 但这就导致一个一致性
+% % 问题, 我们必须确保在空链表中, \verb|currentPos| 和 \verb|head| 总都是
+% % \verb|nullptr|. 如果不一致, 那么说明代码出了问题. 合理的做法是在
+% % \verb|is_empty| 中增加判定语句或断言 (assert) 来保证. 这就会更增加我们
+% % 的代码量. 因此, 不要增加不必要的属性, 此外, 这里大家可以再体会一下确保
+% % 只有一个 \verb|is_empty|, 也就是代码复用的意义所在.
+
+% % 关于模板类的函数实现, 有两个需要注意的问题. 首先, 如果没有必要, 不要再
+% % 去考虑代码分离的问题, 也就是把实现单独写成一个 .cpp 文件是繁琐且无聊的.
+% % 在开源机制下, 不如全部都写在 .h 文件内. 其次, 因为类的申明带有抽象的模
+% % 板参数, 因此对每一个成员函数, 也必须跟上这种模板参数抽象机制. 也就是说,
+% % 模板类的成员函数, 天然就是带模板参数的模板函数. 看一个具体的例子:
+% % \begin{verbatim}
+% % template <typename T>
+% % void SingleLinkedList<T>::insert(const T& _val)
+% % {
+% %     ...
+% % };
+% % \end{verbatim}
+% % 这里第一行表示下面定义的内容, 带有一个表示类型的模板参数 \verb|T|, 这
+% % 里参数标识名一般需要和模板类一致, 否则会有严重的可读性问题. 第二行出现
+% % 了两个 \verb|T|, 第一个是一个模板类的具体化, 也就是把第一行的参数
+% % \verb|T| 传递过来, 然后形成一个具体的类 \verb|SingleLinkedList<T>|, 因
+% % 此这个参数是不可缺少的, 而且本质上, 我们在一次编译中, 只实现一个针对具
+% % 体 \verb|T| 的具体版本 (这里的逻辑关系和规则, 认真考虑一下!)；而第二个
+% % \verb|T| 则是对第一行 \verb|T| 的直接引用.
+
+% % 这里顺便说一下, 如果大家觉得每一个函数前都要写一行
+% % \begin{verbatim}
+% % template <typename T>
+% % \end{verbatim}
+% % 太烦, 可以考虑用
+% % \begin{verbatim}
+% % #define TEMPLATE template <typename T>
+% % \end{verbatim}
+% % 来替换, 特别是当模板参数非常多或复杂时.
+
+% % 对指针操作还不熟悉的同学, 请对照代码和课本仔细推敲. 特别是
+% % \begin{verbatim}
+% % template <typename T>
+% % void SingleLinkedList<T>::insert(const T& _val)
+% % {
+% % 	Node *p = new Node(_val);
+% % 	if (is_empty())
+% % 		head = p;
+% % 	else
+% % 	{
+% % 		p->next = currentPos->next;
+% % 		currentPos->next = p;
+% % 	}
+% % 	currentPos = p;
+% % 	size++;
+% % };
+
+% % template <typename T>
+% % void SingleLinkedList<T>::remove()
+% % {
+% % 	if (is_empty() || currentPos->next == nullptr)
+% % 		;
+% % 	else if (head->next == nullptr)
+% % 		makeEmpty();
+% % 	else 
+% % 	{
+% % 		Node* p = currentPos->next;
+% % 		currentPos->next = currentPos->next->next;
+% % 		delete p;
+% % 		size--;
+% %         }
+% % };
+% % \end{verbatim}
+% % 这两个函数的实现, 请考虑这里 \verb|Node* p| 的必要性和 \verb|delete|
+% % 的执行时机.
+
+% % 此外要注意, \verb|findKth| 和 \verb|previous| 这两个函数都是
+% % $\Theta(n)$ 代价的 (请证明一下). 因此效率低下, 在实际的单链表应用中,
+% % 不会出现.
+
+% % 对于动态内存操作, 一个常见的错误是忘记释放内存, 这将导致内存泄漏. 系统
+% % 提供了 \verb|valgrind| 工具, 可以做检查. 当然全局调试工具 \verb|gdb|
+% % 也可以做到. 
+
+% % 接下去 3.3 \~ 3.5 节, 课本分析了标准 C++ 库 STL 里面 \verb|vector| 和
+% % \verb|list| 的实现, 并给出了完整的代码. 请认真阅读, 学习. 课本的代码是
+% % 一个简化版本, 但可以用. 请大家注意:
+
+% % \begin{itemize}
+% % \item \verb|vector| 中通过重载运算符 \verb|[]| 使之读取接口和标准数组一致；
+% % \item Iterator 方法如何确保容器(container, 包括 \verb|vector| 和
+% %   \verb|list|) 不发生越界错误, 特别是如何通过重载运算符, 保持具有一致
+% %   的操作接口；
+% % \item 继承的运用, 这里普通的 Iterator 是 Const Iterator 的一个派生. 
 % \end{itemize}
+
+我们接下去考虑如何构建 \verb|iterator| 和 \verb|const_iterator|. 
+
+介绍一下 STL 的迭代器(iterator)机制. 和 STL 中的容器。
 
 \section{堆栈和队列}
 
