@@ -1,0 +1,132 @@
+%!Tex Program = xelatex
+%\documentclass[a4paper]{article}
+\documentclass[a4paper]{ctexart}
+\usepackage{xltxtra}
+%\setmainfont[Mapping=tex-text]{AR PL UMing CN:style=Light}
+%\setmainfont[Mapping=tex-text]{AR PL UKai CN:style=Book}
+%\setmainfont[Mapping=tex-text]{WenQuanYi Zen Hei:style=Regular}
+%\setmainfont[Mapping=tex-text]{WenQuanYi Zen Hei Sharp:style=Regular}
+%\setmainfont[Mapping=tex-text]{AR PL KaitiM GB:style=Regular} 
+%\setmainfont[Mapping=tex-text]{AR PL SungtiL GB:style=Regular} 
+%\setmainfont[Mapping=tex-text]{WenQuanYi Zen Hei Mono:style=Regular} 
+
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\renewcommand{\thefigure}{\arabic{section}.\arabic{figure}}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\newcommand{\hl}[1]
+{\noindent {\bf {#1}}}
+
+% 创建定理环境  
+\newtheorem{theorem}{定理}  
+
+\theoremstyle{definition}  
+\newtheorem{definition}{定义}[section]
+
+\theoremstyle{definition}  
+\newtheorem{example}{例}[section]  
+
+
+\title{数据结构和算法}
+\author{王何宇}
+\date{}
+\begin{document}
+\maketitle
+\pagestyle{empty}
+
+\section{栈抽象数据类型（Stack ADT）}
+
+\noindent
+栈（stack）是一种线性表，但对插入与删除的位置加以限制：这些操作只能在表的一端进行，这一端称为 \emph{栈顶}（top）。
+
+\subsection{栈模型}
+
+\noindent
+栈上的基本操作是 \texttt{push}（等价于插入）与 \texttt{pop}（删除最近插入的元素）。最近插入的元素可以在执行 \texttt{pop} 之前，通过 \texttt{top} 这一操作进行查看。\texttt{pop} 或 \texttt{top} 作用在空栈上，一般被认为是对栈 ADT 的错误操作。另一方面，在执行 \texttt{push} 时若空间耗尽，这是实现层面的限制，而不是 ADT 的错误。
+
+\noindent
+栈有时也被称为 \emph{后进先出}（LIFO，last in, first out）表。图 3.23 所示的模型仅表明：\texttt{push} 是向栈输入的操作，而 \texttt{pop} 与 \texttt{top} 是输出操作。常见的附加操作还包括：将栈清空、检测栈是否为空等；但本质上，对栈所能进行的核心操作就是 \texttt{push} 与 \texttt{pop}。
+
+\noindent
+图 3.24 展示了在若干次操作之后的一个抽象栈。一般的模型是：总有某个元素位于栈顶，并且这是唯一可见的元素。
+
+\begin{figure}[h]
+  \centering
+  % 概念性占位图说明
+  \fbox{\parbox{0.8\linewidth}{
+  栈模型：向栈的输入通过 \texttt{push} 完成；输出通过 \texttt{pop} 与 \texttt{top} 完成。
+  }}
+  \caption{图 3.23\quad 栈模型：输入由 \texttt{push} 完成；输出由 \texttt{pop} 与 \texttt{top} 完成}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  % 概念性占位图说明
+  \fbox{\parbox{0.6\linewidth}{
+  栈模型：只有位于栈顶的元素可被直接访问（示例堆叠：顶部为 2，其下依次为 4、1、3、6）。
+  }}
+  \caption{图 3.24\quad 栈模型：只有栈顶元素可被访问}
+\end{figure}
+
+\subsection{栈的实现}
+
+\noindent
+由于栈本质上是受限的线性表，任何线性表的实现都可以用来实现栈。显然，\texttt{list} 与 \texttt{vector} 都支持栈操作；在 99\% 的情况下，它们是最合理的选择。偶尔在特殊场景中，设计一份专用实现会更快。然而，由于栈操作都是常数时间操作，除非在非常特殊的环境下，这样做通常难以带来可观的改进。
+
+\noindent
+针对这些特殊场景，下面给出两种常见的栈实现：一种用链式结构，另一种用数组。两者都可以简化 \texttt{vector} 与 \texttt{list} 中的逻辑，因此不再另外给出代码。
+
+\paragraph{链表实现的栈}
+\noindent
+第一种实现使用单链表。我们通过在表头插入来完成一次 \texttt{push}；通过删除表头元素来完成一次 \texttt{pop}。操作 \texttt{top} 仅查看表头元素并返回其值。有时会把 \texttt{pop} 与 \texttt{top} 合并为一个操作。
+
+\paragraph{数组实现的栈}
+\noindent
+另一种实现避免了指针链接，且可能是更常见的做法。它复用 \texttt{vector} 的 \texttt{back}、\texttt{push\_back} 与 \texttt{pop\_back}，因此实现十分直接。对每个栈，我们维护 \texttt{theArray} 与 \texttt{topOfStack}，其中空栈时 \texttt{topOfStack = -1}（这也是空栈的初始化方式）。向栈中 \texttt{push} 某个元素 \texttt{x} 时，先递增 \texttt{topOfStack}，再令 \texttt{theArray[topOfStack] = x}。执行 \texttt{pop} 时，返回 \texttt{theArray[topOfStack]} 的值，然后将 \texttt{topOfStack} 递减。
+
+\noindent
+请注意，这些操作不仅是常数时间，而且在许多机器上还是非常快的常数时间。在某些体系结构上，整数的 \texttt{push}/\texttt{pop} 可由一条机器指令完成，利用带自动增减地址的寄存器操作。许多现代机器把栈操作作为指令集的一部分，这进一步强化了“栈是仅次于数组、最基础的数据结构”这一观点。
+
+\subsection{应用}
+
+\noindent
+并不令人意外的是：一旦限制了线性表可用的操作，这些操作就能被非常快速地实现。真正令人惊讶的是：尽管操作数量不多，它们却非常强大而重要。我们将给出栈的三个典型应用；第三个应用还能深入揭示程序是如何组织的。
+
+\paragraph{符号配对}
+\noindent
+编译器会检查程序中的语法错误，但经常只是缺少某个符号（比如缺少右花括号或注释起始符）就会让编译器打印出成百上千行诊断信息，却没有指出真正的错误。一个有用的工具是：编写程序检查所有符号是否成对匹配。因此，每一个右花括号、右方括号与右圆括号，都必须与其对应的左符号相匹配。
+\bibliography{../bibtexlib/crazyfish.bib}
+\bibliographystyle{plain}
+
+\end{document}
