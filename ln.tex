@@ -5697,378 +5697,950 @@ $$
 
 \subsection{二叉搜索树, Binary Search Tree}
 
-% 我们直接看一下, 课本提供的 BinarySearchTree.h 的代码. 一个学习语言的方
-% 法就是读别人的代码, 特别是高手的代码. 读代码的一个好习惯是边读边写注释
-% 和自己的小测试.
+我们今天讨论二叉搜索树的实现。假设树中的每个结点都存储一个元素。
+为了简化，在我们的示例中，这些元素是整数（当然，在 C++ 中也很容易处理任意复杂的元素）。
+我们还假定所有元素彼此不同；关于重复元素的问题稍后再讨论。
 
-上节课基本介绍了 BST 的思想，和保持 BST 良好性质的关键：保持平衡。
-我们现在先考虑如何设计和构建 BST。
+使二叉树成为二叉搜索树（BST）的性质是：对于树中每个结点 X，X 的左子树中所有元素的值都小于 X 的值，右子树中所有元素的值都大于 X 的值。
 
-首先是节点，我们参考课本的设计，定义一个简单的节点结构：
+我们先观察这个二叉搜索树的节点设计，133页中部：
 
-\begin{lstlisting}[language=C++]
-  struct BinaryNode
-  {
-  Object
-   element;
-   // The data in the node
-  BinaryNode *left;
-   // Left child
-  BinaryNode *right;
-   // Right child
-  };
-\end{lstlisting}  
+\begin{lstlisting}[][language=C++]
+    /**
+     * @brief 内部结点结构。
+     *
+     * 保存元素与左右孩子指针；不保存父指针。
+     */
+    struct BinaryNode
+    {
+        Comparable element;   ///< 结点中存储的元素
+        BinaryNode *left;     ///< 左孩子
+        BinaryNode *right;    ///< 右孩子
 
-和链表一样，我们将其封装在类 BinarySearchTree 中。保持必要的安全性和便利性。
+        /**
+         * @brief 结点构造函数（拷贝元素）。
+         * @param theElement 元素值（左值）。
+         * @param lt 左孩子指针。
+         * @param rt 右孩子指针。
+         */
+        BinaryNode( const Comparable & theElement, BinaryNode *lt, BinaryNode *rt )
+          : element{ theElement }, left{ lt }, right{ rt } { }
 
-\begin{lstlisting}[language=C++]
-/// 数据类型必须是 Comparable, 所以就用这个作为抽象模板参数.
+        /**
+         * @brief 结点构造函数（移动元素）。
+         * @param theElement 元素值（右值，将被移动）。
+         * @param lt 左孩子指针。
+         * @param rt 右孩子指针。
+         */
+        BinaryNode( Comparable && theElement, BinaryNode *lt, BinaryNode *rt )
+          : element{ std::move( theElement ) }, left{ lt }, right{ rt } { }
+    };
+\end{lstlisting}
+
+这是一个单向的二叉树，每个节点都只提供了指向左右孩子的指针，没有指向父节点的指针。
+这种设计使得节点结构更为简洁。 节点结构中包含了两个构造函数，一个用于拷贝元素，另一个用于移动元素。
+
+这个节点的设计和我们之前讨论的链表节点设计有相似之处。每个节点都包含了数据元素和指向其他节点的指针。
+因此只能用于内部实现，不能直接暴露给用户使用。
+
+图 4.16 的其他部分展示了二叉搜索树的基本结构和我们需要实现的功能：
+
+在 public 部分，我们提供了如下接口函数：
+
+首先是 The Big Five：构造、拷贝构造、移动构造、析构、拷贝赋值和移动赋值。
+然后是一些基本操作（静态）：查找最小值、查找最大值、检查是否包含某个元素、检查树是否为空、打印树。
+注意静态操作用 \verb|const| 修饰，表示它们不会修改树的结构。
+
+接下来是修改操作（动态）：清空树、插入元素、删除元素。
+
+\begin{lstlisting}[language=c++]
 template <typename Comparable>
 class BinarySearchTree
 {
 public:
-  BinarySearchTree( );
-  BinarySearchTree( const BinarySearchTree & rhs );
-  BinarySearchTree( BinarySearchTree && rhs );
-  ~BinarySearchTree( );
-  const Comparable & findMin( ) const;
-  const Comparable & findMax( ) const;
-  bool contains( const Comparable & x ) const;
-  bool isEmpty( ) const;
-  void printTree( ostream & out = cout ) const;
-  void makeEmpty( );
-  void insert( const Comparable & x );
-  void insert( Comparable && x );
-  void remove( const Comparable & x );
-  BinarySearchTree & operator=( const BinarySearchTree & rhs );
-  BinarySearchTree & operator=( BinarySearchTree && rhs );
+    BinarySearchTree( );  // 默认构造函数
+    BinarySearchTree( const BinarySearchTree & rhs );  // 拷贝构造函数
+    BinarySearchTree( BinarySearchTree && rhs ); // 移动构造函数
+    ~BinarySearchTree( ); // 析构函数
+
+    const Comparable & findMin( ) const; // 查找最小元素
+    const Comparable & findMax( ) const;  // 查找最大元素
+    bool contains( const Comparable & x ) const; // 检查是否包含元素 x
+    bool isEmpty( ) const;  // 检查树是否为空
+    void printTree( ostream & out = cout ) const;  // 打印树
+
+    void makeEmpty( );  // 清空树
+    void insert( const Comparable & x );  // 插入元素 x
+    void insert( Comparable && x );  // 插入元素 x（右值）
+    void remove( const Comparable & x );  // 删除元素 x
+
+    BinarySearchTree & operator=( const BinarySearchTree & rhs );  // 拷贝赋值运算符
+    BinarySearchTree & operator=( BinarySearchTree && rhs );  // 移动赋值运算符
+
 private:
-  struct BinaryNode
-  {
-    Comparable element;
-    BinaryNode *left;
-    BinaryNode *right;
-    BinaryNode( const Comparable & theElement, 
-                BinaryNode *lt, 
-                BinaryNode *rt )
-      : element{ theElement }, 
-        left{ lt }, 
-        right{ rt } { }
-    BinaryNode( Comparable && theElement, 
-                BinaryNode *lt, 
-                BinaryNode *rt )
-      : element{ std::move( theElement ) }, 
-        left{ lt }, 
-        right{ rt } { }
-  };
-  BinaryNode *root;
-  void insert( const Comparable & x, BinaryNode * & t );
-  void insert( Comparable && x, BinaryNode * & t );
-  void remove( const Comparable & x, BinaryNode * & t );
-  BinaryNode * findMin( BinaryNode *t ) const;
-  BinaryNode * findMax( BinaryNode *t ) const;
-  bool contains( const Comparable & x, BinaryNode *t ) const;
-  void makeEmpty( BinaryNode * & t );
-  void printTree( BinaryNode *t, ostream & out ) const;
-  BinaryNode * clone( BinaryNode *t ) const;
+    struct BinaryNode
+    {
+        Comparable element;
+        BinaryNode *left;
+        BinaryNode *right;
+
+        BinaryNode( const Comparable & theElement, BinaryNode *lt, BinaryNode *rt )
+          : element{ theElement }, left{ lt }, right{ rt } { }
+
+        BinaryNode( Comparable && theElement, BinaryNode *lt, BinaryNode *rt )
+          : element{ std::move( theElement ) }, left{ lt }, right{ rt } { }
+    };
+
+    BinaryNode *root;
+
+    void insert( const Comparable & x, BinaryNode * & t );  // 辅助插入函数
+    void insert( Comparable && x, BinaryNode * & t );  // 辅助插入函数（右值）
+    void remove( const Comparable & x, BinaryNode * & t );  // 辅助删除函数
+    BinaryNode * findMin( BinaryNode *t ) const;  // 辅助查找最小元素函数
+    BinaryNode * findMax( BinaryNode *t ) const;  // 辅助查找最大元素函数
+    bool contains( const Comparable & x, BinaryNode *t ) const;  // 辅助检查包含元素函数
+    void makeEmpty( BinaryNode * & t );  // 辅助清空树函数
+    void printTree( BinaryNode *t, ostream & out ) const;  // 辅助打印树函数
+    BinaryNode * clone( BinaryNode *t ) const;  // 辅助克隆树函数
 };
 \end{lstlisting}
 
-\begin{lstlisting}[language=C++]
-  /** 
-  * Default constructor. 
-  * 
-  */
-  BinarySearchTree( ) : root{ nullptr } 
-  {
-    /// C++ 11 以后的标准推崇用 {} 来初始化数据.  
-  }
-\end{lstlisting}
+在 private 部分，除了定义了节点结构 BinaryNode，我们定义了一个指向树根的指针 root。
+以及一些辅助函数，这些函数通常是递归实现的，接受一个节点指针作为参数。是上述公共接口函数的实际实现。
+这样我们既可以享受内部递归实现的便利，又能保持公共接口的简洁和安全。
 
-常见的内置类型如 \verb|int| 等等, 或者 STL 中类型如 \verb|string| 等等,都
-提供了这种初始化. 一般的 \verb|struct| 或者 \verb|class| 中的
-\verb|public|, 都默认提供了这种初始化形式. 当然实际上我们并不推荐在类
-设计中直接使用这种缺省构造. 而是建议大家在设计类时考虑显式构造具有这种
-接口的构造. 
+由于功能实际上都在 private 部分实现，我们接下来先重点讨论这些辅助函数的实现细节。
 
-测试代码 \verb|test_brace.cpp| 给出了一个默认大括号初始化的例子.
+\subsubsection*{contains} 
 
-接下去的拷贝构造函数使用了静态左值引用作为参数, 避免在调用的时候, 参数
-\verb|rhs| 从外部进入函数内部时发生复制.
+在当前树中查找是否包含指定的元素 x，如果包含，返回 true，否则返回 false。
+考虑用递归实现。
 
-\begin{lstlisting}[language=C++]
-  /**
-  * Copy constructor
-  */
-  BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
-  {
-    /// 初始化时的 root{ nullptr } 似乎毫无意义?
-    root = clone( rhs.root );
-    /// 这里用 clone 完成指针指向的内容复制, 而不是仅仅复制了指针.
-  }
-\end{lstlisting}
+T.contains(x) 可以分解为以下几种情况：
+\begin{itemize}
+\item 如果当前节点 t 为空，说明已经到达叶子节点的下方，元素 x 不存在于树中，返回 false。
+\item 如果 x 小于当前节点 t 的元素值，说明 x 可能在左子树中，递归调用 contains(x, t->left)。
+\item 如果 x 大于当前节点 t 的元素值，说明 x 可能在右子树中，递归调用 contains(x, t->right)。
+\item 如果 x 等于当前节点 t 的元素值，说明找到了元素 x，返回 true。
+\end{itemize}
 
-通过　gdb 我们可以清楚看到，在参数在传递过程中，并没有发生复制．
-
-\begin{verbatim}
-Breakpoint 1, main () at TestBinarySearchTree.cpp:49
-49	    BinarySearchTree<int> t3(t);
-(gdb) p t
-$1 = {root = 0x55555556c2c0}
-(gdb) p &t
-$2 = (BinarySearchTree<int> *) 0x7fffffffe3f0
-(gdb) s
-BinarySearchTree<int>::BinarySearchTree (this=0x7fffffffe3f8, rhs=...) 
-at BinarySearchTree.h:40
-40	    BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
-(gdb) s
-43			root = clone( rhs.root );
-(gdb) p rhs
-$3 = (const BinarySearchTree<int> &) @0x7fffffffe3f0: {root = 0x55555556c2c0}
-\end{verbatim}
-
-避免这个复制是重要的，因为这是一次{\bf 额外}的复制．复制构造函数本身的任务就
-是复制，发生在\verb|clone| 调用内部, 这是一个内置的递归函数.
-
-\begin{lstlisting}[language=C++]
-  /**
-  * Internal method to clone subtree.
-  */
-  BinaryNode * clone( BinaryNode *t ) const
-  {
-    if( t == nullptr )
-        return nullptr;
-    else
-        return new BinaryNode{ t->element,
-                               clone( t->left ),
-                               clone( t->right ) };
-  }
-\end{lstlisting}
-
-提问, 复制时这是一个什么序的遍历?
-
-按照　C 语言和旧　C++ 规范，有一种情况函数调用时的参数复制仍然不可避免，比如
-\begin{lstlisting}[language=C++]
-  ...
-  Student cai {"Kunkun", 24};
-  ...
-\end{lstlisting}
-这里在函数调用时, 因为 "Kunkun" 作为一个常量字符串, 是一个右值 (不可变
-更的值), 因此不能作为左值进行引用, 必然会发生一次额外复制.
-
-为此 C++ 11 引入了右值引用的概念. 注意左值的生命周期取决于变量本身的生
-命周期, 因此可以通过左值引用, 顺带修改变量的值. 但右值是一次性的, 用完
-即丢. 因此无所谓改变右值. 这里有一个典型的案例:
+这个实现就很直接。
 
 \begin{lstlisting}[language=C++]
 /**
-* Move constructor
-*/
-BinarySearchTree( BinarySearchTree && rhs ) : root{ rhs.root }
+ * Internal method to test if an item is in a subtree.
+ * x is item to search for.
+ * t is the node that roots the subtree.
+ */
+bool contains( const Comparable & x, BinaryNode *t ) const
 {
-  /// 比较和 copy 的区别, 这里外部参数传入 rhs 时, 如果外部参数
-  /// 是一个右值, 那么按照旧 C++ 规范, 复制不可避免. 现在提供了
-  /// 右值引用, 在参数传入时, 避免了复制. 而这里通过对 rhs.root
-  /// 的指针复制, 避免了整棵树的复制. 
-  rhs.root = nullptr;
-  /// 必须释放 rhs.root 的管理权限. 提问: 为何这里不需要先delete
-  /// ? this->root 接管了原本 rhs.root 的内存, 没有指向内容的复
-  /// 制. 数据仍然存放在原地址, 因此不可以 delete, 否则
-  /// this->root 下的树也会被删除.  而 rhs 在调用发生之后, 作为
-  /// 一个右值量, 从概念上, 只用一次, 不会再使用, 因此可以赋为
-  /// nullptr, 避免同一段内存出现两个入口.
+    if( t == nullptr )
+        return false;
+    else if( x < t->element )
+        return contains( x, t->left );
+    else if( t->element < x )
+        return contains( x, t->right );
+    else
+        return true;   // Match
+}  
+\end{lstlisting}
+
+请注意首先判断树是否为空至关重要，否则我们可能会通过一个 nullptr 指针访问数据成员，从而在运行时产生错误。
+其余的判断按“最不可能发生的情形放在最后”的原则排列。
+
+图 4.19 展示了如何抽象比较操作，用了函数式编程的思想。我们这里先不展开讨论。
+
+递归实现尽管方便，但并不是没有代价的。 每次递归调用都会在调用栈上分配新的栈帧，保存函数参数和局部变量。
+好在如果树是平衡的，递归深度大约是 $\log n$，其中 $n$ 是树中节点的数量。因此，递归调用的栈空间开销是可控的。
+
+但事实上，递归总是可以用迭代来替代的。对于 contains 函数，我们也可以用迭代实现：
+
+\begin{lstlisting}[language=C++]
+bool contains( const Comparable & x, BinaryNode *t ) const
+{
+    while( t != nullptr )
+    {
+        if( x < t->element )
+            t = t->left;
+        else if( t->element < x )
+            t = t->right;
+        else
+            return true;   // Match
+    }
+    return false;
 }
 \end{lstlisting}
 
-我们在跟踪中观察右值的实际作用:
+这两个程序的逻辑是完全相同的，只是实现方式不同。迭代版本避免了递归调用的栈空间开销，但代码稍微复杂一些。
 
-\begin{verbatim}
-Breakpoint 1, main () at TestBinarySearchTree.cpp:63
-63	    BinarySearchTree<int> t4(std::move(t));
-(gdb) p t
-$1 = {root = 0x55555556c2c0}
-(gdb) p &t
-$2 = (BinarySearchTree<int> *) 0x7fffffffe3e8
-(gdb) s
-std::move<BinarySearchTree<int>&> (__t=...) 
-at /usr/include/c++/9/bits/move.h:99
-99	    move(_Tp&& __t) noexcept
-(gdb) s
-100	    
-{ return static_cast<typename std::remove_reference<_Tp>::type&&>(__t); }
-(gdb) s
-BinarySearchTree<int>::BinarySearchTree (this=0x7fffffffe3e8, rhs=...) 
-at BinarySearchTree.h:50
-50	    BinarySearchTree( BinarySearchTree && rhs ) : root{ rhs.root }
-(gdb) s
-56			rhs.root = nullptr;
-(gdb) p rhs
-$3 = (BinarySearchTree<int> &&) @0x7fffffffe3e8: {root = 0x55555556c2c0}
-(gdb) s
-63	    }
-(gdb) s
-main () at TestBinarySearchTree.cpp:66
-66	    for( i = 2; i < NUMS; i+=2 )
-(gdb) p t4
-$4 = {root = 0x55555556c2c0}
-(gdb) p &t4
-$5 = (BinarySearchTree<int> *) 0x7fffffffe400
-(gdb) p t
-$6 = {root = 0x0}
-(gdb) p &t
-$7 = (BinarySearchTree<int> *) 0x7fffffffe3e8
-\end{verbatim}
+接下去的讨论我们先按照课本的方案，总是优先采用递归实现.
 
-我们可以看到, \verb|move| 的实际作用是一次左值到右值的转换, 而函数参数
-通过地址直接获得了一个右值的引用, 因此没有发生复制. 然后尽管 \verb|t4|
-是一个新的实体, 但它的 \verb|root| 直接复制了 \verb|t| 的 \verb|root|,
-因此对原树的管理权已经传递给 \verb|t4|, 而 \verb|t| 的 \verb|root| 直
-接被切断, 避免了两棵树管理同一段内存的问题. 这种切断语法上不是必须的,
-但逻辑上是.
+\subsubsection*{findMin 和 findMax}
 
-同样的情况发生在赋值运算中. 一般对动态类, 我们都需要重载赋值运算
-\verb|=|, 而这里也有引用避免隐含复制的问题. 课本的例子也是极好的. 但在
-移动赋值运算时, 有一个逻辑漏洞. 参见注释.
+首先是递归实现的 findMin: 查找以节点 t 为根的子树中的最小元素。思路如下：
 
-接下去课本的代码都中规中矩. 注意一下:
-\begin{verbatim}
+\begin{itemize}
+  \item 如果当前节点 t 为空，说明子树为空，返回 nullptr。
+  \item 如果当前节点 t 的左子节点为空，说明当前节点 t 就是子树中的最小元素，返回 t。
+  \item 否则，递归调用 findMin(t->left)，继续在左子树中查找最小元素。
+\end{itemize}
+
+/**
+ * Internal method to find the smallest item in a subtree t.
+ * Return node containing the smallest item.
+ */
 BinaryNode * findMin( BinaryNode *t ) const
-\end{verbatim}
-和
-\begin{verbatim}
-BinaryNode * findMax( BinaryNode *t ) const
-\end{verbatim}
-这两个功能上对称的函数. 但它们的实现截然不同. 通常, 后者效率更高一些.
-但是前者更容易设计, 可读性更好. 课本这里同时展示了两个版本, 供大家比较
-学习.
+{
+    if( t == nullptr )
+        return nullptr;
+    if( t->left == nullptr )
+        return t;
+    return findMin( t->left );
+}
 
-课本的类设计上, 也不是没有槽点. 大家这里可以观察到, \verb|contain| 和
-\verb|remove| 似乎有较多的重复功能代码段. 这是一个需要察觉的要素. 这说
-明这里发生了功能代码冗余. 如何避免呢? 也很简单, 再增加一个内置函数
-\verb|find(val)|, 如果 \verb|val| 存在, 返回其节点地址, 如果不存在, 则
-返回 \verb|NIL| (或任何一个约定标志). 然后 \verb|contain| 和
-\verb|remove| 都通过调用 \verb|find| 完成相应功能. (\verb|contain| 此
-时沦为 \verb|find| 的一层马甲.)
+设计递归的一个基本思路是尽量将递归放在最后一步. 这样有助于转换成迭代形式.
+比如这个程序的迭代形式如下:
 
-动态数据结构的难点都在动态操作上, 典型的就是 \verb|insert| 和
-\verb|delete|. 一般删除又更复杂一些. 我们先看 \verb|insert|. 一个数据
-结构是有一定的规则的, 比如 BST 的动态操作要满足操作前后要都要满足 BST
-的定义.
-
-
-首先接口上, 我们注意到有两个版本:
-\begin{verbatim}
-void insert( const Comparable & x, BinaryNode * & t )
-\end{verbatim}
-和
-\begin{verbatim}
-void insert( Comparable && x, BinaryNode * & t )
-\end{verbatim}
-分别对应了 \verb|x| 是左值和右值的情况. 当然, 我们可以只有一个版本:
-\begin{verbatim}
-void insert( Comparable x, BinaryNode * & t )
-\end{verbatim}
-对应 \verb|x| 的任意情况, 只是这样注定 \verb|x| 在参数传递时会发生隐含
-复制. 所以, 如果 \verb|x| 是轻量级的, 如 \verb|int| 等等, 完全可以不用
-回避这个复制, 以简化接口. 但对 \verb|x| 可能是重量级, 如这里是一个未知
-的模板类型, 那么同时提供左右值引用是 C++ 11 以后推荐的做法.
-
-现在回到 \verb|insert| 操作. 我们需要首先确定插入的点. 这里仍然使用了
-递归, 找到用于挂载的节点, 它要么是一个叶子节点, 也可能是一个只有单边子
-树的节点, 而新节点将挂在它的空子树上. 实际上, 我们观察代码就会发现, 课
-本的代码竟然一口气递归到了 \verb|nullptr|, 也就是空节点. 在链表操作时
-我们知道, 在做插入准备的遍历时, 哪怕是在最后增加一个新节点, 也不能一直
-遍历到空节点, 否则就失去了前续节点的线索. 那么为什么这里可以呢? 关键是
-递归的时候, 采用了指针引用的接口 \verb|BinaryNode * & t|.
-
-我们前面分析了引用主要有两个功能, 一个是避免隐含复制；另一个是用于修改
-被引用的变量. 指针引用, 就是指针变量的引用. 这里 \verb|BinaryNode *|
-应该看作是一种变量类型, 表示能存放一个 \verb|BinaryNode| 节点地址的指
-针变量. 所以 \verb|BinaryNode * & t| 就表示 \verb|t| 是对一个存放了节
-点地址的指针变量的引用. 你可以认为它本质是通过一个双重指针 (即指针变量
-的地址) 来传递参数的. 当上一层调用 \verb|insert( x, t->left );| 时,
-\verb|t->left| 本身是一个地址值, 但它传给参数 \verb|t| 时, 不是把它存
-的地址值复制给 \verb|t|, 而是通过它 (\verb|t->left|) 的地址, 传递了一
-个引用给 \verb|t|. 所以当 \verb|t| 是 \verb|nullptr| 时, 直接将其改成
-一个新节点的地址, 这个改动也会通过这个左值引用, 反馈给 \verb|t->left|,
-从而实现当发现上一层的左子树是空, 就将其改成新节点地址的操作. 
-
-注意不论哪个版本, 第二个参数都是左值指针引用. 
 \begin{lstlisting}[language=C++]
-      /**
-     * Internal method to insert into a subtree.
-     * x is the item to insert.
-     * t is the node that roots the subtree.
-     * Set the new root of the subtree.
-     */
-    void insert( const Comparable & x, BinaryNode * & t )
-	{
-	    if( t == nullptr )
-		t = new BinaryNode{ x, nullptr, nullptr };
-	    /// 这里可以这么做的原因是 t 是一个指针引用参数. 也就是说, t
-	    /// 是一个指针变量的引用. 这个分支被触发, 要么 t 就是 root, 而
-	    /// root 是 nullptr, 也就是说这是一棵空树. 于是直接给它分配一
-	    /// 个新结点；另一种情况是递归的终点. 也就是 t 是作为一个指针
-	    /// 引用参数, 对之前某结点的左子树或右子树的根的引用. 比如, 实
-	    /// 际发生的调用是 insert( x, t->left ), 这样进入调用后, 发现
-	    /// t 是 nullptr, 于是把 t 赋成一个新结点. 这时对 t 的改动, 相
-	    /// 当于对上一层 t->left 的一个别名的改动 (引用的原始定义), 于
-	    /// 是相当于直接把上一层的 t->left 从 nullptr 改成了新结点. 因
-	    /// 此合法且高效. 用这种技巧我们就不需要保留上一层的缓存了. 
-	    else if( x < t->element )
-		insert( x, t->left );
-	    else if( t->element < x )
-		insert( x, t->right );
-	    else
-		;  // Duplicate; do nothing
-	    /// 书上这个 BST 约定元素无重复, 因此有重复就什么也不做. 
-	}
+BinaryNode * findMin( BinaryNode *t ) const
+{
+    if( t == nullptr )
+        return nullptr;
+    while( t->left != nullptr )
+        t = t->left;  
+    return t;
+}
 \end{lstlisting}
 
-插入这里注意一个细节，如果从初始，依次插入的数据是 6，5，7，2，5，8，那么得到的 BST 长什么样？
+findMax 的实现和 findMin 类似，只不过方向相反：
+\begin{lstlisting}[language=C++]
+BinaryNode * findMax( BinaryNode *t ) const
+{
+    if( t == nullptr )
+        return nullptr;
+    while( t->right != nullptr )
+        t = t->right;  
+    return t;
+}
+\end{lstlisting}
+注意我的实现和图 4.21 有细微的区别。
 
-%\includegraphics[width=0.75\textwidth]{images/BST_insert1.png}
+它的递归版本是：
+\begin{lstlisting}[language=C++]
+BinaryNode * findMax( BinaryNode *t ) const
+{
+    if( t == nullptr )
+        return nullptr;
+    if( t->right == nullptr )
+        return t;
+    return findMax( t->right );
+}
+\end{lstlisting}
 
-那么如果插入次序是：6，2，5，5，8，7 呢？
+这是镜像对称的程序。
 
-%\includegraphics[width=0.75\textwidth]{images/BST_insert2.png}
+\subsubsection*{insert}
 
-稍加思考，不难明确：
+插入过程在概念上很简单。要把 X 插入到树 T 中，像执行 contains 那样沿着树向下走即可。
+如果找到了 X，就什么也不做；否则，就把 X 插入到所经过路径上的最后一个位置。
 
-\begin{enumerate}
-\item BST 是否平衡，和插入次序有关；
-\item 同一棵 BST，插入的次序不唯一；
-\end{enumerate}
+因此整体思路是：
+\begin{itemize}
+\item 如果当前节点 t 为空，说明找到了插入位置，创建一个新节点，存储元素 x，并将其赋值给 t。
+\item 如果 x 小于当前节点 t 的元素值，递归调用 insert(x, t->left)。
+\item 如果 x 大于当前节点 t 的元素值，递归调用 insert(x, t->right)。
+\item 如果 x 等于当前节点 t 的元素值，说明元素已存在，不做任何操作。
+\end{itemize}
 
-现在我们来考虑一个动态结构中最复杂的操作——删除。这里要求删除一个 BST
-的指定节点，并且要求删除之后，通过适当的调整（限制在 $\Theta(1)$），使
-得它仍然是 BST。注意一个前提, 由于我们的插入规则, 我们的 BST 中不会有
-重复值节点. 这里我们用 \verb|x| 代表我们即将删除的节点。我们分以下几种情况
-讨论：
+\begin{lstlisting}[language=C++]
+/**
+ * Internal method to insert into a subtree.
+ * x is the item to insert.
+ * t is the node that roots the subtree.
+ * Set the new root of the subtree.
+ */
+void insert( const Comparable & x, BinaryNode * & t )
+{
+    if( t == nullptr )
+        t = new BinaryNode{ x, nullptr, nullptr };
+    else if( x < t->element )
+        insert( x, t->left );
+    else if( t->element < x )
+        insert( x, t->right );
+    else
+        ;  // Duplicate; do nothing
+}
 
-\begin{enumerate}
-\item 节点 \verb|x| 没有任何子节点, 直接删除 \verb|x| 即可; 
-\item 节点 \verb|x| 有一个子树, 用它的子树代替 \verb|x|, 再删除
-  \verb|x|; 这两种情况可以统一处理. 即删除 \verb|x|, 用 \verb|x| 的子
-  树代替 \verb|x|(如有).
-\item 节点 \verb|x| 有两棵子树, 则首先寻找 \verb|x| 的后继 \verb|y|,
-  这里指出 \verb|y| 必存在 (右子树的最小值), 然后用 \verb|y| 的值占据
-  |verb|x| 的值, 再将 \verb|x->right| 中删除 \verb|y|.
-\end{enumerate}
+/**
+ * Internal method to insert into a subtree.
+ * x is the item to insert by moving.
+ * t is the node that roots the subtree.
+ * Set the new root of the subtree.
+ */
+void insert( Comparable && x, BinaryNode * & t )
+{
+    if( t == nullptr )
+        t = new BinaryNode{ std::move( x ), nullptr, nullptr };
+    else if( x < t->element )
+        insert( std::move( x ), t->left );
+    else if( t->element < x )
+        insert( std::move( x ), t->right );
+    else
+        ;  // Duplicate; do nothing
+}
+\end{lstlisting}
 
-以上操作已经充分考虑了可以利用指针引用这样的神器. 在没有指针引用的年代,
-上述操作极为复杂, 大家可以去看算法导论中的相关内容.
+这里实现了两个 insert 函数，一个用于拷贝元素，另一个用于移动元素。在实际调用时，
+编译器会根据传入参数的类型选择合适的函数。比如 T.insert(42) 会调用移动版本，
+而 T.insert(y)（其中 y 是一个变量）会调用拷贝版本。
 
-这里顺便指出, 课本的 \verb|remove| 只提供了一个版本, 它没有像
-\verb|insert| 那样同时提供左右值引用的版本, 而是只用了一个常量左值引用
-的接口版本来共同处理左右值引用的调用. 这里的基本逻辑是, 我们不会修改被
-删除对象. 我们在 \verb|test_rvalue.cpp| 中演示一下常量左值引用的意义.
+这里最令新手迷惑的步骤是：
+\begin{lstlisting}[language=C++]
+    if( t == nullptr )
+        t = new BinaryNode{ x, nullptr, nullptr };
+\end{lstlisting}
+我们怎么可以将新节点挂到一个空指针上呢？ 其实这里的 t 是一个引用参数，引用的是指向节点的指针。 因此，当 t 为空时，
+实际上是在别名为 t 的指针变量内存储的地址是 nullptr。 当我们执行 t = new BinaryNode{ x, nullptr, nullptr }; 时，
+我们实际上是将新节点的地址赋值给了指针变量 t，替代了原来的 nullptr。 这样就成功地将新节点插入到了树中。
 
-我们看到, C++ 的新特性, 已经不再是一些细节修饰的语法糖, 而是开始试图从
-根本上调整一些底层算法的逻辑. 从汇编的角度看, 可能并没有什么本质区别,
-特别是自动优化之后. 但是对 C++ 层面和算法层面, 系统内部调度和算法结构
-之间的分层变得更加清晰, 上层的算法变得更加直观和简约. 这是未来 C++ 和
-算法的一个发展趋势. 
+比如如果我们对一棵空树 T 调用 insert(42， T.root)，那么 T.root 最初是 nullptr。
+执行 insert 函数时，t 引用的是 T.root，因此 t 也是 nullptr。
+当我们执行 t = new BinaryNode{ 42, nullptr, nullptr }; 时，实际上是将新节点的地址赋值给了 T.root，
+从而成功地将新节点插入到了树中。
+
+指针引用结合递归的使用，使得插入操作变得非常简洁和直观。
+
+而它的迭代版本相对复杂一些，因为就像单链表一样，我们需要维护一个指向当前节点的指针以及其父节点的指针。也就是说，我们不能再仅仅使用一个指针变量 t 来遍历树。
+而必须使用两个指针变量：一个指向当前节点 curr，另一个指向当前节点的父节点 parent。
+
+\begin{lstlisting}[language=C++]
+void insert( const Comparable & x, BinaryNode * & t )
+{
+    BinaryNode * parent = nullptr;
+    BinaryNode * curr = t;
+
+    while( curr != nullptr )
+    {
+        parent = curr;
+        if( x < curr->element )
+            curr = curr->left;
+        else if( curr->element < x )
+            curr = curr->right;
+        else
+            return;  // Duplicate; do nothing
+    }  // 找到插入位置
+
+    curr = new BinaryNode{ x, nullptr, nullptr };
+    if( parent == nullptr )
+        t = curr;  // Tree was empty
+    else if( x < parent->element )  // 需要判断插入到左子树还是右子树
+        parent->left = curr;
+    else
+        parent->right = curr;
+}
+\end{lstlisting}
+
+比较一下递归和迭代版本的 insert 函数，可以发现递归版本更为简洁和直观。
+
+\subsubsection*{remove}
+
+像许多数据结构一样，最难的操作是删除。一旦找到了要删除的结点，我们需要考虑几种情况。
+
+\begin{itemize}
+\item 如果该结点是叶子，可以直接删除。
+\item 如果该结点只有一个孩子，则在其父结点把指向它的链接绕过它后就能删除它（为了清晰，我们会把链接方向画出来）。见图 4.24。（只有一个继承人）
+\item 更复杂的情况是结点有两个孩子。（宫斗！）一般策略是用其右子树中最小的数据替换该结点的数据（这很容易找到），
+然后递归地删除那个现在为空的结点。由于右子树中的最小结点不可能再有左孩子，第二次 remove 会很容易。
+图 4.25 展示了一棵初始树以及删除后的结果。要删除的结点是根的左孩子，键值为 2。
+它被其右子树中的最小数据 3 所替换，然后那个结点像之前一样被删除。
+\end{itemize}
+
+\begin{lstlisting}[language=C++]
+/**
+ * Internal method to remove from a subtree.
+ * x is the item to remove.
+ * t is the node that roots the subtree.
+ * Set the new root of the subtree.
+ */
+void remove( const Comparable & x, BinaryNode * & t )
+{
+    if( t == nullptr )
+        return;   // Item not found; do nothing
+    if( x < t->element )
+        remove( x, t->left );
+    else if( t->element < x )
+        remove( x, t->right );
+    else if( t->left != nullptr && t->right != nullptr ) // Two children
+    {
+        t->element = findMin( t->right )->element;
+        remove( t->element, t->right );
+    }
+    else
+    {
+        BinaryNode *oldNode = t;
+        t = ( t->left != nullptr ) ? t->left : t->right;
+        delete oldNode;
+    }
+}
+\end{lstlisting}
+
+图 4.26 的代码实现了删除。但它效率不高，因为有可能它会沿树向下遍历两次，以在右子树中找到并删除最小结点。
+可以通过编写一个专门的 removeMin 方法来消除这种低效；为了简洁，我们在这里没有这样做。
+
+如果预计删除操作的次数较少，一种常见策略是惰性删除：当某个元素要被删除时，不把它从树中移走，
+而只是将其标记为“已删除”。当存在重复元素时这种方法尤其流行，因为这时可以把记录出现频率的数据成员减一。
+如果树中“真实”结点数与被标记为“已删除”的结点数相同，那么树的深度预计只会增加一个很小的常数（为什么？），
+因此惰性删除带来的运行时损耗很小。此外，如果一个被标记删除的元素又被插入，便可避免为其重新分配新单元的开销。
+
+能考虑一下迭代版本的 remove 吗？ 其实也不难, 但代码会比较冗长. 参见算法导论.
+
+4.3.5 析构函数与拷贝构造函数
+
+和往常一样，析构函数会调用 makeEmpty。公有的 makeEmpty（未给出）只是调用其私有的递归版本。
+如图 4.27 所示，在递归处理完 t 的子结点后，对 t 调用 delete。这样所有结点都会被递归释放。注意最后 t（因此也包括 root）被改为指向 nullptr。
+
+makeEmpty 的思路如下：
+\begin{itemize}
+\item 如果当前节点 t 为空，说明子树为空，直接返回。
+\item 否则，递归调用 makeEmpty(t->left) 和 makeEmpty(t->right)，清空左子树和右子树。
+\item 最后，删除当前节点 t，并将 t 设为 nullptr。
+\end{itemize}
+
+代码如下：
+\begin{lstlisting}[language=C++]
+/**
+ * Internal method to make subtree empty.
+ */
+void makeEmpty( BinaryNode * & t )
+{
+    if( t != nullptr )
+    {
+        makeEmpty( t->left );
+        makeEmpty( t->right );
+        delete t;
+    }
+    t = nullptr;
+}
+\end{lstlisting}
+而析构函数调用它：
+\begin{lstlisting}[language=C++]
+/**
+ * Destructor for the tree.
+ */
+~BinarySearchTree( )
+{
+    makeEmpty( );
+}
+\end{lstlisting}
+
+很简单。而拷贝构造函数的思路是：
+
+\begin{itemize}
+\item 如果 rhs 的根节点为空，说明 rhs 是空树，直接将当前树的根节点设为 nullptr。
+\item 否则，调用 clone(rhs.root) 函数，递归地复制 rhs 树的所有节点，并将返回的根节点赋值给当前树的根节点。
+\end{itemize}
+
+进而考虑 clone 函数的实现：
+\begin{itemize}
+\item 如果当前节点 t 为空，说明子树为空，返回 nullptr。
+\item 否则，递归调用 clone(t->left) 和 clone(t->right)，分别复制左子树和右子树。
+\item 创建一个新节点，存储当前节点 t 的元素值，并将复制得到的左子树和右子树的根节点作为其左孩子和右孩子。
+\item 返回新创建的节点。
+\end{itemize}
+
+先给出 clone 函数的代码：
+\begin{lstlisting}[language=C++]
+/**
+ * Internal method to clone subtree.
+ */
+BinaryNode * clone( BinaryNode *t ) const
+{
+    if( t == nullptr )  
+        return nullptr;
+    else
+        return new BinaryNode{ t->element, 
+                               clone( t->left ), 
+                               clone( t->right ) };
+}
+\end{lstlisting}
+
+然后是拷贝构造函数的代码：
+\begin{lstlisting}[language=C++]
+/**
+ * Copy constructor
+ */
+BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
+{
+    root = clone( rhs.root );
+}
+\end{lstlisting}
+
+\subsubsection*{平均意义复杂度}
+
+直观地看，本节描述的所有操作（除 makeEmpty 和拷贝外）都应在 O(log N) 时间内完成，因为我们每次用常数时间就会向树的下一层下降，因此所处理的树规模大致减半。
+实际上，所有操作（除 makeEmpty 和拷贝外）的运行时间都是 O(d)，其中 d 是包含被访问元素的结点的深度（在 remove 的两孩子情形中，可能是替换结点的深度）。
+或者，O(h), 其中 h 是树的高度。
+
+本节将证明：在所有可能的插入序列等可能的假设下，一棵树中所有结点的平均深度是 O(log N)。
+
+树中所有结点深度之和称为内部路径长度（internal path length）。下面我们将计算二叉搜索树的平均内部路径长度，平均是对所有可能的插入序列取的。
+
+设 $D(N)$ 表示某棵有 $N$ 个结点的树 $T$ 的内部路径长度。$D(1)=0$。一个有 $N$ 个结点的树由一个包含 $i$ 个结点的左子树和一个包含 $N-i-1$ 个结点的右子树，
+再加上深度为 $0$ 的根组成，其中 $0 \le i < N$。$D(i)$ 是左子树（以其根为参考）的内部路径长度。在主树中，这些结点的深度都比在各自子树中多 $1$ 层。
+右子树同理。因此得到递推式
+\[
+D(N) = D(i) + D(N - i - 1) + N - 1.
+\]
+
+如果所有子树大小同等可能（对二叉搜索树成立，因为子树大小只取决于插入到树中的第一个元素的相对名次；对一般二叉树不成立），
+则 $D(i)$ 与 $D(N-i-1)$ 的平均值都是
+$\frac{1}{N}\sum_{j=0}^{N-1} D(j)$。于是有
+\[
+D(N) = \frac{2}{N}\left[\sum_{j=0}^{N-1} D(j)\right] + N - 1.
+\]
+
+这个递推关系将在第 7 章遇到并求解，得到平均值 $D(N) = O(N \log N)$。
+因此任一结点的期望深度为 $O(\log N)$。例如，随机生成的 $500$ 结点的树，其结点的期望深度为 $9.98$。
+
+设
+\[
+D(1)=0,\qquad D(N)=\frac{2}{N}\,S(N-1)+N-1,\quad
+S(N)=\sum_{j=1}^{N} D(j).
+\]
+则
+\[
+S(N)=S(N-1)+D(N)
+     =\Bigl(1+\frac{2}{N}\Bigr)S(N-1)+N-1
+     =\frac{N+2}{N}\,S(N-1)+N-1. \tag{1}
+\]
+
+令
+\[
+T(N)=\frac{S(N)}{N(N+1)}.
+\]
+将(1)两边除以 $N(N+1)$，得到
+\[
+\frac{S(N)}{N(N+1)}=\frac{S(N-1)}{(N-1)N}+\frac{N-1}{N(N+1)}
+\quad\Longrightarrow\quad
+T(N)=T(N-1)+\frac{N-1}{N(N+1)}.
+\]
+注意
+\[
+\frac{N-1}{N(N+1)}=\frac{1}{N}-\frac{2}{N+1}.
+\]
+从 $N=2$ 累加到 $N$，并用调和数 $H_N=\sum_{k=1}^{N}\frac1k$，且
+$T(1)=\frac{S(1)}{1\cdot2}=0$，得
+\[
+T(N)=\sum_{k=2}^{N}\!\Bigl(\frac{1}{k}-\frac{2}{k+1}\Bigr)
+     =(H_N-1)-2\,(H_{N+1}-1-\tfrac12)
+     =-H_N-\frac{2}{N+1}+2.
+\]
+因此
+\[
+S(N)=N(N+1)\,T(N)
+    =N(N+1)\Bigl(2-H_N-\frac{2}{N+1}\Bigr)
+    =N\bigl((N+1)(2-H_N)-2\bigr).
+\]
+由 $D(N)=S(N)-S(N-1)$ 或直接代回
+$D(N)=\frac{2}{N}S(N-1)+N-1$ 可得显式主阶：
+\[
+D(N)=2N\,H_N-4N+O(1)\;=\;2N\ln N+O(N).
+\]
+
+结论：内部路径长度的期望
+\[
+D(N)=\Theta(N\log N),
+\qquad
+\text{平均结点深度 } \frac{D(N)}{N}=2H_N-4+O\!\left(\frac1N\right)=\Theta(\log N).
+\]
+
+人们很容易据此断言上一节中所有操作的平均运行时间都是 $O(\log N)$，但这并不完全正确。原因在于存在删除操作时，
+所有二叉搜索树并不一定同等可能。尤其是，上述删除算法倾向于使左子树比右子树更深，因为我们总是用右子树中的结点来替换被删结点。该策略的确切影响仍不清楚，
+但实际上证明这一点的人还没有出现。无论如何，这种现象大多只是理论上的新奇点，因为在小规模的树上几乎不会出现这种效果；更奇怪的是，如果使用 $O(N^2)$ 对插入/删除操作，树反而似乎会变得更平衡。
+
+这段讨论的要点在于：要界定“平均情况”究竟是什么意思通常极其困难，而且往往需要一些可能成立也可能不成立的假设。在没有删除操作，或采用惰性删除时，我们可以得出上述操作的平均运行时间为 O(log N) 的结论。
+除去像前面提到的那种奇特情形外，这一结论与实际观察到的行为非常一致。
+
+如果输入是预先排好序的，那么一串插入操作将花费二次时间，把树变成一种昂贵的“链表”实现，因为树中只会有没有左孩子的结点。一个解决方案是强加一个额外的结构条件，称为“平衡”：不允许任何结点过深。
+
+实现平衡树的通用算法有不少。大多数都比标准二叉搜索树复杂一些，并且在平均情况下对更新操作更慢。不过，它们确实能避免那些令人尴尬的简单反例。下面我们将概述最古老的一类平衡搜索树——AVL 树。
+
+第二种方法是放弃严格的平衡条件，允许树在某些时候非常深，但在每次操作之后应用一种重构规则，使得将来的操作趋于高效。这类数据结构通常被归类为“自调节的”（self-adjusting）。
+对于二叉搜索树，我们不再保证任何单次操作都有 O(log N) 的上界，但可以证明：任意一串包含 M 次操作的序列，
+其总运行时间为 O(M log N)（摊还意义下）。这通常足以防范糟糕的最坏情况。我们将要讨论的这种数据结构称为伸展树（splay tree）；其分析相当复杂，将在第 11 章讨论。
+
+
+% 图 4.28 展示了拷贝构造函数：它遵循常规流程，先把 root 初始化为 nullptr，然后生成 rhs 的一份拷贝。我们使用一个非常巧妙的递归函数 clone 来完成所有繁琐的工作。
+% % 和自己的小测试.
+
+% 上节课基本介绍了 BST 的思想，和保持 BST 良好性质的关键：保持平衡。
+% 我们现在先考虑如何设计和构建 BST。
+
+% 首先是节点，我们参考课本的设计，定义一个简单的节点结构：
+
+% \begin{lstlisting}[language=C++]
+%   struct BinaryNode
+%   {
+%   Object
+%    element;
+%    // The data in the node
+%   BinaryNode *left;
+%    // Left child
+%   BinaryNode *right;
+%    // Right child
+%   };
+% \end{lstlisting}  
+
+% 和链表一样，我们将其封装在类 BinarySearchTree 中。保持必要的安全性和便利性。
+
+% \begin{lstlisting}[language=C++]
+% /// 数据类型必须是 Comparable, 所以就用这个作为抽象模板参数.
+% template <typename Comparable>
+% class BinarySearchTree
+% {
+% public:
+%   BinarySearchTree( );
+%   BinarySearchTree( const BinarySearchTree & rhs );
+%   BinarySearchTree( BinarySearchTree && rhs );
+%   ~BinarySearchTree( );
+%   const Comparable & findMin( ) const;
+%   const Comparable & findMax( ) const;
+%   bool contains( const Comparable & x ) const;
+%   bool isEmpty( ) const;
+%   void printTree( ostream & out = cout ) const;
+%   void makeEmpty( );
+%   void insert( const Comparable & x );
+%   void insert( Comparable && x );
+%   void remove( const Comparable & x );
+%   BinarySearchTree & operator=( const BinarySearchTree & rhs );
+%   BinarySearchTree & operator=( BinarySearchTree && rhs );
+% private:
+%   struct BinaryNode
+%   {
+%     Comparable element;
+%     BinaryNode *left;
+%     BinaryNode *right;
+%     BinaryNode( const Comparable & theElement, 
+%                 BinaryNode *lt, 
+%                 BinaryNode *rt )
+%       : element{ theElement }, 
+%         left{ lt }, 
+%         right{ rt } { }
+%     BinaryNode( Comparable && theElement, 
+%                 BinaryNode *lt, 
+%                 BinaryNode *rt )
+%       : element{ std::move( theElement ) }, 
+%         left{ lt }, 
+%         right{ rt } { }
+%   };
+%   BinaryNode *root;
+%   void insert( const Comparable & x, BinaryNode * & t );
+%   void insert( Comparable && x, BinaryNode * & t );
+%   void remove( const Comparable & x, BinaryNode * & t );
+%   BinaryNode * findMin( BinaryNode *t ) const;
+%   BinaryNode * findMax( BinaryNode *t ) const;
+%   bool contains( const Comparable & x, BinaryNode *t ) const;
+%   void makeEmpty( BinaryNode * & t );
+%   void printTree( BinaryNode *t, ostream & out ) const;
+%   BinaryNode * clone( BinaryNode *t ) const;
+% };
+% \end{lstlisting}
+
+% \begin{lstlisting}[language=C++]
+%   /** 
+%   * Default constructor. 
+%   * 
+%   */
+%   BinarySearchTree( ) : root{ nullptr } 
+%   {
+%     /// C++ 11 以后的标准推崇用 {} 来初始化数据.  
+%   }
+% \end{lstlisting}
+
+% 常见的内置类型如 \verb|int| 等等, 或者 STL 中类型如 \verb|string| 等等,都
+% 提供了这种初始化. 一般的 \verb|struct| 或者 \verb|class| 中的
+% \verb|public|, 都默认提供了这种初始化形式. 当然实际上我们并不推荐在类
+% 设计中直接使用这种缺省构造. 而是建议大家在设计类时考虑显式构造具有这种
+% 接口的构造. 
+
+% 测试代码 \verb|test_brace.cpp| 给出了一个默认大括号初始化的例子.
+
+% 接下去的拷贝构造函数使用了静态左值引用作为参数, 避免在调用的时候, 参数
+% \verb|rhs| 从外部进入函数内部时发生复制.
+
+% \begin{lstlisting}[language=C++]
+%   /**
+%   * Copy constructor
+%   */
+%   BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
+%   {
+%     /// 初始化时的 root{ nullptr } 似乎毫无意义?
+%     root = clone( rhs.root );
+%     /// 这里用 clone 完成指针指向的内容复制, 而不是仅仅复制了指针.
+%   }
+% \end{lstlisting}
+
+% 通过　gdb 我们可以清楚看到，在参数在传递过程中，并没有发生复制．
+
+% \begin{verbatim}
+% Breakpoint 1, main () at TestBinarySearchTree.cpp:49
+% 49	    BinarySearchTree<int> t3(t);
+% (gdb) p t
+% $1 = {root = 0x55555556c2c0}
+% (gdb) p &t
+% $2 = (BinarySearchTree<int> *) 0x7fffffffe3f0
+% (gdb) s
+% BinarySearchTree<int>::BinarySearchTree (this=0x7fffffffe3f8, rhs=...) 
+% at BinarySearchTree.h:40
+% 40	    BinarySearchTree( const BinarySearchTree & rhs ) : root{ nullptr }
+% (gdb) s
+% 43			root = clone( rhs.root );
+% (gdb) p rhs
+% $3 = (const BinarySearchTree<int> &) @0x7fffffffe3f0: {root = 0x55555556c2c0}
+% \end{verbatim}
+
+% 避免这个复制是重要的，因为这是一次{\bf 额外}的复制．复制构造函数本身的任务就
+% 是复制，发生在\verb|clone| 调用内部, 这是一个内置的递归函数.
+
+% \begin{lstlisting}[language=C++]
+%   /**
+%   * Internal method to clone subtree.
+%   */
+%   BinaryNode * clone( BinaryNode *t ) const
+%   {
+%     if( t == nullptr )
+%         return nullptr;
+%     else
+%         return new BinaryNode{ t->element,
+%                                clone( t->left ),
+%                                clone( t->right ) };
+%   }
+% \end{lstlisting}
+
+% 提问, 复制时这是一个什么序的遍历?
+
+% 按照　C 语言和旧　C++ 规范，有一种情况函数调用时的参数复制仍然不可避免，比如
+% \begin{lstlisting}[language=C++]
+%   ...
+%   Student cai {"Kunkun", 24};
+%   ...
+% \end{lstlisting}
+% 这里在函数调用时, 因为 "Kunkun" 作为一个常量字符串, 是一个右值 (不可变
+% 更的值), 因此不能作为左值进行引用, 必然会发生一次额外复制.
+
+% 为此 C++ 11 引入了右值引用的概念. 注意左值的生命周期取决于变量本身的生
+% 命周期, 因此可以通过左值引用, 顺带修改变量的值. 但右值是一次性的, 用完
+% 即丢. 因此无所谓改变右值. 这里有一个典型的案例:
+
+% \begin{lstlisting}[language=C++]
+% /**
+% * Move constructor
+% */
+% BinarySearchTree( BinarySearchTree && rhs ) : root{ rhs.root }
+% {
+%   /// 比较和 copy 的区别, 这里外部参数传入 rhs 时, 如果外部参数
+%   /// 是一个右值, 那么按照旧 C++ 规范, 复制不可避免. 现在提供了
+%   /// 右值引用, 在参数传入时, 避免了复制. 而这里通过对 rhs.root
+%   /// 的指针复制, 避免了整棵树的复制. 
+%   rhs.root = nullptr;
+%   /// 必须释放 rhs.root 的管理权限. 提问: 为何这里不需要先delete
+%   /// ? this->root 接管了原本 rhs.root 的内存, 没有指向内容的复
+%   /// 制. 数据仍然存放在原地址, 因此不可以 delete, 否则
+%   /// this->root 下的树也会被删除.  而 rhs 在调用发生之后, 作为
+%   /// 一个右值量, 从概念上, 只用一次, 不会再使用, 因此可以赋为
+%   /// nullptr, 避免同一段内存出现两个入口.
+% }
+% \end{lstlisting}
+
+% 我们在跟踪中观察右值的实际作用:
+
+% \begin{verbatim}
+% Breakpoint 1, main () at TestBinarySearchTree.cpp:63
+% 63	    BinarySearchTree<int> t4(std::move(t));
+% (gdb) p t
+% $1 = {root = 0x55555556c2c0}
+% (gdb) p &t
+% $2 = (BinarySearchTree<int> *) 0x7fffffffe3e8
+% (gdb) s
+% std::move<BinarySearchTree<int>&> (__t=...) 
+% at /usr/include/c++/9/bits/move.h:99
+% 99	    move(_Tp&& __t) noexcept
+% (gdb) s
+% 100	    
+% { return static_cast<typename std::remove_reference<_Tp>::type&&>(__t); }
+% (gdb) s
+% BinarySearchTree<int>::BinarySearchTree (this=0x7fffffffe3e8, rhs=...) 
+% at BinarySearchTree.h:50
+% 50	    BinarySearchTree( BinarySearchTree && rhs ) : root{ rhs.root }
+% (gdb) s
+% 56			rhs.root = nullptr;
+% (gdb) p rhs
+% $3 = (BinarySearchTree<int> &&) @0x7fffffffe3e8: {root = 0x55555556c2c0}
+% (gdb) s
+% 63	    }
+% (gdb) s
+% main () at TestBinarySearchTree.cpp:66
+% 66	    for( i = 2; i < NUMS; i+=2 )
+% (gdb) p t4
+% $4 = {root = 0x55555556c2c0}
+% (gdb) p &t4
+% $5 = (BinarySearchTree<int> *) 0x7fffffffe400
+% (gdb) p t
+% $6 = {root = 0x0}
+% (gdb) p &t
+% $7 = (BinarySearchTree<int> *) 0x7fffffffe3e8
+% \end{verbatim}
+
+% 我们可以看到, \verb|move| 的实际作用是一次左值到右值的转换, 而函数参数
+% 通过地址直接获得了一个右值的引用, 因此没有发生复制. 然后尽管 \verb|t4|
+% 是一个新的实体, 但它的 \verb|root| 直接复制了 \verb|t| 的 \verb|root|,
+% 因此对原树的管理权已经传递给 \verb|t4|, 而 \verb|t| 的 \verb|root| 直
+% 接被切断, 避免了两棵树管理同一段内存的问题. 这种切断语法上不是必须的,
+% 但逻辑上是.
+
+% 同样的情况发生在赋值运算中. 一般对动态类, 我们都需要重载赋值运算
+% \verb|=|, 而这里也有引用避免隐含复制的问题. 课本的例子也是极好的. 但在
+% 移动赋值运算时, 有一个逻辑漏洞. 参见注释.
+
+% 接下去课本的代码都中规中矩. 注意一下:
+% \begin{verbatim}
+% BinaryNode * findMin( BinaryNode *t ) const
+% \end{verbatim}
+% 和
+% \begin{verbatim}
+% BinaryNode * findMax( BinaryNode *t ) const
+% \end{verbatim}
+% 这两个功能上对称的函数. 但它们的实现截然不同. 通常, 后者效率更高一些.
+% 但是前者更容易设计, 可读性更好. 课本这里同时展示了两个版本, 供大家比较
+% 学习.
+
+% 课本的类设计上, 也不是没有槽点. 大家这里可以观察到, \verb|contain| 和
+% \verb|remove| 似乎有较多的重复功能代码段. 这是一个需要察觉的要素. 这说
+% 明这里发生了功能代码冗余. 如何避免呢? 也很简单, 再增加一个内置函数
+% \verb|find(val)|, 如果 \verb|val| 存在, 返回其节点地址, 如果不存在, 则
+% 返回 \verb|NIL| (或任何一个约定标志). 然后 \verb|contain| 和
+% \verb|remove| 都通过调用 \verb|find| 完成相应功能. (\verb|contain| 此
+% 时沦为 \verb|find| 的一层马甲.)
+
+% 动态数据结构的难点都在动态操作上, 典型的就是 \verb|insert| 和
+% \verb|delete|. 一般删除又更复杂一些. 我们先看 \verb|insert|. 一个数据
+% 结构是有一定的规则的, 比如 BST 的动态操作要满足操作前后要都要满足 BST
+% 的定义.
+
+
+% 首先接口上, 我们注意到有两个版本:
+% \begin{verbatim}
+% void insert( const Comparable & x, BinaryNode * & t )
+% \end{verbatim}
+% 和
+% \begin{verbatim}
+% void insert( Comparable && x, BinaryNode * & t )
+% \end{verbatim}
+% 分别对应了 \verb|x| 是左值和右值的情况. 当然, 我们可以只有一个版本:
+% \begin{verbatim}
+% void insert( Comparable x, BinaryNode * & t )
+% \end{verbatim}
+% 对应 \verb|x| 的任意情况, 只是这样注定 \verb|x| 在参数传递时会发生隐含
+% 复制. 所以, 如果 \verb|x| 是轻量级的, 如 \verb|int| 等等, 完全可以不用
+% 回避这个复制, 以简化接口. 但对 \verb|x| 可能是重量级, 如这里是一个未知
+% 的模板类型, 那么同时提供左右值引用是 C++ 11 以后推荐的做法.
+
+% 现在回到 \verb|insert| 操作. 我们需要首先确定插入的点. 这里仍然使用了
+% 递归, 找到用于挂载的节点, 它要么是一个叶子节点, 也可能是一个只有单边子
+% 树的节点, 而新节点将挂在它的空子树上. 实际上, 我们观察代码就会发现, 课
+% 本的代码竟然一口气递归到了 \verb|nullptr|, 也就是空节点. 在链表操作时
+% 我们知道, 在做插入准备的遍历时, 哪怕是在最后增加一个新节点, 也不能一直
+% 遍历到空节点, 否则就失去了前续节点的线索. 那么为什么这里可以呢? 关键是
+% 递归的时候, 采用了指针引用的接口 \verb|BinaryNode * & t|.
+
+% 我们前面分析了引用主要有两个功能, 一个是避免隐含复制；另一个是用于修改
+% 被引用的变量. 指针引用, 就是指针变量的引用. 这里 \verb|BinaryNode *|
+% 应该看作是一种变量类型, 表示能存放一个 \verb|BinaryNode| 节点地址的指
+% 针变量. 所以 \verb|BinaryNode * & t| 就表示 \verb|t| 是对一个存放了节
+% 点地址的指针变量的引用. 你可以认为它本质是通过一个双重指针 (即指针变量
+% 的地址) 来传递参数的. 当上一层调用 \verb|insert( x, t->left );| 时,
+% \verb|t->left| 本身是一个地址值, 但它传给参数 \verb|t| 时, 不是把它存
+% 的地址值复制给 \verb|t|, 而是通过它 (\verb|t->left|) 的地址, 传递了一
+% 个引用给 \verb|t|. 所以当 \verb|t| 是 \verb|nullptr| 时, 直接将其改成
+% 一个新节点的地址, 这个改动也会通过这个左值引用, 反馈给 \verb|t->left|,
+% 从而实现当发现上一层的左子树是空, 就将其改成新节点地址的操作. 
+
+% 注意不论哪个版本, 第二个参数都是左值指针引用. 
+% \begin{lstlisting}[language=C++]
+%       /**
+%      * Internal method to insert into a subtree.
+%      * x is the item to insert.
+%      * t is the node that roots the subtree.
+%      * Set the new root of the subtree.
+%      */
+%     void insert( const Comparable & x, BinaryNode * & t )
+% 	{
+% 	    if( t == nullptr )
+% 		t = new BinaryNode{ x, nullptr, nullptr };
+% 	    /// 这里可以这么做的原因是 t 是一个指针引用参数. 也就是说, t
+% 	    /// 是一个指针变量的引用. 这个分支被触发, 要么 t 就是 root, 而
+% 	    /// root 是 nullptr, 也就是说这是一棵空树. 于是直接给它分配一
+% 	    /// 个新结点；另一种情况是递归的终点. 也就是 t 是作为一个指针
+% 	    /// 引用参数, 对之前某结点的左子树或右子树的根的引用. 比如, 实
+% 	    /// 际发生的调用是 insert( x, t->left ), 这样进入调用后, 发现
+% 	    /// t 是 nullptr, 于是把 t 赋成一个新结点. 这时对 t 的改动, 相
+% 	    /// 当于对上一层 t->left 的一个别名的改动 (引用的原始定义), 于
+% 	    /// 是相当于直接把上一层的 t->left 从 nullptr 改成了新结点. 因
+% 	    /// 此合法且高效. 用这种技巧我们就不需要保留上一层的缓存了. 
+% 	    else if( x < t->element )
+% 		insert( x, t->left );
+% 	    else if( t->element < x )
+% 		insert( x, t->right );
+% 	    else
+% 		;  // Duplicate; do nothing
+% 	    /// 书上这个 BST 约定元素无重复, 因此有重复就什么也不做. 
+% 	}
+% \end{lstlisting}
+
+% 插入这里注意一个细节，如果从初始，依次插入的数据是 6，5，7，2，5，8，那么得到的 BST 长什么样？
+
+% %\includegraphics[width=0.75\textwidth]{images/BST_insert1.png}
+
+% 那么如果插入次序是：6，2，5，5，8，7 呢？
+
+% %\includegraphics[width=0.75\textwidth]{images/BST_insert2.png}
+
+% 稍加思考，不难明确：
+
+% \begin{enumerate}
+% \item BST 是否平衡，和插入次序有关；
+% \item 同一棵 BST，插入的次序不唯一；
+% \end{enumerate}
+
+% 现在我们来考虑一个动态结构中最复杂的操作——删除。这里要求删除一个 BST
+% 的指定节点，并且要求删除之后，通过适当的调整（限制在 $\Theta(1)$），使
+% 得它仍然是 BST。注意一个前提, 由于我们的插入规则, 我们的 BST 中不会有
+% 重复值节点. 这里我们用 \verb|x| 代表我们即将删除的节点。我们分以下几种情况
+% 讨论：
+
+% \begin{enumerate}
+% \item 节点 \verb|x| 没有任何子节点, 直接删除 \verb|x| 即可; 
+% \item 节点 \verb|x| 有一个子树, 用它的子树代替 \verb|x|, 再删除
+%   \verb|x|; 这两种情况可以统一处理. 即删除 \verb|x|, 用 \verb|x| 的子
+%   树代替 \verb|x|(如有).
+% \item 节点 \verb|x| 有两棵子树, 则首先寻找 \verb|x| 的后继 \verb|y|,
+%   这里指出 \verb|y| 必存在 (右子树的最小值), 然后用 \verb|y| 的值占据
+%   |verb|x| 的值, 再将 \verb|x->right| 中删除 \verb|y|.
+% \end{enumerate}
+
+% 以上操作已经充分考虑了可以利用指针引用这样的神器. 在没有指针引用的年代,
+% 上述操作极为复杂, 大家可以去看算法导论中的相关内容.
+
+% 这里顺便指出, 课本的 \verb|remove| 只提供了一个版本, 它没有像
+% \verb|insert| 那样同时提供左右值引用的版本, 而是只用了一个常量左值引用
+% 的接口版本来共同处理左右值引用的调用. 这里的基本逻辑是, 我们不会修改被
+% 删除对象. 我们在 \verb|test_rvalue.cpp| 中演示一下常量左值引用的意义.
+
+% 我们看到, C++ 的新特性, 已经不再是一些细节修饰的语法糖, 而是开始试图从
+% 根本上调整一些底层算法的逻辑. 从汇编的角度看, 可能并没有什么本质区别,
+% 特别是自动优化之后. 但是对 C++ 层面和算法层面, 系统内部调度和算法结构
+% 之间的分层变得更加清晰, 上层的算法变得更加直观和简约. 这是未来 C++ 和
+% 算法的一个发展趋势. 
 
 \subsection{平衡树}
 
