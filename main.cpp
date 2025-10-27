@@ -1,12 +1,7 @@
-#include "ArrayList.h"
+#include <iostream>
+#include "BinarySearchTree.h"
 
-int main()
+int main ()
 {
-    ArrayList<double> A {1, 2, 3, 4, 5};
-    A.printList();
-
     return 0;
 }
-
-/// std::vector 
-///  

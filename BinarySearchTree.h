@@ -5,6 +5,10 @@
  * @tparam Comparable 存储的键（或值）类型。要求支持严格弱序（通常通过 operator< 实现）。
  */
 
+#include <iostream>
+using std::ostream;
+using std::cout;
+
 /// 存储 Comparable 类型元素的二叉搜索树。
 template <typename Comparable>
 class BinarySearchTree
@@ -65,7 +69,10 @@ public:
      * @param x 待查找的元素。
      * @return 若存在等价元素（!(x<y) && !(y<x)）则返回 true，否则返回 false。
      */
-    bool contains( const Comparable & x ) const;
+    bool contains( const Comparable & x ) const
+    {
+      return contains(x, root);
+    };
 
     /**
      * @brief 判断树是否为空。
@@ -228,3 +235,130 @@ private:
      */
     BinaryNode * clone( BinaryNode *t ) const;
 };
+
+template <typename Comparable>
+bool 
+BinarySearchTree<Comparable>::contains( const Comparable & x, 
+                                        BinaryNode *t ) const
+{
+  if (t == nullptr)
+    return false;
+  else if (x < t->element)
+    contains(x, t->left);
+  else if (x > t->element)
+    contains(x, t->right);
+  else 
+    return true;
+}
+
+template <typename Comparable>
+typename BinarySearchTree<Comparable>::BinaryNode * 
+BinarySearchTree<Comparable>::findMin( BinaryNode *t ) const
+{
+  if (t == nullptr)
+    return nullptr;
+  while (t->left != nullptr)
+    t = t->left;
+  return t;
+}
+
+template <typename Comparable>
+typename BinarySearchTree<Comparable>::BinaryNode * 
+BinarySearchTree<Comparable>::findMax( BinaryNode *t ) const
+{
+  if (t == nullptr)
+    return nullptr;
+  if (t->right == nullptr)
+    return t;
+  return findMax(t->right);
+}
+
+template <typename Comparable>
+void 
+BinarySearchTree<Comparable>
+::insert( const Comparable & x, BinaryNode * & t )
+{
+  if (t == nullptr)
+    t = new BinaryNode(x, nullptr, nullptr);
+  else if (x < t->element)
+    insert(x, t->left);
+  else if (x > t->element)
+    insert(x, t->right);
+  else
+    // DO NOTHING. 
+    ;
+  // BinaryNode * parent = nullptr;
+  // BinaryNode * curr = t;
+  // while (curr != nullptr)
+  // {
+  //   parent = curr;
+  //   if (x < curr->element)
+  //     curr = curr->left;
+  //   else if (x > curr->element)
+  //     curr = curr->right;
+  //   else
+  //     return; // DO NOTHING.
+  // }
+
+  // if (parent == nullptr)
+  //   t = new BinaryNode(x, nullptr, nullptr);
+  // else if (x < parent->element)
+  //   parent->left = new BinaryNode(x, nullptr, nullptr);
+  // else
+  //   parent->right = new BinaryNode(x, nullptr, nullptr);
+}
+
+
+template <typename Comparable>
+void 
+BinarySearchTree<Comparable>
+::remove( const Comparable & x, BinaryNode * & t )
+{
+  if (t == nullptr)
+    return ;  // DO NOTHING;
+  if (x < t->element)
+    remove(x, t->left);
+  else if (x > t->element)
+    remove(x, x->right);
+  else if (t->left != nullptr && t->right != nullptr)
+  {
+    t->element = findMin(t->right)->element;
+    remove(t->element, t->right);
+  } 
+  else 
+  {
+    BinaryNode *oldT = t;
+    t = (t->left != nullptr) ? t-> left : t->right;
+    delete oldT;
+  } 
+}
+
+template <typename Comparable>
+void 
+BinarySearchTree<Comparable>::
+makeEmpty(BinaryNode *& t)
+{
+  if (t != nullptr)
+  {
+    makeEmpty(t->left);
+    makeEmpty(t->right);
+    delete t;
+  }
+  t = nullptr;
+}
+
+template <typename Comparable>
+typename BinarySearchTree<Comparable>::BinaryNode * 
+clone(BinaryNode *t) const
+{
+  if (t == nullptr)
+    return nullptr;
+  else
+    return new BinaryNode{t->element,
+                          clone(t->left),
+                          clone(t->right)};
+}
+
+
+
+
